@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { StethoscopeConsult } from "@/components/StethoscopeConsult";
+import { VideoVisit } from "@/features/video-visit";
 
 type Doctor = {
   id: string;

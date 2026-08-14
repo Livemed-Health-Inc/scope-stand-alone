@@ -7,7 +7,7 @@ import { setDoctorPresence } from "@/lib/staff";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { StethoscopeConsult } from "@/components/StethoscopeConsult";
+import { VideoVisit } from "@/features/video-visit";
 import { startRinging, stopRinging } from "@/lib/ringtone";
 
 type Call = {
