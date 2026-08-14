@@ -104,10 +104,11 @@ export function NurseStation() {
     const { data, error } = await supabase.rpc("place_public_call", {
       _doctor_id: target.id,
       _patient_room: room,
-      _reason: reason || undefined,
-      _hospital: profile?.hospital ?? undefined,
-      _unit: profile?.unit ?? undefined,
+      ...(reason ? { _reason: reason } : {}),
+      ...(profile?.hospital ? { _hospital: profile.hospital } : {}),
+      ...(profile?.unit ? { _unit: profile.unit } : {}),
     });
+
     if (error || !data) {
       toast.error(error?.message ?? "Could not place the call.");
       return;
