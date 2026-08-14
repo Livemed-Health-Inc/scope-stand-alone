@@ -30,7 +30,7 @@ function Landing() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && user) void navigate({ to: "/station" });
+    if (!loading && user) void navigate({ to: "/doctor" });
   }, [loading, user]);
 
   return (
