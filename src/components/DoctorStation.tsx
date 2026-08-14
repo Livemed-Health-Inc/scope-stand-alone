@@ -131,6 +131,8 @@ export function DoctorStation() {
         role="remote"
         patient={(active.nurse_id && nurseNames[active.nurse_id]) || "Bedside nurse"}
         room={active.patient_room ? `Room ${active.patient_room}` : ""}
+        hospital={active.hospital ?? "Virtualis General Hospital"}
+        unit={active.unit ?? "ICU - 4 West"}
         title={active.reason ?? "Virtual consult"}
         callerName={profile?.full_name ? `Dr. ${profile.full_name}` : "Physician"}
         allowRemoteLocalScope

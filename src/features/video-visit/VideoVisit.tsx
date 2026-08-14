@@ -22,6 +22,10 @@ export interface VideoVisitProps {
   patient: string;
   /** Bed / room label shown next to the patient name. */
   room?: string;
+  /** Originating hospital shown in the visit header. */
+  hospital?: string;
+  /** Originating unit / floor shown in the visit header. */
+  unit?: string;
   /** Header title (e.g. the encounter or clinician name). */
   title?: string;
   /** Which side this device is: "patient" (bedside/nurse) or "remote" (doctor). */
@@ -53,6 +57,8 @@ export function VideoVisit({
   roomId,
   patient,
   room,
+  hospital,
+  unit,
   title,
   role: roleProp,
   callerName,
@@ -255,7 +261,9 @@ export function VideoVisit({
             {title ? ` · ${title}` : ""}
           </p>
           <p className="truncate text-xs text-slate-400">
-            HIPAA-secure room · end-to-end encrypted
+            {hospital ?? "Virtualis General Hospital"}
+            {unit ? ` · ${unit}` : ""}
+            {room ? ` · ${room}` : ""}
           </p>
         </div>
       </header>
