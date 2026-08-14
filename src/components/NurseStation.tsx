@@ -164,7 +164,7 @@ export function NurseStation() {
     const doc = doctors.find((d) => d.id === activeCall.doctor_id);
     return (
       <StethoscopeConsult
-        peerName={doc ? `Dr. ${doc.full_name}` : "Physician"}
+        peerName={doc ? (/^dr\.?\s/i.test(doc.full_name) ? doc.full_name : `Dr. ${doc.full_name}`) : "Physician"}
         peerRole={doc?.specialty ?? "Attending physician"}
         patientRoom={activeCall.patient_room}
         reason={activeCall.reason}
