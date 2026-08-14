@@ -5,9 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Virtualis clinical design system.
- * Dark instrument-panel aesthetic: deep slate-teal surfaces, cyan signal accent,
- * amber alert, medical-green online state. All colors in oklch.
+ * Virtualis design system — matched to virtualischat.com.
+ * Cool off-white canvas (#F4F5F7), white cards, deep navy ink (#0B0F1A /
+ * #0E1A3E) and the Virtualis electric blue (#2E5CFF) as the signal accent.
  */
 
 @theme inline {
@@ -38,51 +38,72 @@
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-signal: var(--signal);
+  --color-navy: var(--navy);
+  --color-navy-foreground: var(--navy-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
   --color-panel: var(--panel);
   --color-panel-foreground: var(--panel-foreground);
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto,
+    ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", monospace;
-  --shadow-panel: 0 1px 0 0 oklch(1 0 0 / 6%) inset, 0 18px 40px -24px oklch(0 0 0 / 80%);
-  --shadow-glow: 0 0 0 1px oklch(0.78 0.13 195 / 35%), 0 0 32px -6px oklch(0.78 0.13 195 / 45%);
+  --shadow-panel: 0 1px 2px 0 oklch(0.17 0.024 268 / 6%), 0 12px 32px -18px oklch(0.17 0.024 268 / 28%);
+  --shadow-glow: 0 0 0 1px oklch(0.553 0.246 266 / 28%), 0 10px 30px -12px oklch(0.553 0.246 266 / 45%);
 }
 
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.19 0.024 235);
-  --foreground: oklch(0.95 0.008 220);
-  --card: oklch(0.235 0.026 234);
-  --card-foreground: oklch(0.95 0.008 220);
-  --panel: oklch(0.265 0.028 233);
-  --panel-foreground: oklch(0.95 0.008 220);
-  --popover: oklch(0.235 0.026 234);
-  --popover-foreground: oklch(0.95 0.008 220);
-  --primary: oklch(0.78 0.13 195);
-  --primary-foreground: oklch(0.18 0.03 230);
-  --secondary: oklch(0.3 0.028 233);
-  --secondary-foreground: oklch(0.93 0.01 220);
-  --muted: oklch(0.28 0.024 233);
-  --muted-foreground: oklch(0.7 0.021 226);
-  --accent: oklch(0.34 0.045 220);
-  --accent-foreground: oklch(0.95 0.008 220);
-  --destructive: oklch(0.6 0.21 22);
-  --destructive-foreground: oklch(0.97 0.01 20);
-  --success: oklch(0.72 0.16 154);
-  --success-foreground: oklch(0.18 0.03 230);
-  --warning: oklch(0.79 0.15 78);
-  --warning-foreground: oklch(0.2 0.03 230);
-  --signal: oklch(0.78 0.13 195);
-  --border: oklch(0.34 0.028 232);
-  --input: oklch(0.32 0.028 232);
-  --ring: oklch(0.78 0.13 195);
+  --background: oklch(0.97 0.003 264.5);
+  --foreground: oklch(0.17 0.024 268.5);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.17 0.024 268.5);
+  --panel: oklch(0.985 0.004 264.5);
+  --panel-foreground: oklch(0.17 0.024 268.5);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.17 0.024 268.5);
+  --primary: oklch(0.553 0.246 265.9);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.963 0.017 264.5);
+  --secondary-foreground: oklch(0.26 0.097 267);
+  --muted: oklch(0.966 0.005 258.3);
+  --muted-foreground: oklch(0.55 0.031 261);
+  --accent: oklch(0.917 0.04 263.7);
+  --accent-foreground: oklch(0.26 0.097 267);
+  --destructive: oklch(0.576 0.209 29.5);
+  --destructive-foreground: oklch(1 0 0);
+  --success: oklch(0.686 0.167 154.9);
+  --success-foreground: oklch(1 0 0);
+  --warning: oklch(0.747 0.17 62.1);
+  --warning-foreground: oklch(0.17 0.024 268.5);
+  --signal: oklch(0.553 0.246 265.9);
+  --navy: oklch(0.231 0.071 266.9);
+  --navy-foreground: oklch(0.97 0.003 264.5);
+  --border: oklch(0.896 0.013 262.4);
+  --input: oklch(0.896 0.013 262.4);
+  --ring: oklch(0.553 0.246 265.9);
 }
 
 .dark {
-  --background: oklch(0.19 0.024 235);
-  --foreground: oklch(0.95 0.008 220);
+  --background: oklch(0.231 0.071 266.9);
+  --foreground: oklch(0.97 0.003 264.5);
+  --card: oklch(0.26 0.097 267);
+  --card-foreground: oklch(0.97 0.003 264.5);
+  --panel: oklch(0.29 0.09 267);
+  --panel-foreground: oklch(0.97 0.003 264.5);
+  --popover: oklch(0.26 0.097 267);
+  --popover-foreground: oklch(0.97 0.003 264.5);
+  --secondary: oklch(0.3 0.085 267);
+  --secondary-foreground: oklch(0.97 0.003 264.5);
+  --muted: oklch(0.3 0.075 267);
+  --muted-foreground: oklch(0.75 0.035 264);
+  --accent: oklch(0.35 0.1 266);
+  --accent-foreground: oklch(0.97 0.003 264.5);
+  --border: oklch(0.36 0.075 267);
+  --input: oklch(0.36 0.075 267);
+  --primary: oklch(0.658 0.182 260.7);
 }
 
 @layer base {
@@ -94,11 +115,13 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     background-image:
-      radial-gradient(60rem 40rem at 15% -10%, oklch(0.78 0.13 195 / 8%), transparent 60%),
-      radial-gradient(50rem 34rem at 100% 0%, oklch(0.62 0.1 260 / 8%), transparent 60%);
+      radial-gradient(46rem 30rem at 12% -12%, oklch(0.553 0.246 266 / 10%), transparent 62%),
+      radial-gradient(38rem 26rem at 100% 0%, oklch(0.658 0.182 261 / 8%), transparent 60%);
     background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
   }
 }
+
 
 @utility panel-surface {
   background-color: var(--color-card);
