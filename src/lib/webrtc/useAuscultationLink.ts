@@ -123,16 +123,25 @@ export function useAuscultationLink(opts: {
         setRemoteStream(new MediaStream(inbound.getTracks()));
       };
       pc.oniceconnectionstatechange = () => {
-        if (pc.iceConnectionState === "failed") pc.restartIce();
+        if (pc.iceConnectionState === "failed") retryIce();
       };
       pc.onconnectionstatechange = () => {
         if (disposed) return;
-        if (pc.connectionState === "connected") setState("live");
-        else if (pc.connectionState === "connecting" || pc.connectionState === "new")
+        if (pc.connectionState === "connected") {
+          clearWatchdog();
+          setState("live");
+        } else if (pc.connectionState === "connecting" || pc.connectionState === "new") {
           setState("connecting");
-        else if (pc.connectionState === "failed") setState("error");
-        else if (pc.connectionState === "disconnected") setState("waiting");
+          armWatchdog();
+        } else if (pc.connectionState === "failed") {
+          setState("error");
+          retryIce();
+        } else if (pc.connectionState === "disconnected") {
+          setState("waiting");
+          armWatchdog();
+        }
       };
+
       pc.onnegotiationneeded = () => void negotiate();
       // Always be ready to receive one audio + one video track.
       pc.addTransceiver("audio", { direction: "sendrecv" });
