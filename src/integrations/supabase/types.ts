@@ -133,12 +133,44 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      end_public_call: { Args: { _call_id: string }; Returns: undefined }
+      get_public_call: {
+        Args: { _call_id: string }
+        Returns: {
+          doctor_id: string
+          id: string
+          patient_room: string
+          reason: string
+          status: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      on_call_directory: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+          in_consult: boolean
+          is_online: boolean
+          last_seen: string
+          specialty: string
+        }[]
+      }
+      place_public_call: {
+        Args: {
+          _doctor_id: string
+          _hospital?: string
+          _patient_room: string
+          _reason?: string
+          _unit?: string
+        }
+        Returns: string
       }
     }
     Enums: {
