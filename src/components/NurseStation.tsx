@@ -177,7 +177,7 @@ export function NurseStation() {
           No physicians registered yet. A physician account must be created to appear here.
         </div>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <ul className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
           {doctors.map((d) => (
             <li key={d.id} className="panel-surface flex items-center gap-4 p-4">
               <div className="relative">
