@@ -31,6 +31,8 @@ type Call = {
   status: string;
   patient_room: string | null;
   reason: string | null;
+  hospital: string | null;
+  unit: string | null;
 };
 
 export function NurseStation() {
@@ -119,6 +121,8 @@ export function NurseStation() {
       status: "ringing",
       patient_room: room,
       reason: reason || null,
+      hospital: profile?.hospital ?? "Virtualis General Hospital",
+      unit: profile?.unit ?? "ICU - 4 West",
     });
     setTarget(null);
     setReason("");
@@ -140,6 +144,8 @@ export function NurseStation() {
         role="patient"
         patient={docName}
         room={activeCall.patient_room ? `Room ${activeCall.patient_room}` : ""}
+        hospital={activeCall.hospital ?? "Virtualis General Hospital"}
+        unit={activeCall.unit ?? "ICU - 4 West"}
         title={activeCall.reason ?? "Virtual consult"}
         callerName="Bedside nurse"
         onEnd={cancelCall}
