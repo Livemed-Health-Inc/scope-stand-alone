@@ -73,7 +73,7 @@ export function NurseStation() {
 
   // Watch our outgoing call
   useEffect(() => {
-    if (!activeCall || !user) return;
+    if (!activeCall) return;
     const channel = supabase
       .channel(`nurse-call-${activeCall.id}`)
       .on(
@@ -96,7 +96,7 @@ export function NurseStation() {
   const online = useMemo(() => doctors.filter((d) => d.is_online).length, [doctors]);
 
   async function placeCall() {
-    if (!user || !target) return;
+    if (!target) return;
     if (target.in_consult) {
       toast.warning(`Dr. ${target.full_name} is currently in a consult — please hold.`);
       return;
@@ -104,7 +104,7 @@ export function NurseStation() {
     const { data, error } = await supabase
       .from("calls")
       .insert({
-        nurse_id: user.id,
+        nurse_id: user?.id ?? null,
         doctor_id: target.id,
         patient_room: room,
         reason: reason || null,

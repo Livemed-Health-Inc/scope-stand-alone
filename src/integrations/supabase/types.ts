@@ -22,7 +22,7 @@ export type Database = {
           ended_at: string | null
           hospital: string | null
           id: string
-          nurse_id: string
+          nurse_id: string | null
           patient_room: string | null
           reason: string | null
           status: string
@@ -35,7 +35,7 @@ export type Database = {
           ended_at?: string | null
           hospital?: string | null
           id?: string
-          nurse_id: string
+          nurse_id?: string | null
           patient_room?: string | null
           reason?: string | null
           status?: string
@@ -48,7 +48,7 @@ export type Database = {
           ended_at?: string | null
           hospital?: string | null
           id?: string
-          nurse_id?: string
+          nurse_id?: string | null
           patient_room?: string | null
           reason?: string | null
           status?: string
