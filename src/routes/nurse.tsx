@@ -41,7 +41,7 @@ function NursePage() {
           <div className="ml-auto flex items-center gap-3">
             <ConnectionStatus />
             <Button asChild variant="ghost" size="sm">
-              <Link to="/auth">Physician sign in</Link>
+              <Link to="/auth">Doctor app</Link>
             </Button>
           </div>
         </div>

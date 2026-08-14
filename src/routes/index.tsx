@@ -30,7 +30,7 @@ function Landing() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && user) void navigate({ to: "/station" });
+    if (!loading && user) void navigate({ to: "/doctor" });
   }, [loading, user]);
 
   return (
@@ -53,7 +53,7 @@ function Landing() {
           <Link to="/nurse">Open nurse station</Link>
         </Button>
         <Button asChild size="lg" variant="secondary">
-          <Link to="/auth">Physician sign in</Link>
+          <Link to="/auth">Doctor app</Link>
         </Button>
       </div>
 

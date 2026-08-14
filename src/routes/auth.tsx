@@ -48,7 +48,7 @@ function AuthPage() {
       toast.error(error.message);
       return;
     }
-    void navigate({ to: "/station" });
+    void navigate({ to: "/doctor" });
   }
 
   async function signUp(e: React.FormEvent) {
@@ -58,7 +58,7 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/station`,
+        emailRedirectTo: `${window.location.origin}/doctor`,
         data: {
           full_name: fullName,
           staff_role: staffRole,
@@ -73,7 +73,7 @@ function AuthPage() {
       return;
     }
     if (data.session) {
-      void navigate({ to: "/station" });
+      void navigate({ to: "/doctor" });
     } else {
       toast.success("Check your email to confirm your account.");
     }
@@ -86,7 +86,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    void navigate({ to: "/station" });
+    void navigate({ to: "/doctor" });
   }
 
   return (
