@@ -18,6 +18,13 @@ type Doctor = {
   in_consult: boolean;
 };
 
+type DoctorPresence = {
+  user_id: string;
+  is_online: boolean;
+  in_consult: boolean;
+  last_seen: string;
+};
+
 type Call = {
   id: string;
   doctor_id: string;
@@ -45,17 +52,22 @@ export function NurseStation() {
     }
     const [{ data: profiles }, { data: presence }] = await Promise.all([
       supabase.from("profiles").select("id, full_name, specialty").in("id", ids),
-      supabase.from("doctor_presence").select("user_id, is_online, in_consult").in("user_id", ids),
+      supabase.from("doctor_presence").select("user_id, is_online, in_consult, last_seen").in("user_id", ids),
     ]);
-    const presenceMap = new Map((presence ?? []).map((p) => [p.user_id, p]));
+    const presenceMap = new Map(((presence ?? []) as DoctorPresence[]).map((p) => [p.user_id, p]));
+    const freshAfter = Date.now() - 45_000;
     setDoctors(
-      (profiles ?? []).map((p) => ({
-        id: p.id,
-        full_name: p.full_name,
-        specialty: p.specialty,
-        is_online: presenceMap.get(p.id)?.is_online ?? false,
-        in_consult: presenceMap.get(p.id)?.in_consult ?? false,
-      })),
+      (profiles ?? []).map((p) => {
+        const doctorPresence = presenceMap.get(p.id);
+        const isFresh = doctorPresence ? new Date(doctorPresence.last_seen).getTime() >= freshAfter : false;
+        return {
+          id: p.id,
+          full_name: p.full_name,
+          specialty: p.specialty,
+          is_online: Boolean(doctorPresence?.is_online && isFresh),
+          in_consult: Boolean(doctorPresence?.in_consult && isFresh),
+        };
+      }),
     );
     setLoading(false);
   }
@@ -66,7 +78,9 @@ export function NurseStation() {
       .channel("nurse-presence")
       .on("postgres_changes", { event: "*", schema: "public", table: "doctor_presence" }, () => void loadDoctors())
       .subscribe();
+    const refresh = window.setInterval(() => void loadDoctors(), 15000);
     return () => {
+      window.clearInterval(refresh);
       void supabase.removeChannel(channel);
     };
   }, []);
