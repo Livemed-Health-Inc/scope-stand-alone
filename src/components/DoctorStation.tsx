@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { StethoscopeConsult } from "@/components/StethoscopeConsult";
+import { startRinging, stopRinging } from "@/lib/ringtone";
 
 type Call = {
   id: string;
-  nurse_id: string;
+  nurse_id: string | null;
   status: string;
   patient_room: string | null;
   reason: string | null;
@@ -37,7 +38,9 @@ export function DoctorStation() {
     setIncoming(calls.filter((c) => c.status === "ringing"));
     setActive(calls.find((c) => c.status === "accepted") ?? null);
 
-    const missing = calls.map((c) => c.nurse_id).filter((id) => !nurseNames[id]);
+    const missing = calls
+      .map((c) => c.nurse_id)
+      .filter((id): id is string => !!id && !nurseNames[id]);
     if (missing.length) {
       const { data: profs } = await supabase.from("profiles").select("id, full_name, unit").in("id", missing);
       setNurseNames((prev) => {
@@ -84,7 +87,22 @@ export function DoctorStation() {
     };
   }, [user]);
 
+  // Fallback poll in case a realtime event is missed
+  useEffect(() => {
+    if (!user) return;
+    const id = window.setInterval(() => void loadCalls(), 4000);
+    return () => window.clearInterval(id);
+  }, [user, loadCalls]);
+
+  // Audible ring while a request is pending
+  useEffect(() => {
+    if (incoming.length > 0 && !active) startRinging();
+    else stopRinging();
+    return () => stopRinging();
+  }, [incoming.length, active]);
+
   async function accept(call: Call) {
+    stopRinging();
     await supabase
       .from("calls")
       .update({ status: "accepted", answered_at: new Date().toISOString() })
@@ -94,6 +112,7 @@ export function DoctorStation() {
   }
 
   async function decline(call: Call) {
+    stopRinging();
     await supabase.from("calls").update({ status: "declined", ended_at: new Date().toISOString() }).eq("id", call.id);
     setIncoming((c) => c.filter((x) => x.id !== call.id));
   }
@@ -107,7 +126,7 @@ export function DoctorStation() {
   if (active) {
     return (
       <StethoscopeConsult
-        peerName={nurseNames[active.nurse_id] ?? "Nurse"}
+        peerName={(active.nurse_id && nurseNames[active.nurse_id]) || "Nurse"}
         peerRole={`${active.unit ?? "Unit"} · Bedside nurse`}
         patientRoom={active.patient_room}
         reason={active.reason}
@@ -155,7 +174,7 @@ export function DoctorStation() {
                 <PhoneIncoming className="size-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-medium">{nurseNames[call.nurse_id] ?? "Bedside nurse"}</p>
+                <p className="font-medium">{(call.nurse_id && nurseNames[call.nurse_id]) || "Bedside nurse"}</p>
                 <p className="text-xs text-muted-foreground">
                   {call.unit ?? "Unit"} · Room {call.patient_room ?? "—"}
                 </p>
