@@ -25,6 +25,8 @@ export function DoctorStation() {
   const [incoming, setIncoming] = useState<Call[]>([]);
   const [active, setActive] = useState<Call | null>(null);
   const [nurseNames, setNurseNames] = useState<Record<string, string>>({});
+  const offlineTimer = useRef<number | null>(null);
+
 
   const loadCalls = useCallback(async () => {
     if (!user) return;
