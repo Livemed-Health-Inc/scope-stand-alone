@@ -242,7 +242,7 @@ export function VideoVisit({
   }, [connecting]);
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-slate-950 px-3 pb-4 pt-3 text-slate-100 sm:max-w-xl sm:px-5 lg:max-w-6xl lg:px-6">
+    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-navy-900 px-3 pb-4 pt-3 text-slate-100 sm:max-w-xl sm:px-5 lg:max-w-6xl lg:px-6">
       <header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
         {onEnd && (
           <button onClick={onEnd} aria-label="Leave visit" className="shrink-0 text-slate-400">
@@ -264,7 +264,7 @@ export function VideoVisit({
         {/* Left column on wide screens, inline flow on mobile */}
         <div className="contents lg:col-start-1 lg:row-start-1 lg:flex lg:flex-col lg:gap-2">
 
-      <section className="relative overflow-hidden rounded-3xl bg-slate-900">
+      <section className="relative overflow-hidden rounded-3xl bg-navy-800">
         <video
           ref={remoteVideoRef}
           className={`aspect-4/3 w-full object-cover lg:aspect-video ${remoteHasVideo ? "" : "hidden"}`}
@@ -300,7 +300,7 @@ export function VideoVisit({
             </div>
           </div>
         )}
-        <span className="absolute left-3 top-3 max-w-[55%] truncate rounded-full bg-slate-950/70 px-3 py-1 text-xs font-medium">
+        <span className="absolute left-3 top-3 max-w-[55%] truncate rounded-full bg-navy-900/70 px-3 py-1 text-xs font-medium">
           {patient}
           {room ? ` · ${room}` : ""}
         </span>
@@ -312,7 +312,7 @@ export function VideoVisit({
             Tap to enable sound
           </button>
         )}
-        <span className="absolute bottom-3 left-3 max-w-[70%] truncate rounded-full bg-slate-950/70 px-3 py-1 text-[10px] font-medium text-slate-300">
+        <span className="absolute bottom-3 left-3 max-w-[70%] truncate rounded-full bg-navy-900/70 px-3 py-1 text-[10px] font-medium text-slate-300">
           {link.state === "live"
             ? remoteHasVideo
               ? `Live · ${role === "patient" ? "doctor" : "bedside"} camera`
@@ -322,7 +322,7 @@ export function VideoVisit({
               : "Waiting for the other side to join…"}
         </span>
 
-        <div className="absolute right-3 top-3 w-20 overflow-hidden rounded-xl border border-slate-700/80 bg-slate-800 shadow-lg sm:w-24 lg:w-32">
+        <div className="absolute right-3 top-3 w-20 overflow-hidden rounded-xl border border-navy-700/80 bg-navy-700 shadow-lg sm:w-24 lg:w-32">
           <div className="relative aspect-3/4 w-full">
             <video
               ref={selfVideoRef}
@@ -340,7 +340,7 @@ export function VideoVisit({
               </div>
             )}
           </div>
-          <p className="bg-slate-950/70 py-0.5 text-center text-[9px] font-medium text-slate-300">
+          <p className="bg-navy-900/70 py-0.5 text-center text-[9px] font-medium text-slate-300">
             You
           </p>
         </div>
@@ -352,7 +352,7 @@ export function VideoVisit({
             <div
               key={v.label}
               className={`min-w-[78px] shrink-0 rounded-xl border px-2.5 py-1.5 ${
-                v.warn ? "border-amber-500/40 bg-amber-500/5" : "border-slate-700 bg-slate-900"
+                v.warn ? "border-amber-500/40 bg-amber-500/5" : "border-navy-700 bg-navy-800"
               }`}
             >
               <p className="text-[10px] uppercase tracking-widest text-slate-400">{v.label}</p>
@@ -377,7 +377,7 @@ export function VideoVisit({
           </p>
           <button
             onClick={() => setScribe((v) => !v)}
-            className="shrink-0 rounded-full bg-slate-800 px-3 py-1 text-xs font-medium"
+            className="shrink-0 rounded-full bg-navy-700 px-3 py-1 text-xs font-medium"
           >
             {scribe ? "Pause" : "Resume"}
           </button>
@@ -501,14 +501,14 @@ export function VideoVisit({
         <button
           onClick={() => setMicOn((v) => !v)}
           aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
-          className="flex size-12 shrink-0 items-center justify-center rounded-full bg-slate-800"
+          className="flex size-12 shrink-0 items-center justify-center rounded-full bg-navy-700"
         >
           {micOn ? <Mic className="size-6" /> : <MicOff className="size-6 text-destructive" />}
         </button>
         <button
           onClick={() => setCamOn((v) => !v)}
           aria-label={camOn ? "Turn camera off" : "Turn camera on"}
-          className="flex size-12 shrink-0 items-center justify-center rounded-full bg-slate-800"
+          className="flex size-12 shrink-0 items-center justify-center rounded-full bg-navy-700"
         >
           {camOn ? <Video className="size-6" /> : <VideoOff className="size-6 text-destructive" />}
         </button>
