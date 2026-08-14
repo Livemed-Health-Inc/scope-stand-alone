@@ -299,6 +299,7 @@ export function useAuscultationLink(opts: {
 
     return () => {
       disposed = true;
+      clearWatchdog();
       if (announce) window.clearInterval(announce);
       send({ kind: "bye" });
       syncRef.current = null;
