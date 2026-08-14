@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PhoneIncoming, PhoneOff, Coffee, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,9 +25,6 @@ export function DoctorStation() {
   const [incoming, setIncoming] = useState<Call[]>([]);
   const [active, setActive] = useState<Call | null>(null);
   const [nurseNames, setNurseNames] = useState<Record<string, string>>({});
-  const offlineTimer = useRef<number | null>(null);
-
-
   const loadCalls = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
@@ -55,24 +52,12 @@ export function DoctorStation() {
   useEffect(() => {
     if (!user) return;
     const userId = user.id;
-    // Cancel any pending "go offline" write from a previous mount / re-render
-    if (offlineTimer.current) {
-      window.clearTimeout(offlineTimer.current);
-      offlineTimer.current = null;
-    }
     void setDoctorPresence(userId, { is_online: available, in_consult: !!active });
     const beat = window.setInterval(() => {
       void setDoctorPresence(userId, { is_online: available, in_consult: !!active });
-    }, 25000);
-    const offline = () => {
-      void setDoctorPresence(userId, { is_online: false, in_consult: false });
-    };
-    window.addEventListener("beforeunload", offline);
+    }, 15000);
     return () => {
       window.clearInterval(beat);
-      window.removeEventListener("beforeunload", offline);
-      // Defer: if this was a re-render/StrictMode remount, the next effect cancels it
-      offlineTimer.current = window.setTimeout(offline, 1500);
     };
   }, [user, available, active]);
 
