@@ -139,9 +139,9 @@
 }
 
 @keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 oklch(0.78 0.13 195 / 45%); }
-  70% { box-shadow: 0 0 0 14px oklch(0.78 0.13 195 / 0%); }
-  100% { box-shadow: 0 0 0 0 oklch(0.78 0.13 195 / 0%); }
+  0% { box-shadow: 0 0 0 0 oklch(0.553 0.246 266 / 45%); }
+  70% { box-shadow: 0 0 0 14px oklch(0.553 0.246 266 / 0%); }
+  100% { box-shadow: 0 0 0 0 oklch(0.553 0.246 266 / 0%); }
 }
 
 @utility ring-pulse {
