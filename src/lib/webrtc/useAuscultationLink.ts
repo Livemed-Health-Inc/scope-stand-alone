@@ -108,6 +108,39 @@ export function useAuscultationLink(opts: {
 
     const inbound = new MediaStream();
 
+    // If the media path never comes up (blocked UDP, NAT with no direct route)
+    // we re-gather candidates and re-offer instead of sitting on "connecting".
+    let watchdog: number | undefined;
+    let iceAttempts = 0;
+    const clearWatchdog = () => {
+      if (watchdog) window.clearTimeout(watchdog);
+      watchdog = undefined;
+    };
+    const retryIce = () => {
+      const pc = pcRef.current;
+      if (!pc || disposed || iceAttempts >= 4) return;
+      iceAttempts += 1;
+      clearWatchdog();
+      try {
+        pc.restartIce();
+      } catch {
+        /* not negotiated yet */
+      }
+      void negotiate();
+      armWatchdog();
+    };
+    function armWatchdog() {
+      if (disposed || watchdog) return;
+      watchdog = window.setTimeout(() => {
+        watchdog = undefined;
+        const pc = pcRef.current;
+        if (!pc || pc.connectionState === "connected") return;
+        retryIce();
+      }, 9000);
+    }
+
+
+
     const ensurePc = () => {
       if (pcRef.current) return pcRef.current;
       const pc = new RTCPeerConnection(ICE);
