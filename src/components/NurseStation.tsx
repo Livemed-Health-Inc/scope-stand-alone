@@ -102,7 +102,25 @@ export function NurseStation() {
         },
       )
       .subscribe();
+    // Poll fallback in case a realtime event is missed (anon sessions)
+    const poll = window.setInterval(async () => {
+      const { data } = await supabase
+        .from("calls")
+        .select("id, doctor_id, status, patient_room, reason")
+        .eq("id", activeCall.id)
+        .maybeSingle();
+      if (!data) return;
+      const next = data as Call;
+      setActiveCall((prev) => {
+        if (!prev || prev.status === next.status) return prev;
+        if (next.status === "declined") toast.error("Call declined — try another physician.");
+        if (next.status === "accepted") toast.success("Physician connected.");
+        if (next.status === "ended") return null;
+        return next;
+      });
+    }, 2500);
     return () => {
+      window.clearInterval(poll);
       void supabase.removeChannel(channel);
     };
   }, [activeCall?.id, user]);
