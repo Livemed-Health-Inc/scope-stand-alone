@@ -50,7 +50,10 @@ function Landing() {
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild size="lg">
-          <Link to="/auth">Enter the station</Link>
+          <Link to="/nurse">Open nurse station</Link>
+        </Button>
+        <Button asChild size="lg" variant="secondary">
+          <Link to="/auth">Physician sign in</Link>
         </Button>
       </div>
 
