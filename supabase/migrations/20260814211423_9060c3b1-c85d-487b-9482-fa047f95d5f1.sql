@@ -1,0 +1,1 @@
+UPDATE public.calls SET status='ended', ended_at=now() WHERE status IN ('ringing','accepted'); UPDATE public.doctor_presence SET in_consult=false;
