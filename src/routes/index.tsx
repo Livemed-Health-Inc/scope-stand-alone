@@ -53,7 +53,7 @@ function Landing() {
           <Link to="/nurse">Open nurse station</Link>
         </Button>
         <Button asChild size="lg" variant="secondary">
-          <Link to="/auth">Physician sign in</Link>
+          <Link to="/auth">Doctor app</Link>
         </Button>
       </div>
 
