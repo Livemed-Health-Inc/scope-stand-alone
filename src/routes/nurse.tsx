@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Stethoscope, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { NurseStation } from "@/components/NurseStation";
 import { Button } from "@/components/ui/button";
