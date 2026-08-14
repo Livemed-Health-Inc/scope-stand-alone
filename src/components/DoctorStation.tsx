@@ -16,6 +16,7 @@ type Call = {
   status: string;
   patient_room: string | null;
   reason: string | null;
+  hospital: string | null;
   unit: string | null;
   created_at: string;
 };
@@ -30,7 +31,7 @@ export function DoctorStation() {
     if (!user) return;
     const { data } = await supabase
       .from("calls")
-      .select("id, nurse_id, status, patient_room, reason, unit, created_at")
+      .select("id, nurse_id, status, patient_room, reason, hospital, unit, created_at")
       .eq("doctor_id", user.id)
       .in("status", ["ringing", "accepted"])
       .order("created_at", { ascending: true });
@@ -179,8 +180,11 @@ export function DoctorStation() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{(call.nurse_id && nurseNames[call.nurse_id]) || "Bedside nurse"}</p>
+                <p className="text-xs font-medium text-foreground/80">
+                  {call.hospital ?? "Virtualis General Hospital"}
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  {call.unit ?? "Unit"} · Room {call.patient_room ?? "—"}
+                  {call.unit ?? "ICU - 4 West"} · Room {call.patient_room ?? "412-B"}
                 </p>
                 {call.reason && <p className="mt-1 text-sm text-foreground/90">{call.reason}</p>}
               </div>
