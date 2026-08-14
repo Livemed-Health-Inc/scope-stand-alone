@@ -80,7 +80,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Virtualis Consult" },
+      { title: "Virtualis Consult — Remote Bedside Physician Calls" },
       { name: "description", content: "Remote bedside-to-physician consult station with a digital stethoscope." },
       { name: "author", content: "Virtualis" },
       { property: "og:title", content: "Virtualis Consult" },
@@ -94,7 +94,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],
   }),
   shellComponent: RootShell,

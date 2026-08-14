@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { BrandMark } from "@/components/BrandMark";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -93,8 +94,7 @@ function AuthPage() {
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <Link to="/" className="mb-6 flex items-center justify-center gap-2 text-primary">
-          <Stethoscope className="size-6" />
-          <span className="text-lg font-semibold tracking-tight text-foreground">Virtualis Consult</span>
+          <BrandMark size={34} labelClassName="text-lg" />
         </Link>
 
         <div className="panel-surface p-6">

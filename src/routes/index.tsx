@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Stethoscope, Activity, Radio, ShieldCheck, Waves } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/BrandMark";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,10 +36,7 @@ function Landing() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-4 py-16">
-      <div className="flex items-center gap-2 text-primary">
-        <Stethoscope className="size-6" />
-        <span className="font-semibold tracking-tight text-foreground">Virtualis Consult</span>
-      </div>
+      <BrandMark size={36} labelClassName="text-lg" />
 
       <h1 className="mt-8 max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
         The bedside call button for on-call physicians — with a stethoscope built in.
