@@ -168,7 +168,7 @@ export function NurseStation() {
         roomId={activeCall.id}
         role="patient"
         patient={docName}
-        room={activeCall.patient_room ? `Room ${activeCall.patient_room}` : undefined}
+        room={activeCall.patient_room ? `Room ${activeCall.patient_room}` : ""}
         title={activeCall.reason ?? "Virtual consult"}
         callerName="Bedside nurse"
         onEnd={cancelCall}
