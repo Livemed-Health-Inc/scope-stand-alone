@@ -6,19 +6,30 @@ export type LinkState = "idle" | "waiting" | "connecting" | "live" | "error";
 
 const ICE: RTCConfiguration = {
   iceServers: [
-    { urls: ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] },
-    // Public relay so the call still connects across restrictive networks.
     {
       urls: [
-        "turn:openrelay.metered.ca:80",
-        "turn:openrelay.metered.ca:443",
-        "turn:openrelay.metered.ca:443?transport=tcp",
+        "stun:stun.l.google.com:19302",
+        "stun:stun1.l.google.com:19302",
+        "stun:global.stun.twilio.com:3478",
+        "stun:stun.relay.metered.ca:80",
+      ],
+    },
+    // Public relay so the call still connects across restrictive hospital /
+    // cellular networks where a direct peer-to-peer path is impossible.
+    {
+      urls: [
+        "turn:staticauth.openrelay.metered.ca:80",
+        "turn:staticauth.openrelay.metered.ca:80?transport=tcp",
+        "turn:staticauth.openrelay.metered.ca:443",
+        "turns:staticauth.openrelay.metered.ca:443?transport=tcp",
       ],
       username: "openrelayproject",
       credential: "openrelayproject",
     },
   ],
+  iceCandidatePoolSize: 4,
 };
+
 
 interface Signal {
   id: string;
@@ -97,6 +108,39 @@ export function useAuscultationLink(opts: {
 
     const inbound = new MediaStream();
 
+    // If the media path never comes up (blocked UDP, NAT with no direct route)
+    // we re-gather candidates and re-offer instead of sitting on "connecting".
+    let watchdog: number | undefined;
+    let iceAttempts = 0;
+    const clearWatchdog = () => {
+      if (watchdog) window.clearTimeout(watchdog);
+      watchdog = undefined;
+    };
+    const retryIce = () => {
+      const pc = pcRef.current;
+      if (!pc || disposed || iceAttempts >= 4) return;
+      iceAttempts += 1;
+      clearWatchdog();
+      try {
+        pc.restartIce();
+      } catch {
+        /* not negotiated yet */
+      }
+      void negotiate();
+      armWatchdog();
+    };
+    function armWatchdog() {
+      if (disposed || watchdog) return;
+      watchdog = window.setTimeout(() => {
+        watchdog = undefined;
+        const pc = pcRef.current;
+        if (!pc || pc.connectionState === "connected") return;
+        retryIce();
+      }, 9000);
+    }
+
+
+
     const ensurePc = () => {
       if (pcRef.current) return pcRef.current;
       const pc = new RTCPeerConnection(ICE);
@@ -112,16 +156,25 @@ export function useAuscultationLink(opts: {
         setRemoteStream(new MediaStream(inbound.getTracks()));
       };
       pc.oniceconnectionstatechange = () => {
-        if (pc.iceConnectionState === "failed") pc.restartIce();
+        if (pc.iceConnectionState === "failed") retryIce();
       };
       pc.onconnectionstatechange = () => {
         if (disposed) return;
-        if (pc.connectionState === "connected") setState("live");
-        else if (pc.connectionState === "connecting" || pc.connectionState === "new")
+        if (pc.connectionState === "connected") {
+          clearWatchdog();
+          setState("live");
+        } else if (pc.connectionState === "connecting" || pc.connectionState === "new") {
           setState("connecting");
-        else if (pc.connectionState === "failed") setState("error");
-        else if (pc.connectionState === "disconnected") setState("waiting");
+          armWatchdog();
+        } else if (pc.connectionState === "failed") {
+          setState("error");
+          retryIce();
+        } else if (pc.connectionState === "disconnected") {
+          setState("waiting");
+          armWatchdog();
+        }
       };
+
       pc.onnegotiationneeded = () => void negotiate();
       // Always be ready to receive one audio + one video track.
       pc.addTransceiver("audio", { direction: "sendrecv" });
@@ -246,6 +299,7 @@ export function useAuscultationLink(opts: {
 
     return () => {
       disposed = true;
+      clearWatchdog();
       if (announce) window.clearInterval(announce);
       send({ kind: "bye" });
       syncRef.current = null;
