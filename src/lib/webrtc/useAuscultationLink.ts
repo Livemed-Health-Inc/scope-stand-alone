@@ -6,19 +6,30 @@ export type LinkState = "idle" | "waiting" | "connecting" | "live" | "error";
 
 const ICE: RTCConfiguration = {
   iceServers: [
-    { urls: ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] },
-    // Public relay so the call still connects across restrictive networks.
     {
       urls: [
-        "turn:openrelay.metered.ca:80",
-        "turn:openrelay.metered.ca:443",
-        "turn:openrelay.metered.ca:443?transport=tcp",
+        "stun:stun.l.google.com:19302",
+        "stun:stun1.l.google.com:19302",
+        "stun:global.stun.twilio.com:3478",
+        "stun:stun.relay.metered.ca:80",
+      ],
+    },
+    // Public relay so the call still connects across restrictive hospital /
+    // cellular networks where a direct peer-to-peer path is impossible.
+    {
+      urls: [
+        "turn:staticauth.openrelay.metered.ca:80",
+        "turn:staticauth.openrelay.metered.ca:80?transport=tcp",
+        "turn:staticauth.openrelay.metered.ca:443",
+        "turns:staticauth.openrelay.metered.ca:443?transport=tcp",
       ],
       username: "openrelayproject",
       credential: "openrelayproject",
     },
   ],
+  iceCandidatePoolSize: 4,
 };
+
 
 interface Signal {
   id: string;
