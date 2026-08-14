@@ -1,0 +1,19 @@
+{
+  "name": "@virtualis/stethoscope-sdk",
+  "version": "1.0.0",
+  "description": "Browser SDK for Mintti Smartho Bluetooth digital stethoscopes: pairing, heart-sound DSP, beat detection and a WebRTC-ready audio stream.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./index.ts",
+    "./react": "./react.ts",
+    "./adapters/twilio": "./adapters/twilio.ts"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": { "optional": true }
+  },
+  "keywords": ["stethoscope", "auscultation", "web-bluetooth", "telehealth", "webrtc"]
+}
