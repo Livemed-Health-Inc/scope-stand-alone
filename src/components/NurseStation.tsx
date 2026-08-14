@@ -43,34 +43,23 @@ export function NurseStation() {
   const [activeCall, setActiveCall] = useState<Call | null>(null);
 
   async function loadDoctors() {
-    const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "doctor");
-    const ids = (roles ?? []).map((r) => r.user_id);
-    if (ids.length === 0) {
-      setDoctors([]);
-      setLoading(false);
-      return;
-    }
-    const [{ data: profiles }, { data: presence }] = await Promise.all([
-      supabase.from("profiles").select("id, full_name, specialty").in("id", ids),
-      supabase.from("doctor_presence").select("user_id, is_online, in_consult, last_seen").in("user_id", ids),
-    ]);
-    const presenceMap = new Map(((presence ?? []) as DoctorPresence[]).map((p) => [p.user_id, p]));
+    const { data } = await supabase.rpc("on_call_directory");
     const freshAfter = Date.now() - 45_000;
     setDoctors(
-      (profiles ?? []).map((p) => {
-        const doctorPresence = presenceMap.get(p.id);
-        const isFresh = doctorPresence ? new Date(doctorPresence.last_seen).getTime() >= freshAfter : false;
+      (data ?? []).map((d) => {
+        const isFresh = d.last_seen ? new Date(d.last_seen).getTime() >= freshAfter : false;
         return {
-          id: p.id,
-          full_name: p.full_name,
-          specialty: p.specialty,
-          is_online: Boolean(doctorPresence?.is_online && isFresh),
-          in_consult: Boolean(doctorPresence?.in_consult && isFresh),
+          id: d.id,
+          full_name: d.full_name,
+          specialty: d.specialty,
+          is_online: Boolean(d.is_online && isFresh),
+          in_consult: Boolean(d.in_consult && isFresh),
         };
       }),
     );
     setLoading(false);
   }
+
 
   useEffect(() => {
     void loadDoctors();
