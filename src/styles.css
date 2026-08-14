@@ -39,6 +39,9 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-signal: var(--signal);
   --color-navy: var(--navy);
+  --color-navy-900: var(--navy-900);
+  --color-navy-800: var(--navy-800);
+  --color-navy-700: var(--navy-700);
   --color-navy-foreground: var(--navy-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
