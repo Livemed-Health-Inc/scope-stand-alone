@@ -74,32 +74,14 @@ export function NurseStation() {
     };
   }, []);
 
-  // Watch our outgoing call
+  // Watch our outgoing call (status polled through a scoped endpoint)
   useEffect(() => {
     if (!activeCall) return;
-    const channel = supabase
-      .channel(`nurse-call-${activeCall.id}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "calls", filter: `id=eq.${activeCall.id}` },
-        (payload) => {
-          const next = payload.new as Call;
-          setActiveCall(next);
-          if (next.status === "declined") toast.error("Call declined — try another physician.");
-          if (next.status === "accepted") toast.success("Physician connected.");
-          if (next.status === "ended") setActiveCall(null);
-        },
-      )
-      .subscribe();
-    // Poll fallback in case a realtime event is missed (anon sessions)
+    const callId = activeCall.id;
     const poll = window.setInterval(async () => {
-      const { data } = await supabase
-        .from("calls")
-        .select("id, doctor_id, status, patient_room, reason")
-        .eq("id", activeCall.id)
-        .maybeSingle();
-      if (!data) return;
-      const next = data as Call;
+      const { data } = await supabase.rpc("get_public_call", { _call_id: callId });
+      const next = (data ?? [])[0] as Call | undefined;
+      if (!next) return;
       setActiveCall((prev) => {
         if (!prev || prev.status === next.status) return prev;
         if (next.status === "declined") toast.error("Call declined — try another physician.");
@@ -107,12 +89,9 @@ export function NurseStation() {
         if (next.status === "ended") return null;
         return next;
       });
-    }, 2500);
-    return () => {
-      window.clearInterval(poll);
-      void supabase.removeChannel(channel);
-    };
-  }, [activeCall?.id, user]);
+    }, 2000);
+    return () => window.clearInterval(poll);
+  }, [activeCall?.id]);
 
   const online = useMemo(() => doctors.filter((d) => d.is_online).length, [doctors]);
 
@@ -122,32 +101,34 @@ export function NurseStation() {
       toast.warning(`Dr. ${target.full_name} is currently in a consult — please hold.`);
       return;
     }
-    const { data, error } = await supabase
-      .from("calls")
-      .insert({
-        nurse_id: user?.id ?? null,
-        doctor_id: target.id,
-        patient_room: room,
-        reason: reason || null,
-        hospital: profile?.hospital ?? null,
-        unit: profile?.unit ?? null,
-      })
-      .select("id, doctor_id, status, patient_room, reason")
-      .single();
-    if (error) {
-      toast.error(error.message);
+    const { data, error } = await supabase.rpc("place_public_call", {
+      _doctor_id: target.id,
+      _patient_room: room,
+      _reason: reason || null,
+      _hospital: profile?.hospital ?? null,
+      _unit: profile?.unit ?? null,
+    });
+    if (error || !data) {
+      toast.error(error?.message ?? "Could not place the call.");
       return;
     }
-    setActiveCall(data as Call);
+    setActiveCall({
+      id: data as string,
+      doctor_id: target.id,
+      status: "ringing",
+      patient_room: room,
+      reason: reason || null,
+    });
     setTarget(null);
     setReason("");
   }
 
   async function cancelCall() {
     if (!activeCall) return;
-    await supabase.from("calls").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", activeCall.id);
+    await supabase.rpc("end_public_call", { _call_id: activeCall.id });
     setActiveCall(null);
   }
+
 
   if (activeCall?.status === "accepted") {
     const doc = doctors.find((d) => d.id === activeCall.doctor_id);
