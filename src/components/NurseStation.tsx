@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { StethoscopeConsult } from "@/components/StethoscopeConsult";
+import { VideoVisit } from "@/features/video-visit";
 
 type Doctor = {
   id: string;
@@ -162,16 +162,20 @@ export function NurseStation() {
 
   if (activeCall?.status === "accepted") {
     const doc = doctors.find((d) => d.id === activeCall.doctor_id);
+    const docName = doc ? (/^dr\.?\s/i.test(doc.full_name) ? doc.full_name : `Dr. ${doc.full_name}`) : "Physician";
     return (
-      <StethoscopeConsult
-        peerName={doc ? (/^dr\.?\s/i.test(doc.full_name) ? doc.full_name : `Dr. ${doc.full_name}`) : "Physician"}
-        peerRole={doc?.specialty ?? "Attending physician"}
-        patientRoom={activeCall.patient_room}
-        reason={activeCall.reason}
+      <VideoVisit
+        roomId={activeCall.id}
+        role="patient"
+        patient={docName}
+        room={activeCall.patient_room ? `Room ${activeCall.patient_room}` : ""}
+        title={activeCall.reason ?? "Virtual consult"}
+        callerName="Bedside nurse"
         onEnd={cancelCall}
       />
     );
   }
+
 
   return (
     <div className="space-y-4">
