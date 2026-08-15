@@ -29,7 +29,7 @@ export async function ensureStaffRecords(user: User) {
   }
 }
 
-export async function setDoctorPresence(userId: string, patch: { is_online?: boolean; in_consult?: boolean }) {
+export async function setDoctorPresence(userId: string, patch: { is_online?: boolean; in_consult?: boolean; ready_to_round?: boolean }) {
   await supabase
     .from("doctor_presence")
     .upsert({ user_id: userId, last_seen: new Date().toISOString(), ...patch }, { onConflict: "user_id" });
