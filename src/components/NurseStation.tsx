@@ -270,6 +270,46 @@ export function NurseStation({ device }: { device: DeviceContext }) {
         </Badge>
       </div>
 
+      {alerting && (
+        <div className="panel-surface flex flex-wrap items-center gap-4 border-warning/60 bg-warning/10 p-5 ring-2 ring-warning/50 animate-pulse-slow">
+          <div className="flex size-14 items-center justify-center rounded-full bg-warning/20 text-warning ring-pulse">
+            <BellRing className="size-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-lg font-semibold">
+              {roundingDocs.length === 1
+                ? `Dr. ${roundingDocs[0]!.full_name} is ready to round`
+                : `${roundingDocs.length} physicians are ready to round`}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Acknowledge and stage the cart at the bedside — the physician will be notified.
+            </p>
+          </div>
+          <Button size="lg" className="gap-2" onClick={() => setAckOpen(true)}>
+            <CheckCircle2 className="size-5" /> Acknowledge
+          </Button>
+        </div>
+      )}
+
+      {staged.length > 0 && (
+        <ul className="space-y-2">
+          {staged.map((s) => (
+            <li key={s.id} className="panel-surface flex items-center gap-4 p-4 ring-1 ring-success/40">
+              <CheckCircle2 className="size-5 shrink-0 text-success" />
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">Cart staged — Room {s.room}</p>
+                <p className="text-xs text-muted-foreground">Physician has been notified you're ready to round.</p>
+              </div>
+              <Button variant="secondary" size="sm" onClick={() => void clearStaged(s.id)}>
+                Cancel
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+
+
       <div className="flex items-center justify-between">
         <div>
           <p className="label-caps">{current ? "Available for consult" : "Consult directory"}</p>
