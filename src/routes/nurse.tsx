@@ -48,7 +48,7 @@ function NursePage() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6">
-        <NurseStation />
+        <DeviceGate>{(device) => <NurseStation device={device} />}</DeviceGate>
       </main>
     </div>
   );
