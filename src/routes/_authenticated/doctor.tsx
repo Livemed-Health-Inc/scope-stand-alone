@@ -65,6 +65,9 @@ function DoctorAppPage() {
           </div>
           <div className="ml-auto flex items-center gap-3">
             <ConnectionStatus />
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/devices">Devices</Link>
+            </Button>
             <Button
               variant="ghost"
               size="icon"
