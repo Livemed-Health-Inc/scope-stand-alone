@@ -21,9 +21,20 @@ type Call = {
   created_at: string;
 };
 
+type Ack = {
+  id: string;
+  hospital: string;
+  unit: string;
+  room: string;
+  note: string | null;
+  created_at: string;
+};
+
 export function DoctorStation() {
   const { user, profile } = useAuth();
   const [available, setAvailable] = useState(true);
+  const [readyToRound, setReadyToRound] = useState(false);
+  const [acks, setAcks] = useState<Ack[]>([]);
   const [incoming, setIncoming] = useState<Call[]>([]);
   const [active, setActive] = useState<Call | null>(null);
   const [nurseNames, setNurseNames] = useState<Record<string, string>>({});
