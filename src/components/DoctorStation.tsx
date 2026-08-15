@@ -63,18 +63,59 @@ export function DoctorStation() {
     }
   }, [user, nurseNames]);
 
+  // Nurse acknowledgements: carts staged and ready for rounds
+  const loadAcks = useCallback(async () => {
+    const { data } = await supabase
+      .from("rounding_queue")
+      .select("id, hospital, unit, room, note, created_at")
+      .eq("status", "ready")
+      .order("created_at", { ascending: true });
+    setAcks((data ?? []) as Ack[]);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    void loadAcks();
+    const channel = supabase
+      .channel("doctor-rounding")
+      .on("postgres_changes", { event: "*", schema: "public", table: "rounding_queue" }, () => void loadAcks())
+      .subscribe();
+    const poll = window.setInterval(() => void loadAcks(), 5000);
+    return () => {
+      window.clearInterval(poll);
+      void supabase.removeChannel(channel);
+    };
+  }, [user, loadAcks]);
+
+  // Chime while carts are staged and waiting (paced, not frantic)
+  useEffect(() => {
+    if (acks.length > 0 && !active && incoming.length === 0) startAlerting(20000);
+    else stopAlerting();
+    return () => stopAlerting();
+  }, [acks.length, active, incoming.length]);
+
+  async function clearAck(id: string) {
+    stopAlerting();
+    await supabase
+      .from("rounding_queue")
+      .update({ status: "cleared", cleared_at: new Date().toISOString(), cleared_by: user?.id ?? null })
+      .eq("id", id);
+    setAcks((a) => a.filter((x) => x.id !== id));
+  }
+
   // Presence: online while on this screen and available
   useEffect(() => {
     if (!user) return;
     const userId = user.id;
-    void setDoctorPresence(userId, { is_online: available, in_consult: !!active });
+    const patch = { is_online: available, in_consult: !!active, ready_to_round: readyToRound && available };
+    void setDoctorPresence(userId, patch);
     const beat = window.setInterval(() => {
-      void setDoctorPresence(userId, { is_online: available, in_consult: !!active });
+      void setDoctorPresence(userId, patch);
     }, 15000);
     return () => {
       window.clearInterval(beat);
     };
-  }, [user, available, active]);
+  }, [user, available, active, readyToRound]);
 
 
   useEffect(() => {
