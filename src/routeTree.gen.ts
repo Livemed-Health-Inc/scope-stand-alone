@@ -14,7 +14,6 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as NurseRouteImport } from './routes/nurse'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedDevicesRouteImport } from './routes/_authenticated/devices'
 import { Route as AuthenticatedDoctorRouteImport } from './routes/_authenticated/doctor'
 import { Route as AuthenticatedStationRouteImport } from './routes/_authenticated/station'
 
@@ -42,11 +41,6 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedDevicesRoute = AuthenticatedDevicesRouteImport.update({
-  id: '/devices',
-  path: '/devices',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedDoctorRoute = AuthenticatedDoctorRouteImport.update({
   id: '/doctor',
   path: '/doctor',
@@ -63,7 +57,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/nurse': typeof NurseRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/devices': typeof AuthenticatedDevicesRoute
   '/doctor': typeof AuthenticatedDoctorRoute
   '/station': typeof AuthenticatedStationRoute
 }
@@ -72,7 +65,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/nurse': typeof NurseRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/devices': typeof AuthenticatedDevicesRoute
   '/doctor': typeof AuthenticatedDoctorRoute
   '/station': typeof AuthenticatedStationRoute
 }
@@ -83,16 +75,14 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/nurse': typeof NurseRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
-  '/_authenticated/devices': typeof AuthenticatedDevicesRoute
   '/_authenticated/doctor': typeof AuthenticatedDoctorRoute
   '/_authenticated/station': typeof AuthenticatedStationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    '/' | '/auth' | '/nurse' | '/admin' | '/devices' | '/doctor' | '/station'
+  fullPaths: '/' | '/auth' | '/nurse' | '/admin' | '/doctor' | '/station'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/nurse' | '/admin' | '/devices' | '/doctor' | '/station'
+  to: '/' | '/auth' | '/nurse' | '/admin' | '/doctor' | '/station'
   id:
     | '__root__'
     | '/'
@@ -100,7 +90,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/nurse'
     | '/_authenticated/admin'
-    | '/_authenticated/devices'
     | '/_authenticated/doctor'
     | '/_authenticated/station'
   fileRoutesById: FileRoutesById
@@ -149,13 +138,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/devices': {
-      id: '/_authenticated/devices'
-      path: '/devices'
-      fullPath: '/devices'
-      preLoaderRoute: typeof AuthenticatedDevicesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/doctor': {
       id: '/_authenticated/doctor'
       path: '/doctor'
@@ -175,14 +157,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
-  AuthenticatedDevicesRoute: typeof AuthenticatedDevicesRoute
   AuthenticatedDoctorRoute: typeof AuthenticatedDoctorRoute
   AuthenticatedStationRoute: typeof AuthenticatedStationRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
-  AuthenticatedDevicesRoute: AuthenticatedDevicesRoute,
   AuthenticatedDoctorRoute: AuthenticatedDoctorRoute,
   AuthenticatedStationRoute: AuthenticatedStationRoute,
 }
