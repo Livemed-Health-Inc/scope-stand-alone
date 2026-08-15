@@ -170,6 +170,15 @@ export function NurseStation({ device }: { device: DeviceContext }) {
   }, [activeCall?.id]);
 
   const online = useMemo(() => doctors.filter((d) => d.is_online).length, [doctors]);
+  const roundingDocs = useMemo(() => doctors.filter((d) => d.ready_to_round && d.is_online), [doctors]);
+  const alerting = roundingDocs.length > 0 && staged.length === 0 && !activeCall;
+
+  // Repeating chime until the nurse acknowledges the rounding request
+  useEffect(() => {
+    if (alerting) startAlerting(15000);
+    else stopAlerting();
+    return () => stopAlerting();
+  }, [alerting]);
 
   async function placeCall() {
     if (!target) return;
