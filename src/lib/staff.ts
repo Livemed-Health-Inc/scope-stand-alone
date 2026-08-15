@@ -30,8 +30,26 @@ export async function ensureStaffRecords(user: User) {
 }
 
 export async function setDoctorPresence(userId: string, patch: { is_online?: boolean; in_consult?: boolean; ready_to_round?: boolean }) {
-  const { error } = await supabase
+  const next = { last_seen: new Date().toISOString(), ...patch };
+  const { data, error } = await supabase
     .from("doctor_presence")
-    .upsert({ user_id: userId, last_seen: new Date().toISOString(), ...patch }, { onConflict: "user_id" });
+    .update(next)
+    .eq("user_id", userId)
+    .select("user_id")
+    .maybeSingle();
   if (error) throw error;
+
+  // A new physician may not have a presence row yet. Insert only in that
+  // case; using upsert for routine heartbeats resets omitted boolean columns
+  // to their database defaults, which previously cleared rounding alerts.
+  if (!data) {
+    const { error: insertError } = await supabase.from("doctor_presence").insert({
+      user_id: userId,
+      is_online: patch.is_online ?? false,
+      in_consult: patch.in_consult ?? false,
+      ready_to_round: patch.ready_to_round ?? false,
+      last_seen: next.last_seen,
+    });
+    if (insertError) throw insertError;
+  }
 }
