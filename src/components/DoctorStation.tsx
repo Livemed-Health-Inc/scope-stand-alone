@@ -31,7 +31,7 @@ type Ack = {
 };
 
 export function DoctorStation() {
-  const { user, profile, role } = useAuth();
+  const { user, profile, role, loading, signOut } = useAuth();
   const [available, setAvailable] = useState(true);
   const [readyToRound, setReadyToRound] = useState(false);
   const [presenceLoaded, setPresenceLoaded] = useState(false);
