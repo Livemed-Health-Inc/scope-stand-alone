@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_allowlist: {
+        Row: {
+          created_at: string
+          email: string
+          note: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          note?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       calls: {
         Row: {
           answered_at: string | null
@@ -105,6 +123,41 @@ export type Database = {
           },
         ]
       }
+      doctor_assignments: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          id: string
+          is_active: boolean
+          site_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          id?: string
+          is_active?: boolean
+          site_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          is_active?: boolean
+          site_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_assignments_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "hospital_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctor_presence: {
         Row: {
           in_consult: boolean
@@ -179,18 +232,21 @@ export type Database = {
           created_at: string
           hospital: string
           id: string
+          is_active: boolean
           unit: string
         }
         Insert: {
           created_at?: string
           hospital: string
           id?: string
+          is_active?: boolean
           unit: string
         }
         Update: {
           created_at?: string
           hospital?: string
           id?: string
+          is_active?: boolean
           unit?: string
         }
         Relationships: []
@@ -251,6 +307,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_admin_role: { Args: never; Returns: boolean }
+      consult_analytics: {
+        Args: { _bucket?: string; _since?: string }
+        Returns: {
+          consults: number
+          period: string
+          specialty: string
+          total_seconds: number
+        }[]
+      }
       create_enrollment_code: { Args: { _site_id: string }; Returns: string }
       device_context: {
         Args: { _device_token: string }
