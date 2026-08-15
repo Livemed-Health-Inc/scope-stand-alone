@@ -32,6 +32,9 @@ function TechsPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [creds, setCreds] = useState<{ email: string; password: string; reset: boolean } | null>(null);
+  const provision = useServerFn(provisionTechAccount);
 
   async function load() {
     const { data } = await supabase.from("tech_allowlist").select("email, note, created_at").order("created_at");
@@ -42,18 +45,32 @@ function TechsPage() {
     void load();
   }, []);
 
-  async function add() {
-    const value = email.trim().toLowerCase();
+  async function provisionFor(value: string, noteValue: string, clearForm: boolean) {
     if (!value) return;
-    const { error } = await supabase.from("tech_allowlist").insert({ email: value, note: note.trim() || null });
-    if (error) {
-      toast.error(error.message);
-      return;
+    setBusy(true);
+    try {
+      const result = await provision({ data: { email: value, note: noteValue } });
+      setCreds(result);
+      if (clearForm) {
+        setEmail("");
+        setNote("");
+      }
+      toast.success(result.reset ? `New password issued for ${result.email}` : `${result.email} can now sign in`);
+      void load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not create that account");
+    } finally {
+      setBusy(false);
     }
-    setEmail("");
-    setNote("");
-    toast.success(`${value} can now open the field-tech console`);
-    void load();
+  }
+
+  async function copy(text: string) {
+    await navigator.clipboard.writeText(text);
+    toast.success("Copied");
+  }
+
+  async function add() {
+    await provisionFor(email.trim().toLowerCase(), note.trim(), true);
   }
 
   async function remove(target: string) {
