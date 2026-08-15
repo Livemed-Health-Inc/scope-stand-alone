@@ -24,6 +24,7 @@ import { Route as AuthenticatedAdminHospitalsRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminPhysiciansRouteImport } from './routes/_authenticated/admin/physicians'
 import { Route as AuthenticatedAdminTechsRouteImport } from './routes/_authenticated/admin/techs'
 import { Route as AuthenticatedTechIndexRouteImport } from './routes/_authenticated/tech/index'
+import { Route as AuthenticatedTechActivateRouteImport } from './routes/_authenticated/tech/activate'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -102,6 +103,12 @@ const AuthenticatedTechIndexRoute = AuthenticatedTechIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedTechRouteRoute,
 } as any)
+const AuthenticatedTechActivateRoute =
+  AuthenticatedTechActivateRouteImport.update({
+    id: '/activate',
+    path: '/activate',
+    getParentRoute: () => AuthenticatedTechRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
   '/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
   '/admin/techs': typeof AuthenticatedAdminTechsRoute
+  '/tech/activate': typeof AuthenticatedTechActivateRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/tech/': typeof AuthenticatedTechIndexRoute
 }
@@ -130,6 +138,7 @@ export interface FileRoutesByTo {
   '/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
   '/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
   '/admin/techs': typeof AuthenticatedAdminTechsRoute
+  '/tech/activate': typeof AuthenticatedTechActivateRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/tech': typeof AuthenticatedTechIndexRoute
 }
@@ -148,6 +157,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
   '/_authenticated/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
   '/_authenticated/admin/techs': typeof AuthenticatedAdminTechsRoute
+  '/_authenticated/tech/activate': typeof AuthenticatedTechActivateRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/tech/': typeof AuthenticatedTechIndexRoute
 }
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/admin/hospitals'
     | '/admin/physicians'
     | '/admin/techs'
+    | '/tech/activate'
     | '/admin/'
     | '/tech/'
   fileRoutesByTo: FileRoutesByTo
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/admin/hospitals'
     | '/admin/physicians'
     | '/admin/techs'
+    | '/tech/activate'
     | '/admin'
     | '/tech'
   id:
@@ -197,6 +209,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/hospitals'
     | '/_authenticated/admin/physicians'
     | '/_authenticated/admin/techs'
+    | '/_authenticated/tech/activate'
     | '/_authenticated/admin/'
     | '/_authenticated/tech/'
   fileRoutesById: FileRoutesById
@@ -316,6 +329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTechIndexRouteImport
       parentRoute: typeof AuthenticatedTechRouteRoute
     }
+    '/_authenticated/tech/activate': {
+      id: '/_authenticated/tech/activate'
+      path: '/activate'
+      fullPath: '/tech/activate'
+      preLoaderRoute: typeof AuthenticatedTechActivateRouteImport
+      parentRoute: typeof AuthenticatedTechRouteRoute
+    }
   }
 }
 
@@ -342,11 +362,13 @@ const AuthenticatedAdminRouteRouteWithChildren =
   )
 
 interface AuthenticatedTechRouteRouteChildren {
+  AuthenticatedTechActivateRoute: typeof AuthenticatedTechActivateRoute
   AuthenticatedTechIndexRoute: typeof AuthenticatedTechIndexRoute
 }
 
 const AuthenticatedTechRouteRouteChildren: AuthenticatedTechRouteRouteChildren =
   {
+    AuthenticatedTechActivateRoute: AuthenticatedTechActivateRoute,
     AuthenticatedTechIndexRoute: AuthenticatedTechIndexRoute,
   }
 
