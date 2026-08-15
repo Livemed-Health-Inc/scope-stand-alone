@@ -206,6 +206,16 @@ export function NurseStation({ device }: { device: DeviceContext }) {
 
   return (
     <div className="space-y-4">
+      <div className="panel-surface flex flex-col gap-1 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="label-caps">{device.hospital}</p>
+          <h2 className="text-lg font-semibold tracking-tight">{device.unit}</h2>
+        </div>
+        <Badge variant="outline" className="w-fit gap-1.5 border-primary/30 text-primary">
+          <Users className="size-3.5" /> {online} online
+        </Badge>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <p className="label-caps">{current ? "Available for consult" : "Consult directory"}</p>
@@ -215,11 +225,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
           <Button variant="secondary" size="sm" onClick={() => setSelectedSpecialty(null)}>
             All specialties
           </Button>
-        ) : (
-          <Badge className="gap-1.5 bg-success/15 text-success">
-            <Users className="size-3.5" /> {online} online
-          </Badge>
-        )}
+        ) : null}
       </div>
 
       {activeCall && activeCall.status === "ringing" && (
