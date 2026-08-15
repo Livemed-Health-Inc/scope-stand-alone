@@ -59,14 +59,14 @@ export function DoctorStation() {
   useEffect(() => {
     if (!user) return;
     const userId = user.id;
-    void setDoctorPresence(userId, { is_online: available, in_consult: !!active });
-    const beat = window.setInterval(() => {
-      void setDoctorPresence(userId, { is_online: available, in_consult: !!active });
-    }, 15000);
+    const push = () =>
+      void setDoctorPresence(userId, { is_online: available, in_consult: !!active, ready_to_round: rounding });
+    push();
+    const beat = window.setInterval(push, 15000);
     return () => {
       window.clearInterval(beat);
     };
-  }, [user, available, active]);
+  }, [user, available, active, rounding]);
 
 
   useEffect(() => {

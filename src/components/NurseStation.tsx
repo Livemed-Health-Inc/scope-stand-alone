@@ -319,13 +319,21 @@ export function NurseStation({ device }: { device: DeviceContext }) {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">Dr. {d.full_name}</p>
                 <p className="truncate text-xs text-muted-foreground">{d.specialty ?? current.name}</p>
-                <p
-                  className={`mt-1 text-[0.68rem] font-semibold uppercase tracking-widest ${
-                    d.in_consult ? "text-warning" : d.is_online ? "text-success" : "text-muted-foreground"
-                  }`}
-                >
-                  {d.in_consult ? "In consult" : d.is_online ? "Online" : "Offline"}
-                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`text-[0.68rem] font-semibold uppercase tracking-widest ${
+                      d.in_consult ? "text-warning" : d.is_online ? "text-success" : "text-muted-foreground"
+                    }`}
+                  >
+                    {d.in_consult ? "In consult" : d.is_online ? "Online" : "Offline"}
+                  </span>
+                  {d.ready_to_round && (
+                    <Badge variant="outline" className="border-primary/30 text-[0.62rem] uppercase tracking-widest text-primary">
+                      Ready to round
+                    </Badge>
+                  )}
+                </div>
+
               </div>
               <Button
                 onClick={() => {
