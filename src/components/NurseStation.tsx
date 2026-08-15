@@ -8,8 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { NurseRounding } from "@/components/NurseRounding";
 import { VideoVisit } from "@/features/video-visit";
 
 type Doctor = {
@@ -18,9 +16,7 @@ type Doctor = {
   specialty: string | null;
   is_online: boolean;
   in_consult: boolean;
-  ready_to_round: boolean;
 };
-
 
 type DoctorPresence = {
   user_id: string;
@@ -88,7 +84,6 @@ export function NurseStation({ device }: { device: DeviceContext }) {
           specialty: d.specialty,
           is_online: Boolean(d.is_online && isFresh),
           in_consult: Boolean(d.in_consult && isFresh),
-          ready_to_round: Boolean((d as { ready_to_round?: boolean }).ready_to_round && isFresh),
         };
       }),
     );
@@ -203,7 +198,6 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       specialty: sp.name,
       is_online: i === 0,
       in_consult: false,
-      ready_to_round: false,
     }));
     return { name: sp.name, doctors: [...real, ...mocks] };
   });
@@ -221,16 +215,6 @@ export function NurseStation({ device }: { device: DeviceContext }) {
           <Users className="size-3.5" /> {online} online
         </Badge>
       </div>
-
-      <Tabs defaultValue="consults">
-        <TabsList>
-          <TabsTrigger value="consults">Consults</TabsTrigger>
-          <TabsTrigger value="rounding">Rounding</TabsTrigger>
-        </TabsList>
-        <TabsContent value="rounding" className="mt-4">
-          <NurseRounding device={device} />
-        </TabsContent>
-        <TabsContent value="consults" className="mt-4 space-y-4">
 
       <div className="flex items-center justify-between">
         <div>
@@ -319,21 +303,13 @@ export function NurseStation({ device }: { device: DeviceContext }) {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">Dr. {d.full_name}</p>
                 <p className="truncate text-xs text-muted-foreground">{d.specialty ?? current.name}</p>
-                <div className="mt-1 flex flex-wrap items-center gap-2">
-                  <span
-                    className={`text-[0.68rem] font-semibold uppercase tracking-widest ${
-                      d.in_consult ? "text-warning" : d.is_online ? "text-success" : "text-muted-foreground"
-                    }`}
-                  >
-                    {d.in_consult ? "In consult" : d.is_online ? "Online" : "Offline"}
-                  </span>
-                  {d.ready_to_round && (
-                    <Badge variant="outline" className="border-primary/30 text-[0.62rem] uppercase tracking-widest text-primary">
-                      Ready to round
-                    </Badge>
-                  )}
-                </div>
-
+                <p
+                  className={`mt-1 text-[0.68rem] font-semibold uppercase tracking-widest ${
+                    d.in_consult ? "text-warning" : d.is_online ? "text-success" : "text-muted-foreground"
+                  }`}
+                >
+                  {d.in_consult ? "In consult" : d.is_online ? "Online" : "Offline"}
+                </p>
               </div>
               <Button
                 onClick={() => {
@@ -356,8 +332,6 @@ export function NurseStation({ device }: { device: DeviceContext }) {
           ))}
         </ul>
       )}
-        </TabsContent>
-      </Tabs>
 
 
       <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
