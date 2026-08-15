@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PhoneCall, Loader2, Users, X, Stethoscope, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { getDeviceToken, type DeviceContext } from "@/lib/device";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
