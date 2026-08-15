@@ -300,6 +300,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
       on_call_directory: {
         Args: { _device_token: string }
         Returns: {
@@ -331,7 +332,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "doctor" | "nurse"
+      app_role: "doctor" | "nurse" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -459,7 +460,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["doctor", "nurse"],
+      app_role: ["doctor", "nurse", "admin"],
     },
   },
 } as const
