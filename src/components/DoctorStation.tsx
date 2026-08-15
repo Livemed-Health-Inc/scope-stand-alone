@@ -26,6 +26,7 @@ type Call = {
 export function DoctorStation() {
   const { user, profile } = useAuth();
   const [available, setAvailable] = useState(true);
+  const [rounding, setRounding] = useState(false);
   const [incoming, setIncoming] = useState<Call[]>([]);
   const [active, setActive] = useState<Call | null>(null);
   const [nurseNames, setNurseNames] = useState<Record<string, string>>({});
@@ -152,15 +153,24 @@ export function DoctorStation() {
           <h1 className="text-2xl font-semibold tracking-tight">Dr. {profile?.full_name}</h1>
           <p className="text-sm text-muted-foreground">{profile?.specialty ?? "Physician"}</p>
         </div>
-        <div className="flex items-center gap-3 rounded-lg border border-border bg-panel/70 px-3 py-2">
-          <Switch checked={available} onCheckedChange={setAvailable} id="avail" />
-          <label htmlFor="avail" className="text-sm font-medium">
-            {available ? "Available for consults" : "Do not disturb"}
-          </label>
-          <Badge className={available ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}>
-            {available ? "Online" : "Offline"}
-          </Badge>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-panel/70 px-3 py-2">
+            <Switch checked={available} onCheckedChange={setAvailable} id="avail" />
+            <label htmlFor="avail" className="text-sm font-medium">
+              {available ? "Available for consults" : "Do not disturb"}
+            </label>
+            <Badge className={available ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}>
+              {available ? "Online" : "Offline"}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-panel/70 px-3 py-2">
+            <Switch checked={rounding} onCheckedChange={setRounding} id="rounding" />
+            <label htmlFor="rounding" className="text-sm font-medium">
+              {rounding ? "Ready to round" : "Not rounding"}
+            </label>
+          </div>
         </div>
+
       </div>
 
       <Tabs defaultValue="consults">
@@ -214,8 +224,15 @@ export function DoctorStation() {
         </TabsContent>
 
         <TabsContent value="rounding" className="mt-4">
-          <RoundingBoard />
+          {rounding ? (
+            <RoundingBoard />
+          ) : (
+            <div className="panel-surface p-10 text-center text-sm text-muted-foreground">
+              Flip “Ready to round” on to see rooms waiting for rounding.
+            </div>
+          )}
         </TabsContent>
+
       </Tabs>
     </div>
 
