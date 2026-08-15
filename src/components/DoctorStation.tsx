@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { PhoneIncoming, PhoneOff, Coffee, CheckCircle2 } from "lucide-react";
+import { PhoneIncoming, PhoneOff, Coffee, CheckCircle2, BellRing, Footprints } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { VideoVisit } from "@/features/video-visit";
-import { startRinging, stopRinging } from "@/lib/ringtone";
+import { startRinging, stopRinging, startAlerting, stopAlerting } from "@/lib/ringtone";
 
 type Call = {
   id: string;
@@ -21,9 +21,20 @@ type Call = {
   created_at: string;
 };
 
+type Ack = {
+  id: string;
+  hospital: string;
+  unit: string;
+  room: string;
+  note: string | null;
+  created_at: string;
+};
+
 export function DoctorStation() {
   const { user, profile } = useAuth();
   const [available, setAvailable] = useState(true);
+  const [readyToRound, setReadyToRound] = useState(false);
+  const [acks, setAcks] = useState<Ack[]>([]);
   const [incoming, setIncoming] = useState<Call[]>([]);
   const [active, setActive] = useState<Call | null>(null);
   const [nurseNames, setNurseNames] = useState<Record<string, string>>({});
@@ -52,18 +63,59 @@ export function DoctorStation() {
     }
   }, [user, nurseNames]);
 
+  // Nurse acknowledgements: carts staged and ready for rounds
+  const loadAcks = useCallback(async () => {
+    const { data } = await supabase
+      .from("rounding_queue")
+      .select("id, hospital, unit, room, note, created_at")
+      .eq("status", "ready")
+      .order("created_at", { ascending: true });
+    setAcks((data ?? []) as Ack[]);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    void loadAcks();
+    const channel = supabase
+      .channel("doctor-rounding")
+      .on("postgres_changes", { event: "*", schema: "public", table: "rounding_queue" }, () => void loadAcks())
+      .subscribe();
+    const poll = window.setInterval(() => void loadAcks(), 5000);
+    return () => {
+      window.clearInterval(poll);
+      void supabase.removeChannel(channel);
+    };
+  }, [user, loadAcks]);
+
+  // Chime while carts are staged and waiting (paced, not frantic)
+  useEffect(() => {
+    if (acks.length > 0 && !active && incoming.length === 0) startAlerting(20000);
+    else stopAlerting();
+    return () => stopAlerting();
+  }, [acks.length, active, incoming.length]);
+
+  async function clearAck(id: string) {
+    stopAlerting();
+    await supabase
+      .from("rounding_queue")
+      .update({ status: "cleared", cleared_at: new Date().toISOString(), cleared_by: user?.id ?? null })
+      .eq("id", id);
+    setAcks((a) => a.filter((x) => x.id !== id));
+  }
+
   // Presence: online while on this screen and available
   useEffect(() => {
     if (!user) return;
     const userId = user.id;
-    void setDoctorPresence(userId, { is_online: available, in_consult: !!active });
+    const patch = { is_online: available, in_consult: !!active, ready_to_round: readyToRound && available };
+    void setDoctorPresence(userId, patch);
     const beat = window.setInterval(() => {
-      void setDoctorPresence(userId, { is_online: available, in_consult: !!active });
+      void setDoctorPresence(userId, patch);
     }, 15000);
     return () => {
       window.clearInterval(beat);
     };
-  }, [user, available, active]);
+  }, [user, available, active, readyToRound]);
 
 
   useEffect(() => {
@@ -160,6 +212,62 @@ export function DoctorStation() {
           </Badge>
         </div>
       </div>
+
+      <div className="panel-surface flex flex-wrap items-center gap-4 p-4">
+        <div
+          className={`flex size-12 items-center justify-center rounded-full ${
+            readyToRound ? "bg-warning/15 text-warning ring-pulse" : "bg-muted text-muted-foreground"
+          }`}
+        >
+          <Footprints className="size-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium">Ready to round</p>
+          <p className="text-sm text-muted-foreground">
+            {readyToRound
+              ? "Bedside stations are being alerted until a nurse acknowledges and stages the cart."
+              : "Alert every bedside station that you're ready to start rounds."}
+          </p>
+        </div>
+        <Button
+          variant={readyToRound ? "secondary" : "default"}
+          className="gap-2"
+          disabled={!available}
+          onClick={() => {
+            const next = !readyToRound;
+            setReadyToRound(next);
+            toast[next ? "success" : "info"](next ? "Nurses are being alerted" : "Rounding alert stopped");
+          }}
+        >
+          <BellRing className="size-4" /> {readyToRound ? "Stop alert" : "Alert nurses"}
+        </Button>
+      </div>
+
+      {acks.length > 0 && (
+        <ul className="space-y-3">
+          {acks.map((a) => (
+            <li
+              key={a.id}
+              className="panel-surface flex flex-wrap items-center gap-4 p-4 ring-1 ring-success/40"
+            >
+              <div className="flex size-12 items-center justify-center rounded-full bg-success/15 text-success ring-pulse">
+                <CheckCircle2 className="size-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">Cart is ready to round — Room {a.room}</p>
+                <p className="text-xs font-medium text-foreground/80">{a.hospital}</p>
+                <p className="text-xs text-muted-foreground">{a.unit}</p>
+                {a.note && <p className="mt-1 text-sm text-foreground/90">{a.note}</p>}
+              </div>
+              <Button variant="secondary" onClick={() => void clearAck(a.id)}>
+                Acknowledge
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+
 
       {incoming.length === 0 ? (
         <div className="panel-surface flex flex-col items-center gap-3 p-12 text-center">

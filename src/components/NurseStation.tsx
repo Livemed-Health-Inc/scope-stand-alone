@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { PhoneCall, Loader2, Users, X, Stethoscope, ChevronRight } from "lucide-react";
+import { PhoneCall, Loader2, Users, X, Stethoscope, ChevronRight, BellRing, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getDeviceToken, type DeviceContext } from "@/lib/device";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { VideoVisit } from "@/features/video-visit";
+import { startAlerting, stopAlerting } from "@/lib/ringtone";
 
 type Doctor = {
   id: string;
@@ -16,7 +17,10 @@ type Doctor = {
   specialty: string | null;
   is_online: boolean;
   in_consult: boolean;
+  ready_to_round: boolean;
 };
+
+type Staged = { id: string; room: string; note: string | null };
 
 type DoctorPresence = {
   user_id: string;
@@ -69,6 +73,41 @@ export function NurseStation({ device }: { device: DeviceContext }) {
   const [room, setRoom] = useState("412-B");
   const [reason, setReason] = useState("");
   const [activeCall, setActiveCall] = useState<Call | null>(null);
+  const [staged, setStaged] = useState<Staged[]>([]);
+  const [ackOpen, setAckOpen] = useState(false);
+  const [roundRoom, setRoundRoom] = useState("412-B");
+
+  async function loadStaged() {
+    const token = getDeviceToken();
+    if (!token) return;
+    const { data } = await supabase.rpc("device_rounding", { _device_token: token });
+    setStaged(((data ?? []) as Staged[]).map((r) => ({ id: r.id, room: r.room, note: r.note })));
+  }
+
+  async function acknowledgeRounding() {
+    const token = getDeviceToken();
+    if (!token) return;
+    const { error } = await supabase.rpc("mark_rounding_ready", {
+      _device_token: token,
+      _room: roundRoom,
+      _note: "Cart staged at bedside",
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    stopAlerting();
+    setAckOpen(false);
+    toast.success("Physician notified \u2014 cart is ready to round");
+    void loadStaged();
+  }
+
+  async function clearStaged(id: string) {
+    const token = getDeviceToken();
+    if (!token) return;
+    await supabase.rpc("clear_rounding", { _device_token: token, _id: id });
+    void loadStaged();
+  }
 
   async function loadDoctors() {
     const token = getDeviceToken();
@@ -84,6 +123,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
           specialty: d.specialty,
           is_online: Boolean(d.is_online && isFresh),
           in_consult: Boolean(d.in_consult && isFresh),
+          ready_to_round: Boolean(d.ready_to_round && isFresh),
         };
       }),
     );
@@ -93,11 +133,15 @@ export function NurseStation({ device }: { device: DeviceContext }) {
 
   useEffect(() => {
     void loadDoctors();
+    void loadStaged();
     const channel = supabase
       .channel("nurse-presence")
       .on("postgres_changes", { event: "*", schema: "public", table: "doctor_presence" }, () => void loadDoctors())
       .subscribe();
-    const refresh = window.setInterval(() => void loadDoctors(), 15000);
+    const refresh = window.setInterval(() => {
+      void loadDoctors();
+      void loadStaged();
+    }, 10000);
     return () => {
       window.clearInterval(refresh);
       void supabase.removeChannel(channel);
@@ -126,6 +170,15 @@ export function NurseStation({ device }: { device: DeviceContext }) {
   }, [activeCall?.id]);
 
   const online = useMemo(() => doctors.filter((d) => d.is_online).length, [doctors]);
+  const roundingDocs = useMemo(() => doctors.filter((d) => d.ready_to_round && d.is_online), [doctors]);
+  const alerting = roundingDocs.length > 0 && staged.length === 0 && !activeCall;
+
+  // Repeating chime until the nurse acknowledges the rounding request
+  useEffect(() => {
+    if (alerting) startAlerting(15000);
+    else stopAlerting();
+    return () => stopAlerting();
+  }, [alerting]);
 
   async function placeCall() {
     if (!target) return;
@@ -198,6 +251,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       specialty: sp.name,
       is_online: i === 0,
       in_consult: false,
+      ready_to_round: false,
     }));
     return { name: sp.name, doctors: [...real, ...mocks] };
   });
@@ -215,6 +269,46 @@ export function NurseStation({ device }: { device: DeviceContext }) {
           <Users className="size-3.5" /> {online} online
         </Badge>
       </div>
+
+      {alerting && (
+        <div className="panel-surface flex flex-wrap items-center gap-4 border-warning/60 bg-warning/10 p-5 ring-2 ring-warning/50">
+          <div className="flex size-14 items-center justify-center rounded-full bg-warning/20 text-warning ring-pulse">
+            <BellRing className="size-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-lg font-semibold">
+              {roundingDocs.length === 1
+                ? `Dr. ${roundingDocs[0]!.full_name} is ready to round`
+                : `${roundingDocs.length} physicians are ready to round`}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Acknowledge and stage the cart at the bedside — the physician will be notified.
+            </p>
+          </div>
+          <Button size="lg" className="gap-2" onClick={() => setAckOpen(true)}>
+            <CheckCircle2 className="size-5" /> Acknowledge
+          </Button>
+        </div>
+      )}
+
+      {staged.length > 0 && (
+        <ul className="space-y-2">
+          {staged.map((s) => (
+            <li key={s.id} className="panel-surface flex items-center gap-4 p-4 ring-1 ring-success/40">
+              <CheckCircle2 className="size-5 shrink-0 text-success" />
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">Cart staged — Room {s.room}</p>
+                <p className="text-xs text-muted-foreground">Physician has been notified you're ready to round.</p>
+              </div>
+              <Button variant="secondary" size="sm" onClick={() => void clearStaged(s.id)}>
+                Cancel
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+
 
       <div className="flex items-center justify-between">
         <div>
@@ -333,6 +427,26 @@ export function NurseStation({ device }: { device: DeviceContext }) {
         </ul>
       )}
 
+
+      <Dialog open={ackOpen} onOpenChange={setAckOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ready to round</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Confirm where the cart will be staged. The physician is notified immediately.
+            </p>
+            <div>
+              <Label htmlFor="round-room">Patient room</Label>
+              <Input id="round-room" value={roundRoom} onChange={(e) => setRoundRoom(e.target.value)} />
+            </div>
+            <Button className="w-full gap-2" onClick={acknowledgeRounding}>
+              <CheckCircle2 className="size-4" /> Cart is ready
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
         <DialogContent>
