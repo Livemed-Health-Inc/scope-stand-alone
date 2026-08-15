@@ -61,8 +61,7 @@ function specialtyFor(specialty: string | null): string {
   return hit?.name ?? "Hospitalist";
 }
 
-export function NurseStation() {
-  const { user, profile } = useAuth();
+export function NurseStation({ device }: { device: DeviceContext }) {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
@@ -72,7 +71,9 @@ export function NurseStation() {
   const [activeCall, setActiveCall] = useState<Call | null>(null);
 
   async function loadDoctors() {
-    const { data } = await supabase.rpc("on_call_directory");
+    const token = getDeviceToken();
+    if (!token) return;
+    const { data } = await supabase.rpc("on_call_directory", { _device_token: token });
     const freshAfter = Date.now() - 45_000;
     setDoctors(
       (data ?? []).map((d) => {
@@ -108,7 +109,9 @@ export function NurseStation() {
     if (!activeCall) return;
     const callId = activeCall.id;
     const poll = window.setInterval(async () => {
-      const { data } = await supabase.rpc("get_public_call", { _call_id: callId });
+      const token = getDeviceToken();
+      if (!token) return;
+      const { data } = await supabase.rpc("get_public_call", { _device_token: token, _call_id: callId });
       const next = (data ?? [])[0] as Call | undefined;
       if (!next) return;
       setActiveCall((prev) => {
@@ -130,12 +133,16 @@ export function NurseStation() {
       toast.warning(`Dr. ${target.full_name} is currently in a consult — please hold.`);
       return;
     }
+    const token = getDeviceToken();
+    if (!token) {
+      toast.error("This device is no longer registered.");
+      return;
+    }
     const { data, error } = await supabase.rpc("place_public_call", {
+      _device_token: token,
       _doctor_id: target.id,
       _patient_room: room,
       ...(reason ? { _reason: reason } : {}),
-      ...(profile?.hospital ? { _hospital: profile.hospital } : {}),
-      ...(profile?.unit ? { _unit: profile.unit } : {}),
     });
 
     if (error || !data) {
@@ -148,8 +155,8 @@ export function NurseStation() {
       status: "ringing",
       patient_room: room,
       reason: reason || null,
-      hospital: profile?.hospital ?? "Virtualis General Hospital",
-      unit: profile?.unit ?? "ICU - 4 West",
+      hospital: device.hospital,
+      unit: device.unit,
     });
     setTarget(null);
     setReason("");
@@ -157,9 +164,11 @@ export function NurseStation() {
 
   async function cancelCall() {
     if (!activeCall) return;
-    await supabase.rpc("end_public_call", { _call_id: activeCall.id });
+    const token = getDeviceToken();
+    if (token) await supabase.rpc("end_public_call", { _device_token: token, _call_id: activeCall.id });
     setActiveCall(null);
   }
+
 
 
   if (activeCall?.status === "accepted") {
