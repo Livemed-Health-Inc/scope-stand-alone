@@ -18,7 +18,9 @@ type Doctor = {
   specialty: string | null;
   is_online: boolean;
   in_consult: boolean;
+  ready_to_round: boolean;
 };
+
 
 type DoctorPresence = {
   user_id: string;
