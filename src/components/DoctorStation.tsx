@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { VideoVisit } from "@/features/video-visit";
-import { startRinging, stopRinging, startAlerting, stopAlerting } from "@/lib/ringtone";
+import { startRinging, stopRinging, startAlerting, stopAlerting, primeAudio } from "@/lib/ringtone";
 
 type Call = {
   id: string;
@@ -62,6 +62,10 @@ export function DoctorStation() {
       });
     }
   }, [user, nurseNames]);
+
+  useEffect(() => {
+    primeAudio();
+  }, []);
 
   // Nurse acknowledgements: carts staged and ready for rounds
   const loadAcks = useCallback(async () => {
