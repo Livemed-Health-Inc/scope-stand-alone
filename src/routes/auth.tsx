@@ -45,7 +45,10 @@ function AuthPage() {
     const uid = userRes.user?.id;
     if (!uid) return "/doctor" as const;
     const { data: isAdmin } = await supabase.rpc("is_admin", { _user_id: uid });
-    return isAdmin ? ("/admin" as const) : ("/doctor" as const);
+    if (isAdmin) return "/admin" as const;
+    const { data: isTech } = await supabase.rpc("is_tech", { _user_id: uid });
+    if (isTech) return "/tech" as const;
+    return "/doctor" as const;
   }
 
   async function signIn(e: React.FormEvent) {
