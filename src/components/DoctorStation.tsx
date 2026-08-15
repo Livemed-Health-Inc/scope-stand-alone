@@ -7,6 +7,8 @@ import { setDoctorPresence } from "@/lib/staff";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RoundingBoard } from "@/components/RoundingBoard";
 import { VideoVisit } from "@/features/video-visit";
 import { startRinging, stopRinging } from "@/lib/ringtone";
 
@@ -161,47 +163,61 @@ export function DoctorStation() {
         </div>
       </div>
 
-      {incoming.length === 0 ? (
-        <div className="panel-surface flex flex-col items-center gap-3 p-12 text-center">
-          <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary ring-pulse">
-            <Coffee className="size-7" />
-          </div>
-          <p className="font-medium">You're in the waiting room</p>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            {available
-              ? "Nurses can see you as online. Incoming consult requests will appear here instantly."
-              : "You're marked offline — nurses can't reach you until you switch back to available."}
-          </p>
-        </div>
-      ) : (
-        <ul className="space-y-3">
-          {incoming.map((call) => (
-            <li key={call.id} className="panel-surface flex flex-wrap items-center gap-4 p-4 ring-1 ring-primary/30">
-              <div className="flex size-12 items-center justify-center rounded-full bg-destructive/15 text-destructive ring-pulse">
-                <PhoneIncoming className="size-5" />
+      <Tabs defaultValue="consults">
+        <TabsList>
+          <TabsTrigger value="consults">Consults</TabsTrigger>
+          <TabsTrigger value="rounding">Rounding</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="consults" className="mt-4">
+          {incoming.length === 0 ? (
+            <div className="panel-surface flex flex-col items-center gap-3 p-12 text-center">
+              <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary ring-pulse">
+                <Coffee className="size-7" />
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">{(call.nurse_id && nurseNames[call.nurse_id]) || "Bedside nurse"}</p>
-                <p className="text-xs font-medium text-foreground/80">
-                  {call.hospital ?? "Virtualis General Hospital"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {call.unit ?? "ICU - 4 West"} · Room {call.patient_room ?? "412-B"}
-                </p>
-                {call.reason && <p className="mt-1 text-sm text-foreground/90">{call.reason}</p>}
-              </div>
-              <div className="flex gap-2">
-                <Button variant="secondary" onClick={() => decline(call)} className="gap-2">
-                  <PhoneOff className="size-4" /> Decline
-                </Button>
-                <Button onClick={() => accept(call)} className="gap-2">
-                  <CheckCircle2 className="size-4" /> Accept
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+              <p className="font-medium">You're in the waiting room</p>
+              <p className="max-w-sm text-sm text-muted-foreground">
+                {available
+                  ? "Nurses can see you as online. Incoming consult requests will appear here instantly."
+                  : "You're marked offline — nurses can't reach you until you switch back to available."}
+              </p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {incoming.map((call) => (
+                <li key={call.id} className="panel-surface flex flex-wrap items-center gap-4 p-4 ring-1 ring-primary/30">
+                  <div className="flex size-12 items-center justify-center rounded-full bg-destructive/15 text-destructive ring-pulse">
+                    <PhoneIncoming className="size-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{(call.nurse_id && nurseNames[call.nurse_id]) || "Bedside nurse"}</p>
+                    <p className="text-xs font-medium text-foreground/80">
+                      {call.hospital ?? "Virtualis General Hospital"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {call.unit ?? "ICU - 4 West"} · Room {call.patient_room ?? "412-B"}
+                    </p>
+                    {call.reason && <p className="mt-1 text-sm text-foreground/90">{call.reason}</p>}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" onClick={() => decline(call)} className="gap-2">
+                      <PhoneOff className="size-4" /> Decline
+                    </Button>
+                    <Button onClick={() => accept(call)} className="gap-2">
+                      <CheckCircle2 className="size-4" /> Accept
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </TabsContent>
+
+        <TabsContent value="rounding" className="mt-4">
+          <RoundingBoard />
+        </TabsContent>
+      </Tabs>
     </div>
+
   );
 }

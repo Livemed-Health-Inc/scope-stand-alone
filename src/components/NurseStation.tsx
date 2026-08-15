@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NurseRounding } from "@/components/NurseRounding";
 import { VideoVisit } from "@/features/video-visit";
 
 type Doctor = {
@@ -216,6 +218,16 @@ export function NurseStation({ device }: { device: DeviceContext }) {
         </Badge>
       </div>
 
+      <Tabs defaultValue="consults">
+        <TabsList>
+          <TabsTrigger value="consults">Consults</TabsTrigger>
+          <TabsTrigger value="rounding">Rounding</TabsTrigger>
+        </TabsList>
+        <TabsContent value="rounding" className="mt-4">
+          <NurseRounding device={device} />
+        </TabsContent>
+        <TabsContent value="consults" className="mt-4 space-y-4">
+
       <div className="flex items-center justify-between">
         <div>
           <p className="label-caps">{current ? "Available for consult" : "Consult directory"}</p>
@@ -332,6 +344,8 @@ export function NurseStation({ device }: { device: DeviceContext }) {
           ))}
         </ul>
       )}
+        </TabsContent>
+      </Tabs>
 
 
       <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
