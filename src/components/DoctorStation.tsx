@@ -128,11 +128,13 @@ export function DoctorStation() {
     setAcks((a) => a.filter((x) => x.id !== id));
   }
 
-  // Presence: online while on this screen and available
+  // Presence heartbeat only reports availability and consult state.
+  // ready_to_round is changed exclusively by the alert button so an older
+  // interval closure cannot overwrite a newly-sent rounding alert.
   useEffect(() => {
     if (!user || role !== "doctor" || !presenceLoaded) return;
     const userId = user.id;
-    const patch = { is_online: available, in_consult: !!active, ready_to_round: readyToRound && available };
+    const patch = { is_online: available, in_consult: Boolean(active) };
     void setDoctorPresence(userId, patch).catch(() => toast.error("Could not update physician status"));
     const beat = window.setInterval(() => {
       void setDoctorPresence(userId, patch).catch(() => undefined);
@@ -140,7 +142,7 @@ export function DoctorStation() {
     return () => {
       window.clearInterval(beat);
     };
-  }, [user, role, presenceLoaded, available, active, readyToRound]);
+  }, [user, role, presenceLoaded, available, active]);
 
 
   useEffect(() => {
