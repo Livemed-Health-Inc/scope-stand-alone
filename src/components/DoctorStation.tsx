@@ -224,8 +224,15 @@ export function DoctorStation() {
         </TabsContent>
 
         <TabsContent value="rounding" className="mt-4">
-          <RoundingBoard />
+          {rounding ? (
+            <RoundingBoard />
+          ) : (
+            <div className="panel-surface p-10 text-center text-sm text-muted-foreground">
+              Flip “Ready to round” on to see rooms waiting for rounding.
+            </div>
+          )}
         </TabsContent>
+
       </Tabs>
     </div>
 
