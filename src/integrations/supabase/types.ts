@@ -281,6 +281,24 @@ export type Database = {
         }
         Relationships: []
       }
+      tech_allowlist: {
+        Row: {
+          created_at: string
+          email: string
+          note: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          note?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -367,6 +385,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_tech: { Args: { _user_id: string }; Returns: boolean }
       on_call_directory: {
         Args: { _device_token: string }
         Returns: {
