@@ -44,7 +44,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       supabase.from("user_roles").select("role").eq("user_id", userId),
     ]);
     setProfile((prof as Profile) ?? null);
-    setRole(((roles?.[0]?.role as StaffRole | undefined) ?? null));
+    const list = (roles ?? []).map((r) => r.role as string);
+    // A login can hold several roles (e.g. doctor + admin); the clinical role wins.
+    const resolved = (["doctor", "nurse"] as StaffRole[]).find((r) => list.includes(r)) ?? null;
+    setRole(resolved);
   }
 
   useEffect(() => {

@@ -31,7 +31,7 @@ type Ack = {
 };
 
 export function DoctorStation() {
-  const { user, profile, role } = useAuth();
+  const { user, profile, role, loading, signOut } = useAuth();
   const [available, setAvailable] = useState(true);
   const [readyToRound, setReadyToRound] = useState(false);
   const [presenceLoaded, setPresenceLoaded] = useState(false);
@@ -218,13 +218,22 @@ export function DoctorStation() {
     );
   }
 
+  if (loading) {
+    return <div className="panel-surface p-8 text-center text-sm text-muted-foreground">Loading your station…</div>;
+  }
+
   if (role !== "doctor") {
     return (
       <div className="panel-surface p-8 text-center">
         <h1 className="text-xl font-semibold">Physician access required</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          This login is not assigned as a physician, so it cannot send rounding alerts.
+          {user?.email ? <>You are signed in as {user.email}, which </> : <>This login </>}
+          is not assigned as a physician, so it cannot send rounding alerts. Ask an admin to assign the physician role,
+          or sign in with your physician account.
         </p>
+        <Button variant="outline" className="mt-4" onClick={() => void signOut()}>
+          Sign out
+        </Button>
       </div>
     );
   }
