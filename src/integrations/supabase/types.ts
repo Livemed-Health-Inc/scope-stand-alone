@@ -281,6 +281,66 @@ export type Database = {
         }
         Relationships: []
       }
+      rounding_queue: {
+        Row: {
+          cleared_at: string | null
+          cleared_by: string | null
+          created_at: string
+          device_id: string | null
+          hospital: string
+          id: string
+          note: string | null
+          room: string
+          site_id: string | null
+          status: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          cleared_at?: string | null
+          cleared_by?: string | null
+          created_at?: string
+          device_id?: string | null
+          hospital: string
+          id?: string
+          note?: string | null
+          room: string
+          site_id?: string | null
+          status?: string
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          cleared_at?: string | null
+          cleared_by?: string | null
+          created_at?: string
+          device_id?: string | null
+          hospital?: string
+          id?: string
+          note?: string | null
+          room?: string
+          site_id?: string | null
+          status?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rounding_queue_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rounding_queue_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "hospital_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tech_allowlist: {
         Row: {
           created_at: string
@@ -326,6 +386,10 @@ export type Database = {
     }
     Functions: {
       claim_admin_role: { Args: never; Returns: boolean }
+      clear_rounding: {
+        Args: { _device_token: string; _id: string }
+        Returns: undefined
+      }
       consult_analytics: {
         Args: { _bucket?: string; _since?: string }
         Returns: {
@@ -363,6 +427,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      device_rounding: {
+        Args: { _device_token: string }
+        Returns: {
+          created_at: string
+          id: string
+          note: string
+          room: string
+          status: string
+        }[]
+      }
       end_public_call: {
         Args: { _call_id: string; _device_token: string }
         Returns: undefined
@@ -386,6 +460,10 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_tech: { Args: { _user_id: string }; Returns: boolean }
+      mark_rounding_ready: {
+        Args: { _device_token: string; _note?: string; _room: string }
+        Returns: string
+      }
       on_call_directory: {
         Args: { _device_token: string }
         Returns: {
