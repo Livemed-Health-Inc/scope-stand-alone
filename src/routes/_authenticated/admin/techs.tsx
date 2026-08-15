@@ -110,21 +110,63 @@ function TechsPage() {
             <Label htmlFor="tech-note">Note</Label>
             <Input id="tech-note" placeholder="Midwest region" value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
-          <Button onClick={add} className="gap-2">
-            <Plus className="size-4" /> Approve
+          <Button onClick={add} disabled={busy} className="gap-2">
+            <Plus className="size-4" /> Create login
           </Button>
         </div>
 
+        {creds && (
+          <div className="rounded-md border border-primary/40 bg-primary/5 p-4">
+            <p className="label-caps text-primary">
+              {creds.reset ? "New password issued" : "Account created"} — shown once
+            </p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-muted-foreground">Email</p>
+                <p className="font-mono text-sm">{creds.email}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Password</p>
+                <p className="font-mono text-sm tracking-wider">{creds.password}</p>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="gap-2"
+                onClick={() => copy(`${creds.email} / ${creds.password}`)}
+              >
+                <Copy className="size-4" /> Copy credentials
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setCreds(null)}>
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        )}
+
         <ul className="divide-y divide-border">
           {entries.map((e) => (
-            <li key={e.email} className="flex items-center justify-between gap-4 py-2.5">
+            <li key={e.email} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
               <div>
                 <p className="text-sm font-medium">{e.email}</p>
                 <p className="text-xs text-muted-foreground">{e.note ?? "—"}</p>
               </div>
-              <Button size="sm" variant="ghost" className="gap-2" onClick={() => remove(e.email)}>
-                <Trash2 className="size-4" /> Remove
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="gap-2"
+                  disabled={busy}
+                  onClick={() => provisionFor(e.email, e.note ?? "", false)}
+                >
+                  <KeyRound className="size-4" /> Reset password
+                </Button>
+                <Button size="sm" variant="ghost" className="gap-2" onClick={() => remove(e.email)}>
+                  <Trash2 className="size-4" /> Remove
+                </Button>
+              </div>
             </li>
           ))}
           {entries.length === 0 && <li className="py-3 text-sm text-muted-foreground">No approved field techs yet.</li>}
