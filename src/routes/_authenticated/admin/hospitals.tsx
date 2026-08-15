@@ -5,7 +5,9 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
+  ExternalLink,
   KeyRound,
+  Link as LinkIcon,
   Plus,
   Power,
   PowerOff,
@@ -109,6 +111,10 @@ function HospitalsPage() {
     setBusy(false);
   }
 
+  function activationUrl(code: string) {
+    return `${window.location.origin}/nurse/activate?code=${encodeURIComponent(code)}`;
+  }
+
   async function copy(code: string) {
     try {
       await navigator.clipboard.writeText(code);
@@ -117,6 +123,20 @@ function HospitalsPage() {
     } catch {
       toast.error("Copy failed — select the code manually");
     }
+  }
+
+  async function copyUrl(code: string) {
+    try {
+      await navigator.clipboard.writeText(activationUrl(code));
+      setCopied(`${code}-url`);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      toast.error("Copy failed — select the link manually");
+    }
+  }
+
+  function openActivation(code: string) {
+    window.open(activationUrl(code), "_blank", "noopener,noreferrer");
   }
 
   async function toggle(site: Site) {
@@ -173,8 +193,9 @@ function HospitalsPage() {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Activation codes are single-use and expire in 24 hours. The field tech enters the code once on the bedside
-          tablet at <span className="font-mono">/nurse</span>.
+          Activation codes are single-use and expire in 24 hours. The field tech opens{" "}
+          <span className="font-mono">/nurse/activate</span> on the bedside tablet and enters the code, or clicks the
+          direct activation link from this page.
         </p>
       </section>
 
@@ -243,6 +264,27 @@ function HospitalsPage() {
                                 <span className="text-xs text-muted-foreground">
                                   expires {new Date(c.expires_at).toLocaleString()}
                                 </span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 gap-1.5 px-2 text-xs"
+                                  onClick={() => openActivation(c.code)}
+                                >
+                                  <ExternalLink className="size-3.5" /> Open screen
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 gap-1.5 px-2 text-xs"
+                                  onClick={() => void copyUrl(c.code)}
+                                >
+                                  {copied === `${c.code}-url` ? (
+                                    <Check className="size-3.5" />
+                                  ) : (
+                                    <LinkIcon className="size-3.5" />
+                                  )}
+                                  Copy link
+                                </Button>
                               </li>
                             ))}
                           </ul>
