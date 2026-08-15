@@ -16,6 +16,7 @@ import { Route as NurseRouteImport } from './routes/nurse'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedDoctorRouteImport } from './routes/_authenticated/doctor'
 import { Route as AuthenticatedStationRouteImport } from './routes/_authenticated/station'
+import { Route as AuthenticatedTechRouteRouteImport } from './routes/_authenticated/tech/route'
 import { Route as NurseActivateRouteImport } from './routes/nurse_.activate'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminAdminsRouteImport } from './routes/_authenticated/admin/admins'
@@ -57,6 +58,11 @@ const AuthenticatedStationRoute = AuthenticatedStationRouteImport.update({
   path: '/station',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTechRouteRoute = AuthenticatedTechRouteRouteImport.update({
+  id: '/tech',
+  path: '/tech',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const NurseActivateRoute = NurseActivateRouteImport.update({
   id: '/nurse_/activate',
   path: '/nurse/activate',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/nurse': typeof NurseRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/tech': typeof AuthenticatedTechRouteRoute
   '/doctor': typeof AuthenticatedDoctorRoute
   '/station': typeof AuthenticatedStationRoute
   '/nurse/activate': typeof NurseActivateRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/nurse': typeof NurseRoute
+  '/tech': typeof AuthenticatedTechRouteRoute
   '/doctor': typeof AuthenticatedDoctorRoute
   '/station': typeof AuthenticatedStationRoute
   '/nurse/activate': typeof NurseActivateRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/nurse': typeof NurseRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/_authenticated/tech': typeof AuthenticatedTechRouteRoute
   '/_authenticated/doctor': typeof AuthenticatedDoctorRoute
   '/_authenticated/station': typeof AuthenticatedStationRoute
   '/nurse_/activate': typeof NurseActivateRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/nurse'
     | '/admin'
+    | '/tech'
     | '/doctor'
     | '/station'
     | '/nurse/activate'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/nurse'
+    | '/tech'
     | '/doctor'
     | '/station'
     | '/nurse/activate'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/nurse'
     | '/_authenticated/admin'
+    | '/_authenticated/tech'
     | '/_authenticated/doctor'
     | '/_authenticated/station'
     | '/nurse_/activate'
@@ -236,6 +248,13 @@ declare module '@tanstack/react-router' {
       path: '/station'
       fullPath: '/station'
       preLoaderRoute: typeof AuthenticatedStationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tech': {
+      id: '/_authenticated/tech'
+      path: '/tech'
+      fullPath: '/tech'
+      preLoaderRoute: typeof AuthenticatedTechRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/nurse_/activate': {
@@ -307,12 +326,14 @@ const AuthenticatedAdminRouteRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedTechRouteRoute: typeof AuthenticatedTechRouteRoute
   AuthenticatedDoctorRoute: typeof AuthenticatedDoctorRoute
   AuthenticatedStationRoute: typeof AuthenticatedStationRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+  AuthenticatedTechRouteRoute: AuthenticatedTechRouteRoute,
   AuthenticatedDoctorRoute: AuthenticatedDoctorRoute,
   AuthenticatedStationRoute: AuthenticatedStationRoute,
 }
