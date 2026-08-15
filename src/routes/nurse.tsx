@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Building2 } from "lucide-react";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { NurseStation } from "@/components/NurseStation";
+import { DeviceGate } from "@/components/DeviceGate";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/BrandMark";
 
