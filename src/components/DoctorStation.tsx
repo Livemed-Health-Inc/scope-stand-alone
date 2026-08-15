@@ -31,9 +31,10 @@ type Ack = {
 };
 
 export function DoctorStation() {
-  const { user, profile } = useAuth();
+  const { user, profile, role } = useAuth();
   const [available, setAvailable] = useState(true);
   const [readyToRound, setReadyToRound] = useState(false);
+  const [presenceLoaded, setPresenceLoaded] = useState(false);
   const [acks, setAcks] = useState<Ack[]>([]);
   const [incoming, setIncoming] = useState<Call[]>([]);
   const [active, setActive] = useState<Call | null>(null);
@@ -66,6 +67,26 @@ export function DoctorStation() {
   useEffect(() => {
     primeAudio();
   }, []);
+
+  useEffect(() => {
+    if (!user || role !== "doctor") return;
+    let active = true;
+    void supabase
+      .from("doctor_presence")
+      .select("is_online, ready_to_round")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) toast.error("Could not load physician status");
+        setAvailable(data?.is_online ?? true);
+        setReadyToRound(data?.ready_to_round ?? false);
+        setPresenceLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [user, role]);
 
   // Nurse acknowledgements: carts staged and ready for rounds
   const loadAcks = useCallback(async () => {
@@ -109,17 +130,17 @@ export function DoctorStation() {
 
   // Presence: online while on this screen and available
   useEffect(() => {
-    if (!user) return;
+    if (!user || role !== "doctor" || !presenceLoaded) return;
     const userId = user.id;
     const patch = { is_online: available, in_consult: !!active, ready_to_round: readyToRound && available };
-    void setDoctorPresence(userId, patch);
+    void setDoctorPresence(userId, patch).catch(() => toast.error("Could not update physician status"));
     const beat = window.setInterval(() => {
-      void setDoctorPresence(userId, patch);
+      void setDoctorPresence(userId, patch).catch(() => undefined);
     }, 15000);
     return () => {
       window.clearInterval(beat);
     };
-  }, [user, available, active, readyToRound]);
+  }, [user, role, presenceLoaded, available, active, readyToRound]);
 
 
   useEffect(() => {
@@ -197,6 +218,17 @@ export function DoctorStation() {
     );
   }
 
+  if (role !== "doctor") {
+    return (
+      <div className="panel-surface p-8 text-center">
+        <h1 className="text-xl font-semibold">Physician access required</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          This login is not assigned as a physician, so it cannot send rounding alerts.
+        </p>
+      </div>
+    );
+  }
+
 
   return (
     <div className="space-y-4">
@@ -237,10 +269,20 @@ export function DoctorStation() {
           variant={readyToRound ? "secondary" : "default"}
           className="gap-2"
           disabled={!available}
-          onClick={() => {
+          onClick={async () => {
             const next = !readyToRound;
-            setReadyToRound(next);
-            toast[next ? "success" : "info"](next ? "Nurses are being alerted" : "Rounding alert stopped");
+            if (!user) return;
+            try {
+              await setDoctorPresence(user.id, {
+                is_online: available,
+                in_consult: Boolean(active),
+                ready_to_round: next,
+              });
+              setReadyToRound(next);
+              toast[next ? "success" : "info"](next ? "Nurses are being alerted" : "Rounding alert stopped");
+            } catch {
+              toast.error("The rounding alert could not be sent");
+            }
           }}
         >
           <BellRing className="size-4" /> {readyToRound ? "Stop alert" : "Alert nurses"}
