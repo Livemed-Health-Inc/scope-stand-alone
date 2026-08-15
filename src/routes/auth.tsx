@@ -82,7 +82,7 @@ function AuthPage() {
       return;
     }
     if (data.session) {
-      void navigate({ to: "/doctor" });
+      void navigate({ to: staffRole === "admin" ? "/admin" : "/doctor" });
     } else {
       toast.success("Check your email to confirm your account.");
     }
@@ -143,8 +143,8 @@ function AuthPage() {
               <form onSubmit={signUp} className="space-y-3">
                 <div>
                   <Label>I am a</Label>
-                  <div className="mt-1 grid grid-cols-2 gap-2">
-                    {(["nurse", "doctor"] as const).map((r) => (
+                  <div className="mt-1 grid grid-cols-3 gap-2">
+                    {(["nurse", "doctor", "admin"] as const).map((r) => (
                       <Button
                         key={r}
                         type="button"
@@ -152,10 +152,11 @@ function AuthPage() {
                         onClick={() => setStaffRole(r)}
                         className="capitalize"
                       >
-                        {r === "doctor" ? "Physician" : "Nurse"}
+                        {r === "doctor" ? "Physician" : r === "admin" ? "Admin" : "Nurse"}
                       </Button>
                     ))}
                   </div>
+
                 </div>
                 <div>
                   <Label htmlFor="name">Full name</Label>
