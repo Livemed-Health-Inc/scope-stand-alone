@@ -3,7 +3,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { ActivationForm } from "@/components/ActivationForm";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/nurse/activate")({
+export const Route = createFileRoute("/nurse_/activate")({
   ssr: false,
   head: () => ({
     meta: [
@@ -19,14 +19,14 @@ export const Route = createFileRoute("/nurse/activate")({
     ],
   }),
   validateSearch: (search: Record<string, unknown>) => ({
-    code: typeof search.code === "string" ? search.code : "",
+    code: typeof search["code"] === "string" ? (search["code"] as string) : "",
   }),
   component: ActivatePage,
 });
 
 function ActivatePage() {
   const navigate = useNavigate();
-  const { code } = useSearch({ from: "/nurse/activate" });
+  const { code } = useSearch({ from: "/nurse_/activate" });
 
   return (
     <div className="min-h-screen">

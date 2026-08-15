@@ -16,6 +16,7 @@ import { Route as NurseRouteImport } from './routes/nurse'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedDoctorRouteImport } from './routes/_authenticated/doctor'
 import { Route as AuthenticatedStationRouteImport } from './routes/_authenticated/station'
+import { Route as NurseActivateRouteImport } from './routes/nurse_.activate'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminAdminsRouteImport } from './routes/_authenticated/admin/admins'
 import { Route as AuthenticatedAdminHospitalsRouteImport } from './routes/_authenticated/admin/hospitals'
@@ -55,6 +56,11 @@ const AuthenticatedStationRoute = AuthenticatedStationRouteImport.update({
   path: '/station',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const NurseActivateRoute = NurseActivateRouteImport.update({
+  id: '/nurse_/activate',
+  path: '/nurse/activate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/doctor': typeof AuthenticatedDoctorRoute
   '/station': typeof AuthenticatedStationRoute
+  '/nurse/activate': typeof NurseActivateRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
   '/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/nurse': typeof NurseRoute
   '/doctor': typeof AuthenticatedDoctorRoute
   '/station': typeof AuthenticatedStationRoute
+  '/nurse/activate': typeof NurseActivateRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
   '/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/doctor': typeof AuthenticatedDoctorRoute
   '/_authenticated/station': typeof AuthenticatedStationRoute
+  '/nurse_/activate': typeof NurseActivateRoute
   '/_authenticated/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/_authenticated/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
   '/_authenticated/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/doctor'
     | '/station'
+    | '/nurse/activate'
     | '/admin/admins'
     | '/admin/hospitals'
     | '/admin/physicians'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/nurse'
     | '/doctor'
     | '/station'
+    | '/nurse/activate'
     | '/admin/admins'
     | '/admin/hospitals'
     | '/admin/physicians'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/doctor'
     | '/_authenticated/station'
+    | '/nurse_/activate'
     | '/_authenticated/admin/admins'
     | '/_authenticated/admin/hospitals'
     | '/_authenticated/admin/physicians'
@@ -160,6 +172,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   NurseRoute: typeof NurseRoute
+  NurseActivateRoute: typeof NurseActivateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -212,6 +225,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/station'
       preLoaderRoute: typeof AuthenticatedStationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/nurse_/activate': {
+      id: '/nurse_/activate'
+      path: '/nurse/activate'
+      fullPath: '/nurse/activate'
+      preLoaderRoute: typeof NurseActivateRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
@@ -284,6 +304,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   NurseRoute: NurseRoute,
+  NurseActivateRoute: NurseActivateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
