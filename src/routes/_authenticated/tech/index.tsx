@@ -32,7 +32,7 @@ function TechHome() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Link
           to="/tech/activate"
-          search={{ site: "" }}
+          search={{ site: "", code: "" }}
           className="panel-surface group flex flex-col gap-2 p-5 transition hover:border-primary"
         >
           <PlusCircle className="size-6 text-primary" />

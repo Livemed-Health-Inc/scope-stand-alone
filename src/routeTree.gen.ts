@@ -25,6 +25,7 @@ import { Route as AuthenticatedAdminPhysiciansRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminTechsRouteImport } from './routes/_authenticated/admin/techs'
 import { Route as AuthenticatedTechIndexRouteImport } from './routes/_authenticated/tech/index'
 import { Route as AuthenticatedTechActivateRouteImport } from './routes/_authenticated/tech/activate'
+import { Route as AuthenticatedTechFacilitiesRouteImport } from './routes/_authenticated/tech/facilities'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -109,6 +110,12 @@ const AuthenticatedTechActivateRoute =
     path: '/activate',
     getParentRoute: () => AuthenticatedTechRouteRoute,
   } as any)
+const AuthenticatedTechFacilitiesRoute =
+  AuthenticatedTechFacilitiesRouteImport.update({
+    id: '/facilities',
+    path: '/facilities',
+    getParentRoute: () => AuthenticatedTechRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
   '/admin/techs': typeof AuthenticatedAdminTechsRoute
   '/tech/activate': typeof AuthenticatedTechActivateRoute
+  '/tech/facilities': typeof AuthenticatedTechFacilitiesRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/tech/': typeof AuthenticatedTechIndexRoute
 }
@@ -139,6 +147,7 @@ export interface FileRoutesByTo {
   '/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
   '/admin/techs': typeof AuthenticatedAdminTechsRoute
   '/tech/activate': typeof AuthenticatedTechActivateRoute
+  '/tech/facilities': typeof AuthenticatedTechFacilitiesRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/tech': typeof AuthenticatedTechIndexRoute
 }
@@ -158,6 +167,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
   '/_authenticated/admin/techs': typeof AuthenticatedAdminTechsRoute
   '/_authenticated/tech/activate': typeof AuthenticatedTechActivateRoute
+  '/_authenticated/tech/facilities': typeof AuthenticatedTechFacilitiesRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/tech/': typeof AuthenticatedTechIndexRoute
 }
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/admin/physicians'
     | '/admin/techs'
     | '/tech/activate'
+    | '/tech/facilities'
     | '/admin/'
     | '/tech/'
   fileRoutesByTo: FileRoutesByTo
@@ -192,6 +203,7 @@ export interface FileRouteTypes {
     | '/admin/physicians'
     | '/admin/techs'
     | '/tech/activate'
+    | '/tech/facilities'
     | '/admin'
     | '/tech'
   id:
@@ -210,6 +222,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/physicians'
     | '/_authenticated/admin/techs'
     | '/_authenticated/tech/activate'
+    | '/_authenticated/tech/facilities'
     | '/_authenticated/admin/'
     | '/_authenticated/tech/'
   fileRoutesById: FileRoutesById
@@ -336,6 +349,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTechActivateRouteImport
       parentRoute: typeof AuthenticatedTechRouteRoute
     }
+    '/_authenticated/tech/facilities': {
+      id: '/_authenticated/tech/facilities'
+      path: '/facilities'
+      fullPath: '/tech/facilities'
+      preLoaderRoute: typeof AuthenticatedTechFacilitiesRouteImport
+      parentRoute: typeof AuthenticatedTechRouteRoute
+    }
   }
 }
 
@@ -363,12 +383,14 @@ const AuthenticatedAdminRouteRouteWithChildren =
 
 interface AuthenticatedTechRouteRouteChildren {
   AuthenticatedTechActivateRoute: typeof AuthenticatedTechActivateRoute
+  AuthenticatedTechFacilitiesRoute: typeof AuthenticatedTechFacilitiesRoute
   AuthenticatedTechIndexRoute: typeof AuthenticatedTechIndexRoute
 }
 
 const AuthenticatedTechRouteRouteChildren: AuthenticatedTechRouteRouteChildren =
   {
     AuthenticatedTechActivateRoute: AuthenticatedTechActivateRoute,
+    AuthenticatedTechFacilitiesRoute: AuthenticatedTechFacilitiesRoute,
     AuthenticatedTechIndexRoute: AuthenticatedTechIndexRoute,
   }
 
