@@ -277,9 +277,9 @@ export function NurseStation({ device }: { device: DeviceContext }) {
           No physicians on service for {current.name} right now.
         </div>
       ) : (
-        <ul className="flex flex-wrap gap-3">
+        <ul className="flex flex-col gap-3">
           {current.doctors.map((d) => (
-            <li key={d.id} className="panel-surface flex flex-1 min-w-[200px] items-center gap-4 p-4">
+            <li key={d.id} className="panel-surface flex w-full items-center gap-4 p-4">
               <div className="relative">
                 <div className="flex size-12 items-center justify-center rounded-full bg-primary/15 font-semibold text-primary">
                   {d.full_name
