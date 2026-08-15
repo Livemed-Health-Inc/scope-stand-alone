@@ -271,7 +271,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       </div>
 
       {alerting && (
-        <div className="panel-surface flex flex-wrap items-center gap-4 border-warning/60 bg-warning/10 p-5 ring-2 ring-warning/50 animate-pulse-slow">
+        <div className="panel-surface flex flex-wrap items-center gap-4 border-warning/60 bg-warning/10 p-5 ring-2 ring-warning/50">
           <div className="flex size-14 items-center justify-center rounded-full bg-warning/20 text-warning ring-pulse">
             <BellRing className="size-6" />
           </div>
@@ -427,6 +427,26 @@ export function NurseStation({ device }: { device: DeviceContext }) {
         </ul>
       )}
 
+
+      <Dialog open={ackOpen} onOpenChange={setAckOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ready to round</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Confirm where the cart will be staged. The physician is notified immediately.
+            </p>
+            <div>
+              <Label htmlFor="round-room">Patient room</Label>
+              <Input id="round-room" value={roundRoom} onChange={(e) => setRoundRoom(e.target.value)} />
+            </div>
+            <Button className="w-full gap-2" onClick={acknowledgeRounding}>
+              <CheckCircle2 className="size-4" /> Cart is ready
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
         <DialogContent>
