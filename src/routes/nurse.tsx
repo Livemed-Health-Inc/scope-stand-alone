@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Building2 } from "lucide-react";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { NurseStation } from "@/components/NurseStation";
+import { DeviceGate } from "@/components/DeviceGate";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/BrandMark";
 
@@ -48,7 +49,7 @@ function NursePage() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6">
-        <NurseStation />
+        <DeviceGate>{(device) => <NurseStation device={device} />}</DeviceGate>
       </main>
     </div>
   );

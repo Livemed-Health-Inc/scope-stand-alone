@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { LogOut, Building2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -65,6 +65,9 @@ function DoctorAppPage() {
           </div>
           <div className="ml-auto flex items-center gap-3">
             <ConnectionStatus />
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/devices">Devices</Link>
+            </Button>
             <Button
               variant="ghost"
               size="icon"

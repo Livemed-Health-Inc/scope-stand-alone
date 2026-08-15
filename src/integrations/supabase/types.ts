@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           answered_at: string | null
           created_at: string
+          device_id: string | null
           doctor_id: string
           ended_at: string | null
           hospital: string | null
@@ -31,6 +32,7 @@ export type Database = {
         Insert: {
           answered_at?: string | null
           created_at?: string
+          device_id?: string | null
           doctor_id: string
           ended_at?: string | null
           hospital?: string | null
@@ -44,6 +46,7 @@ export type Database = {
         Update: {
           answered_at?: string | null
           created_at?: string
+          device_id?: string | null
           doctor_id?: string
           ended_at?: string | null
           hospital?: string | null
@@ -54,7 +57,53 @@ export type Database = {
           status?: string
           unit?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "calls_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devices: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          last_seen: string | null
+          site_id: string
+          status: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string
+          last_seen?: string | null
+          site_id: string
+          status?: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          last_seen?: string | null
+          site_id?: string
+          status?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devices_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "hospital_sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       doctor_presence: {
         Row: {
@@ -74,6 +123,75 @@ export type Database = {
           is_online?: boolean
           last_seen?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      enrollment_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          device_id: string | null
+          expires_at: string
+          id: string
+          site_id: string
+          used_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          expires_at?: string
+          id?: string
+          site_id: string
+          used_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          expires_at?: string
+          id?: string
+          site_id?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollment_codes_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_codes_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "hospital_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospital_sites: {
+        Row: {
+          created_at: string
+          hospital: string
+          id: string
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          hospital: string
+          id?: string
+          unit: string
+        }
+        Update: {
+          created_at?: string
+          hospital?: string
+          id?: string
+          unit?: string
         }
         Relationships: []
       }
@@ -133,9 +251,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      end_public_call: { Args: { _call_id: string }; Returns: undefined }
+      create_enrollment_code: { Args: { _site_id: string }; Returns: string }
+      device_context: {
+        Args: { _device_token: string }
+        Returns: {
+          device_id: string
+          hospital: string
+          label: string
+          unit: string
+        }[]
+      }
+      device_from_token: {
+        Args: { _token: string }
+        Returns: {
+          created_at: string
+          id: string
+          label: string
+          last_seen: string | null
+          site_id: string
+          status: string
+          token_hash: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "devices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      end_public_call: {
+        Args: { _call_id: string; _device_token: string }
+        Returns: undefined
+      }
       get_public_call: {
-        Args: { _call_id: string }
+        Args: { _call_id: string; _device_token: string }
         Returns: {
           doctor_id: string
           id: string
@@ -152,7 +301,7 @@ export type Database = {
         Returns: boolean
       }
       on_call_directory: {
-        Args: never
+        Args: { _device_token: string }
         Returns: {
           full_name: string
           id: string
@@ -164,13 +313,21 @@ export type Database = {
       }
       place_public_call: {
         Args: {
+          _device_token: string
           _doctor_id: string
-          _hospital?: string
           _patient_room: string
           _reason?: string
-          _unit?: string
         }
         Returns: string
+      }
+      redeem_enrollment_code: {
+        Args: { _code: string; _label?: string }
+        Returns: {
+          device_token: string
+          hospital: string
+          label: string
+          unit: string
+        }[]
       }
     }
     Enums: {
