@@ -35,10 +35,37 @@ type Call = {
   unit: string | null;
 };
 
+const SPECIALTIES = [
+  { name: "Cardiology", keywords: ["cardio", "heart"] },
+  { name: "Pulmonology", keywords: ["pulmon", "lung", "respir"] },
+  { name: "Neurology", keywords: ["neuro"] },
+  { name: "Infectious Disease", keywords: ["infect", "id"] },
+  { name: "Nephrology", keywords: ["nephro", "renal", "kidney"] },
+  { name: "Critical Care", keywords: ["critical", "intensiv", "icu"] },
+  { name: "Hospitalist", keywords: ["hospitalist", "internal", "medicine"] },
+] as const;
+
+const MOCK_DOCTORS: Record<string, string[]> = {
+  Cardiology: ["Amara Osei", "Daniel Reyes"],
+  Pulmonology: ["Priya Raman", "Grant Whitfield"],
+  Neurology: ["Lena Kowalski", "Marcus Bell"],
+  "Infectious Disease": ["Yusuf Karim", "Elise Tran"],
+  Nephrology: ["Hannah Choi", "Victor Alvarez"],
+  "Critical Care": ["Simone Adeyemi", "Peter Lindqvist"],
+  Hospitalist: ["Nina Duarte", "Owen Blackwell"],
+};
+
+function specialtyFor(specialty: string | null): string {
+  const s = (specialty ?? "").toLowerCase();
+  const hit = SPECIALTIES.find((sp) => sp.keywords.some((k) => s.includes(k)));
+  return hit?.name ?? "Hospitalist";
+}
+
 export function NurseStation() {
   const { user, profile } = useAuth();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [target, setTarget] = useState<Doctor | null>(null);
   const [room, setRoom] = useState("412-B");
   const [reason, setReason] = useState("");
