@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { PhoneIncoming, PhoneOff, Coffee, CheckCircle2 } from "lucide-react";
+import { PhoneIncoming, PhoneOff, Coffee, CheckCircle2, BellRing, Footprints } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { VideoVisit } from "@/features/video-visit";
-import { startRinging, stopRinging } from "@/lib/ringtone";
+import { startRinging, stopRinging, startAlerting, stopAlerting } from "@/lib/ringtone";
 
 type Call = {
   id: string;
