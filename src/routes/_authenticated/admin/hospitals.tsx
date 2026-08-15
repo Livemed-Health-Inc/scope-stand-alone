@@ -111,6 +111,10 @@ function HospitalsPage() {
     setBusy(false);
   }
 
+  function activationUrl(code: string) {
+    return `${window.location.origin}/nurse/activate?code=${encodeURIComponent(code)}`;
+  }
+
   async function copy(code: string) {
     try {
       await navigator.clipboard.writeText(code);
@@ -119,6 +123,20 @@ function HospitalsPage() {
     } catch {
       toast.error("Copy failed — select the code manually");
     }
+  }
+
+  async function copyUrl(code: string) {
+    try {
+      await navigator.clipboard.writeText(activationUrl(code));
+      setCopied(`${code}-url`);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      toast.error("Copy failed — select the link manually");
+    }
+  }
+
+  function openActivation(code: string) {
+    window.open(activationUrl(code), "_blank", "noopener,noreferrer");
   }
 
   async function toggle(site: Site) {
