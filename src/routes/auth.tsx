@@ -33,7 +33,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [staffRole, setStaffRole] = useState<"nurse" | "doctor" | "admin">("doctor");
+  const [staffRole, setStaffRole] = useState<"nurse" | "doctor">("doctor");
   const [fullName, setFullName] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [unit, setUnit] = useState("ICU - 4 West");
@@ -82,7 +82,7 @@ function AuthPage() {
       return;
     }
     if (data.session) {
-      void navigate({ to: staffRole === "admin" ? "/admin" : "/doctor" });
+      void navigate({ to: "/doctor" });
     } else {
       toast.success("Check your email to confirm your account.");
     }
@@ -143,8 +143,8 @@ function AuthPage() {
               <form onSubmit={signUp} className="space-y-3">
                 <div>
                   <Label>I am a</Label>
-                  <div className="mt-1 grid grid-cols-3 gap-2">
-                    {(["nurse", "doctor", "admin"] as const).map((r) => (
+                  <div className="mt-1 grid grid-cols-2 gap-2">
+                    {(["nurse", "doctor"] as const).map((r) => (
                       <Button
                         key={r}
                         type="button"
@@ -152,10 +152,13 @@ function AuthPage() {
                         onClick={() => setStaffRole(r)}
                         className="capitalize"
                       >
-                        {r === "doctor" ? "Physician" : r === "admin" ? "Admin" : "Nurse"}
+                        {r === "doctor" ? "Physician" : "Nurse"}
                       </Button>
                     ))}
                   </div>
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    LiveMed administrator access is granted internally and cannot be requested here.
+                  </p>
 
                 </div>
                 <div>

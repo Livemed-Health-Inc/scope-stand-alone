@@ -53,9 +53,6 @@ function Landing() {
         <Button asChild size="lg" variant="secondary">
           <Link to="/auth">Doctor app</Link>
         </Button>
-        <Button asChild size="lg" variant="ghost">
-          <Link to="/admin">Admin console</Link>
-        </Button>
       </div>
 
       <ul className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
