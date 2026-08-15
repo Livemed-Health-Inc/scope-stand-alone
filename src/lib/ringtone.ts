@@ -1,9 +1,49 @@
 /** Simple WebAudio ringer for incoming consult requests (no asset needed). */
 let ctx: AudioContext | null = null;
 let timer: number | null = null;
+let primed = false;
+
+function ensureCtx(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  try {
+    ctx =
+      ctx ??
+      new (window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    if (ctx.state === "suspended") void ctx.resume();
+    return ctx;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Browsers block audio until the user interacts with the page. Call once on
+ * mount: the context is created/resumed on the first touch, click or keypress
+ * so later alerts can play without any gesture.
+ */
+export function primeAudio() {
+  if (typeof window === "undefined" || primed) return;
+  primed = true;
+  const unlock = () => {
+    const c = ensureCtx();
+    if (!c) return;
+    // A silent tick fully unlocks iOS/Safari audio.
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    gain.gain.setValueAtTime(0.0001, c.currentTime);
+    osc.connect(gain).connect(c.destination);
+    osc.start();
+    osc.stop(c.currentTime + 0.02);
+  };
+  for (const ev of ["pointerdown", "touchstart", "keydown", "click"] as const) {
+    window.addEventListener(ev, unlock, { passive: true });
+  }
+  ensureCtx();
+}
 
 function beep() {
-  if (!ctx) return;
+  if (!ensureCtx() || !ctx) return;
   const now = ctx.currentTime;
   for (const offset of [0, 0.45]) {
     const osc = ctx.createOscillator();
@@ -21,12 +61,7 @@ function beep() {
 
 export function startRinging() {
   if (typeof window === "undefined" || timer !== null) return;
-  try {
-    ctx = ctx ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    void ctx.resume();
-  } catch {
-    return;
-  }
+  if (!ensureCtx()) return;
   beep();
   timer = window.setInterval(beep, 2000);
 }
@@ -42,7 +77,7 @@ export function stopRinging() {
 let alertTimer: number | null = null;
 
 function chime() {
-  if (!ctx) return;
+  if (!ensureCtx() || !ctx) return;
   const now = ctx.currentTime;
   const notes = [
     { f: 587.33, t: 0 },
@@ -66,12 +101,7 @@ function chime() {
 /** Repeating (but not frantic) alert used for rounding notifications. */
 export function startAlerting(intervalMs = 15000) {
   if (typeof window === "undefined" || alertTimer !== null) return;
-  try {
-    ctx = ctx ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    void ctx.resume();
-  } catch {
-    return;
-  }
+  if (!ensureCtx()) return;
   chime();
   alertTimer = window.setInterval(chime, intervalMs);
 }

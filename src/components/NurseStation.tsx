@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { VideoVisit } from "@/features/video-visit";
-import { startAlerting, stopAlerting } from "@/lib/ringtone";
+import { startAlerting, stopAlerting, primeAudio } from "@/lib/ringtone";
 
 type Doctor = {
   id: string;
@@ -172,6 +172,10 @@ export function NurseStation({ device }: { device: DeviceContext }) {
   const online = useMemo(() => doctors.filter((d) => d.is_online).length, [doctors]);
   const roundingDocs = useMemo(() => doctors.filter((d) => d.ready_to_round && d.is_online), [doctors]);
   const alerting = roundingDocs.length > 0 && staged.length === 0 && !activeCall;
+
+  useEffect(() => {
+    primeAudio();
+  }, []);
 
   // Repeating chime until the nurse acknowledges the rounding request
   useEffect(() => {
