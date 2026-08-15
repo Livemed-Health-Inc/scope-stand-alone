@@ -71,15 +71,15 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-primary/15 text-primary">
             <ShieldCheck className="size-6" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">Register this device</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Activate this tablet</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Enter the enrollment code from your unit administrator. This tablet will then be tied to that hospital and
-            unit — no nurse login required.
+            Field tech: enter the activation code issued by the Virtualis administrator for this unit. The tablet is
+            then bound to that hospital and unit — no nurse login required.
           </p>
         </div>
         <div className="panel-surface space-y-3 p-5">
           <div>
-            <Label htmlFor="code">Enrollment code</Label>
+            <Label htmlFor="code">Activation code</Label>
             <Input
               id="code"
               value={code}

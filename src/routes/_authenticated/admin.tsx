@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Copy, Plus, ShieldOff, ShieldCheck } from "lucide-react";
+import { Copy, LogOut, Plus, ShieldOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,28 +9,31 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { BrandMark } from "@/components/BrandMark";
 
-export const Route = createFileRoute("/_authenticated/devices")({
+export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Registered Devices — Virtualis Consult" },
+      { title: "Admin Console — Virtualis Consult" },
       {
         name: "description",
-        content: "Administer bedside tablets: create hospital units, issue enrollment codes and revoke devices.",
+        content:
+          "Administrator console: create hospital units, issue tablet activation codes for field techs and revoke bedside devices.",
       },
-      { property: "og:title", content: "Registered Devices — Virtualis Consult" },
-      { property: "og:description", content: "Issue enrollment codes and revoke bedside devices." },
+      { property: "og:title", content: "Admin Console — Virtualis Consult" },
+      { property: "og:description", content: "Issue tablet activation codes and revoke bedside devices." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: DevicesPage,
+  component: AdminPage,
 });
 
 type Site = { id: string; hospital: string; unit: string };
 type Device = { id: string; site_id: string; label: string; status: string; last_seen: string | null };
 type Code = { id: string; code: string; site_id: string; expires_at: string; used_at: string | null };
 
-function DevicesPage() {
+function AdminPage() {
+  const navigate = useNavigate();
+  const [allowed, setAllowed] = useState<boolean | null>(null);
   const [sites, setSites] = useState<Site[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [codes, setCodes] = useState<Code[]>([]);
@@ -53,27 +56,48 @@ function DevicesPage() {
   }
 
   useEffect(() => {
-    void load();
+    let active = true;
+    void (async () => {
+      const { data: userRes } = await supabase.auth.getUser();
+      const uid = userRes.user?.id;
+      if (!uid) return;
+      const { data: isAdmin } = await supabase.rpc("is_admin", { _user_id: uid });
+      if (!active) return;
+      setAllowed(Boolean(isAdmin));
+      if (isAdmin) void load();
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function addSite() {
     if (!hospital.trim() || !unit.trim()) return;
     const { error } = await supabase.from("hospital_sites").insert({ hospital: hospital.trim(), unit: unit.trim() });
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setUnit("");
     void load();
   }
 
   async function issueCode(siteId: string) {
     const { data, error } = await supabase.rpc("create_enrollment_code", { _site_id: siteId });
-    if (error) { toast.error(error.message); return; }
-    toast.success(`Enrollment code ${data} — valid for 24 hours`);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Activation code ${data} — valid for 24 hours`);
     void load();
   }
 
   async function setStatus(id: string, status: string) {
     const { error } = await supabase.from("devices").update({ status }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     void load();
   }
 
@@ -82,15 +106,41 @@ function DevicesPage() {
     return s ? `${s.hospital} · ${s.unit}` : "—";
   };
 
+  if (allowed === false) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-4">
+        <div className="panel-surface max-w-md space-y-3 p-6 text-center">
+          <h1 className="text-lg font-semibold">Administrator access required</h1>
+          <p className="text-sm text-muted-foreground">
+            This console is limited to Virtualis administrators. Physicians should use the waiting room.
+          </p>
+          <Button asChild variant="secondary" size="sm">
+            <Link to="/doctor">Go to waiting room</Link>
+          </Button>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
           <BrandMark size={26} />
-          <Button asChild variant="ghost" size="sm" className="ml-auto gap-2">
-            <Link to="/doctor">
-              <ArrowLeft className="size-4" /> Waiting room
-            </Link>
+          <Badge variant="secondary" className="uppercase tracking-widest">
+            Admin
+          </Badge>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Sign out"
+            className="ml-auto"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              void navigate({ to: "/auth" });
+            }}
+          >
+            <LogOut className="size-4" />
           </Button>
         </div>
       </header>
@@ -98,7 +148,11 @@ function DevicesPage() {
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-6">
         <div>
           <p className="label-caps">Administration</p>
-          <h1 className="text-2xl font-semibold tracking-tight">Bedside devices</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Device provisioning</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Generate an activation code for a unit, hand it to the field tech, and they activate the tablet during
+            installation.
+          </p>
         </div>
 
         <section className="panel-surface space-y-3 p-5">
@@ -124,7 +178,7 @@ function DevicesPage() {
                   <p className="text-xs text-muted-foreground">{s.unit}</p>
                 </div>
                 <Button size="sm" variant="secondary" onClick={() => issueCode(s.id)}>
-                  Issue enrollment code
+                  Issue activation code
                 </Button>
               </li>
             ))}
@@ -133,7 +187,7 @@ function DevicesPage() {
         </section>
 
         <section className="panel-surface space-y-3 p-5">
-          <h2 className="font-medium">Open enrollment codes</h2>
+          <h2 className="font-medium">Open activation codes</h2>
           {codes.length === 0 ? (
             <p className="text-sm text-muted-foreground">No unused codes.</p>
           ) : (
@@ -164,35 +218,28 @@ function DevicesPage() {
         </section>
 
         <section className="panel-surface space-y-3 p-5">
-          <h2 className="font-medium">Registered devices</h2>
+          <h2 className="font-medium">Registered tablets</h2>
           {devices.length === 0 ? (
             <p className="text-sm text-muted-foreground">No devices registered yet.</p>
           ) : (
             <ul className="divide-y divide-border">
               {devices.map((d) => (
                 <li key={d.id} className="flex items-center justify-between gap-4 py-2.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{d.label}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {siteLabel(d.site_id)}
-                      {d.last_seen ? ` · last seen ${new Date(d.last_seen).toLocaleString()}` : ""}
+                  <div>
+                    <p className="text-sm font-medium">{d.label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {siteLabel(d.site_id)} · last seen {d.last_seen ? new Date(d.last_seen).toLocaleString() : "never"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge
-                      className={
-                        d.status === "active" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"
-                      }
-                    >
-                      {d.status}
-                    </Badge>
+                    <Badge variant={d.status === "active" ? "default" : "secondary"}>{d.status}</Badge>
                     {d.status === "active" ? (
-                      <Button size="sm" variant="secondary" className="gap-2" onClick={() => setStatus(d.id, "revoked")}>
+                      <Button size="sm" variant="ghost" className="gap-2" onClick={() => setStatus(d.id, "revoked")}>
                         <ShieldOff className="size-4" /> Revoke
                       </Button>
                     ) : (
                       <Button size="sm" variant="ghost" className="gap-2" onClick={() => setStatus(d.id, "active")}>
-                        <ShieldCheck className="size-4" /> Restore
+                        <ShieldCheck className="size-4" /> Reactivate
                       </Button>
                     )}
                   </div>

@@ -33,12 +33,20 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [staffRole, setStaffRole] = useState<"nurse" | "doctor">("doctor");
+  const [staffRole, setStaffRole] = useState<"nurse" | "doctor" | "admin">("doctor");
   const [fullName, setFullName] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [unit, setUnit] = useState("ICU - 4 West");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  async function landing() {
+    const { data: userRes } = await supabase.auth.getUser();
+    const uid = userRes.user?.id;
+    if (!uid) return "/doctor" as const;
+    const { data: isAdmin } = await supabase.rpc("is_admin", { _user_id: uid });
+    return isAdmin ? ("/admin" as const) : ("/doctor" as const);
+  }
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
@@ -49,7 +57,7 @@ function AuthPage() {
       toast.error(error.message);
       return;
     }
-    void navigate({ to: "/doctor" });
+    void navigate({ to: await landing() });
   }
 
   async function signUp(e: React.FormEvent) {
@@ -74,7 +82,7 @@ function AuthPage() {
       return;
     }
     if (data.session) {
-      void navigate({ to: "/doctor" });
+      void navigate({ to: staffRole === "admin" ? "/admin" : "/doctor" });
     } else {
       toast.success("Check your email to confirm your account.");
     }
@@ -135,8 +143,8 @@ function AuthPage() {
               <form onSubmit={signUp} className="space-y-3">
                 <div>
                   <Label>I am a</Label>
-                  <div className="mt-1 grid grid-cols-2 gap-2">
-                    {(["nurse", "doctor"] as const).map((r) => (
+                  <div className="mt-1 grid grid-cols-3 gap-2">
+                    {(["nurse", "doctor", "admin"] as const).map((r) => (
                       <Button
                         key={r}
                         type="button"
@@ -144,10 +152,11 @@ function AuthPage() {
                         onClick={() => setStaffRole(r)}
                         className="capitalize"
                       >
-                        {r === "doctor" ? "Physician" : "Nurse"}
+                        {r === "doctor" ? "Physician" : r === "admin" ? "Admin" : "Nurse"}
                       </Button>
                     ))}
                   </div>
+
                 </div>
                 <div>
                   <Label htmlFor="name">Full name</Label>
