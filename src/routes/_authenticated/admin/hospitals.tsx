@@ -264,6 +264,27 @@ function HospitalsPage() {
                                 <span className="text-xs text-muted-foreground">
                                   expires {new Date(c.expires_at).toLocaleString()}
                                 </span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 gap-1.5 px-2 text-xs"
+                                  onClick={() => openActivation(c.code)}
+                                >
+                                  <ExternalLink className="size-3.5" /> Open screen
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 gap-1.5 px-2 text-xs"
+                                  onClick={() => void copyUrl(c.code)}
+                                >
+                                  {copied === `${c.code}-url` ? (
+                                    <Check className="size-3.5" />
+                                  ) : (
+                                    <LinkIcon className="size-3.5" />
+                                  )}
+                                  Copy link
+                                </Button>
                               </li>
                             ))}
                           </ul>
