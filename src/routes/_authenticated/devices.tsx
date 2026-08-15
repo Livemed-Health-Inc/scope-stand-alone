@@ -59,21 +59,21 @@ function DevicesPage() {
   async function addSite() {
     if (!hospital.trim() || !unit.trim()) return;
     const { error } = await supabase.from("hospital_sites").insert({ hospital: hospital.trim(), unit: unit.trim() });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setUnit("");
     void load();
   }
 
   async function issueCode(siteId: string) {
     const { data, error } = await supabase.rpc("create_enrollment_code", { _site_id: siteId });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(`Enrollment code ${data} — valid for 24 hours`);
     void load();
   }
 
   async function setStatus(id: string, status: string) {
     const { error } = await supabase.from("devices").update({ status }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     void load();
   }
 
