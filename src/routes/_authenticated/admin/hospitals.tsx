@@ -193,8 +193,9 @@ function HospitalsPage() {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Activation codes are single-use and expire in 24 hours. The field tech enters the code once on the bedside
-          tablet at <span className="font-mono">/nurse</span>.
+          Activation codes are single-use and expire in 24 hours. The field tech opens{" "}
+          <span className="font-mono">/nurse/activate</span> on the bedside tablet and enters the code, or clicks the
+          direct activation link from this page.
         </p>
       </section>
 
