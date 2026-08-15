@@ -163,18 +163,21 @@ export type Database = {
           in_consult: boolean
           is_online: boolean
           last_seen: string
+          ready_to_round: boolean
           user_id: string
         }
         Insert: {
           in_consult?: boolean
           is_online?: boolean
           last_seen?: string
+          ready_to_round?: boolean
           user_id: string
         }
         Update: {
           in_consult?: boolean
           is_online?: boolean
           last_seen?: string
+          ready_to_round?: boolean
           user_id?: string
         }
         Relationships: []
@@ -472,6 +475,7 @@ export type Database = {
           in_consult: boolean
           is_online: boolean
           last_seen: string
+          ready_to_round: boolean
           specialty: string
         }[]
       }
