@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { PhoneCall, Loader2, Users, X } from "lucide-react";
+import { PhoneCall, Loader2, Users, X, Stethoscope, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -35,10 +35,37 @@ type Call = {
   unit: string | null;
 };
 
+const SPECIALTIES = [
+  { name: "Cardiology", keywords: ["cardio", "heart"] },
+  { name: "Pulmonology", keywords: ["pulmon", "lung", "respir"] },
+  { name: "Neurology", keywords: ["neuro"] },
+  { name: "Infectious Disease", keywords: ["infect", "id"] },
+  { name: "Nephrology", keywords: ["nephro", "renal", "kidney"] },
+  { name: "Critical Care", keywords: ["critical", "intensiv", "icu"] },
+  { name: "Hospitalist", keywords: ["hospitalist", "internal", "medicine"] },
+] as const;
+
+const MOCK_DOCTORS: Record<string, string[]> = {
+  Cardiology: ["Amara Osei", "Daniel Reyes"],
+  Pulmonology: ["Priya Raman", "Grant Whitfield"],
+  Neurology: ["Lena Kowalski", "Marcus Bell"],
+  "Infectious Disease": ["Yusuf Karim", "Elise Tran"],
+  Nephrology: ["Hannah Choi", "Victor Alvarez"],
+  "Critical Care": ["Simone Adeyemi", "Peter Lindqvist"],
+  Hospitalist: ["Nina Duarte", "Owen Blackwell"],
+};
+
+function specialtyFor(specialty: string | null): string {
+  const s = (specialty ?? "").toLowerCase();
+  const hit = SPECIALTIES.find((sp) => sp.keywords.some((k) => s.includes(k)));
+  return hit?.name ?? "Hospitalist";
+}
+
 export function NurseStation() {
   const { user, profile } = useAuth();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [target, setTarget] = useState<Doctor | null>(null);
   const [room, setRoom] = useState("412-B");
   const [reason, setReason] = useState("");
@@ -154,16 +181,36 @@ export function NurseStation() {
   }
 
 
+  const bySpecialty = SPECIALTIES.map((sp) => {
+    const real = doctors.filter((d) => specialtyFor(d.specialty) === sp.name);
+    const mocks: Doctor[] = (MOCK_DOCTORS[sp.name] ?? []).map((n, i) => ({
+      id: `mock:${sp.name}:${i}`,
+      full_name: n,
+      specialty: sp.name,
+      is_online: i === 0,
+      in_consult: false,
+    }));
+    return { name: sp.name, doctors: [...real, ...mocks] };
+  });
+
+  const current = bySpecialty.find((s) => s.name === selectedSpecialty);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="label-caps">Physician directory</p>
-          <h1 className="text-2xl font-semibold tracking-tight">On-call physicians</h1>
+          <p className="label-caps">{current ? "Available for consult" : "Consult directory"}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{current ? current.name : "Specialties"}</h1>
         </div>
-        <Badge className="gap-1.5 bg-success/15 text-success">
-          <Users className="size-3.5" /> {online} online
-        </Badge>
+        {current ? (
+          <Button variant="secondary" size="sm" onClick={() => setSelectedSpecialty(null)}>
+            All specialties
+          </Button>
+        ) : (
+          <Badge className="gap-1.5 bg-success/15 text-success">
+            <Users className="size-3.5" /> {online} online
+          </Badge>
+        )}
       </div>
 
       {activeCall && activeCall.status === "ringing" && (
@@ -185,13 +232,44 @@ export function NurseStation() {
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading directory…</p>
-      ) : doctors.length === 0 ? (
+      ) : !current ? (
+        <ul className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+          {bySpecialty.map((sp) => {
+            const availableCount = sp.doctors.filter((d) => d.is_online && !d.in_consult).length;
+            return (
+              <li key={sp.name}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSpecialty(sp.name)}
+                  className="panel-surface flex w-full items-center gap-4 p-4 text-left transition hover:border-primary/50"
+                >
+                  <div className="flex size-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+                    <Stethoscope className="size-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{sp.name}</p>
+                    <p className="text-xs text-muted-foreground">{sp.doctors.length} physicians on service</p>
+                    <p
+                      className={`mt-1 text-[0.68rem] font-semibold uppercase tracking-widest ${
+                        availableCount ? "text-success" : "text-muted-foreground"
+                      }`}
+                    >
+                      {availableCount ? `${availableCount} available` : "None available"}
+                    </p>
+                  </div>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : current.doctors.length === 0 ? (
         <div className="panel-surface p-8 text-center text-sm text-muted-foreground">
-          No physicians registered yet. A physician account must be created to appear here.
+          No physicians on service for {current.name} right now.
         </div>
       ) : (
         <ul className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
-          {doctors.map((d) => (
+          {current.doctors.map((d) => (
             <li key={d.id} className="panel-surface flex items-center gap-4 p-4">
               <div className="relative">
                 <div className="flex size-12 items-center justify-center rounded-full bg-primary/15 font-semibold text-primary">
@@ -209,7 +287,7 @@ export function NurseStation() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">Dr. {d.full_name}</p>
-                <p className="truncate text-xs text-muted-foreground">{d.specialty ?? "Physician"}</p>
+                <p className="truncate text-xs text-muted-foreground">{d.specialty ?? current.name}</p>
                 <p
                   className={`mt-1 text-[0.68rem] font-semibold uppercase tracking-widest ${
                     d.in_consult ? "text-warning" : d.is_online ? "text-success" : "text-muted-foreground"
@@ -219,7 +297,17 @@ export function NurseStation() {
                 </p>
               </div>
               <Button
-                onClick={() => (d.in_consult ? toast.warning(`Dr. ${d.full_name} is in a consult — please hold.`) : setTarget(d))}
+                onClick={() => {
+                  if (d.id.startsWith("mock:")) {
+                    toast.info(`Dr. ${d.full_name} is a demo listing — no physician account connected yet.`);
+                    return;
+                  }
+                  if (d.in_consult) {
+                    toast.warning(`Dr. ${d.full_name} is in a consult — please hold.`);
+                    return;
+                  }
+                  setTarget(d);
+                }}
                 disabled={!d.is_online || !!activeCall}
                 className="gap-2"
               >
@@ -229,6 +317,7 @@ export function NurseStation() {
           ))}
         </ul>
       )}
+
 
       <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
         <DialogContent>
