@@ -88,6 +88,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
           specialty: d.specialty,
           is_online: Boolean(d.is_online && isFresh),
           in_consult: Boolean(d.in_consult && isFresh),
+          ready_to_round: Boolean((d as { ready_to_round?: boolean }).ready_to_round && isFresh),
         };
       }),
     );
@@ -202,6 +203,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       specialty: sp.name,
       is_online: i === 0,
       in_consult: false,
+      ready_to_round: false,
     }));
     return { name: sp.name, doctors: [...real, ...mocks] };
   });
