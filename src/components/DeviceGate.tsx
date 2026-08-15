@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
-import { Loader2, ShieldCheck } from "lucide-react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { clearDeviceToken, getDeviceToken, setDeviceToken, type DeviceContext } from "@/lib/device";
+import { Loader2 } from "lucide-react";
+import { ActivationForm } from "@/components/ActivationForm";
+import { clearDeviceToken, getDeviceToken, type DeviceContext } from "@/lib/device";
 
 export function DeviceGate({ children }: { children: (device: DeviceContext) => React.ReactNode }) {
   const [device, setDevice] = useState<DeviceContext | null>(null);
