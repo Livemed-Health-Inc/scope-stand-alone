@@ -1,6 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Check, Copy, KeyRound, Plus, Power, PowerOff } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  KeyRound,
+  Plus,
+  Power,
+  PowerOff,
+  ShieldCheck,
+  ShieldOff,
+  Tablet,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,10 +23,16 @@ import { Badge } from "@/components/ui/badge";
 export const Route = createFileRoute("/_authenticated/admin/hospitals")({
   head: () => ({
     meta: [
-      { title: "Hospitals — LiveMed Admin" },
-      { name: "description", content: "Add hospital units and activate or deactivate hospital sites." },
-      { property: "og:title", content: "Hospitals — LiveMed Admin" },
-      { property: "og:description", content: "Activate or deactivate hospital units served by LiveMed." },
+      { title: "Hospitals & Devices — LiveMed Admin" },
+      {
+        name: "description",
+        content: "Add hospital units, issue tablet activation codes, and manage bedside devices per unit.",
+      },
+      { property: "og:title", content: "Hospitals & Devices — LiveMed Admin" },
+      {
+        property: "og:description",
+        content: "Activate hospital units and manage the bedside tablets registered to each one.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -23,22 +41,32 @@ export const Route = createFileRoute("/_authenticated/admin/hospitals")({
 });
 
 type Site = { id: string; hospital: string; unit: string; is_active: boolean };
+type Device = { id: string; site_id: string; label: string; status: string; last_seen: string | null };
+type Code = { id: string; code: string; site_id: string; expires_at: string };
 
 function HospitalsPage() {
   const [sites, setSites] = useState<Site[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [codes, setCodes] = useState<Code[]>([]);
   const [hospital, setHospital] = useState("");
   const [unit, setUnit] = useState("");
   const [busy, setBusy] = useState(false);
-  const [codes, setCodes] = useState<Record<string, string>>({});
+  const [open, setOpen] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState<string | null>(null);
 
   async function load() {
-    const { data } = await supabase
-      .from("hospital_sites")
-      .select("id, hospital, unit, is_active")
-      .order("hospital")
-      .order("unit");
-    setSites((data as Site[] | null) ?? []);
+    const [s, d, c] = await Promise.all([
+      supabase.from("hospital_sites").select("id, hospital, unit, is_active").order("hospital").order("unit"),
+      supabase.from("devices").select("id, site_id, label, status, last_seen").order("created_at", { ascending: false }),
+      supabase
+        .from("enrollment_codes")
+        .select("id, code, site_id, expires_at")
+        .is("used_at", null)
+        .order("created_at", { ascending: false }),
+    ]);
+    setSites((s.data as Site[] | null) ?? []);
+    setDevices((d.data as Device[] | null) ?? []);
+    setCodes((c.data as Code[] | null) ?? []);
   }
 
   useEffect(() => {
@@ -51,8 +79,9 @@ function HospitalsPage() {
       toast.error(error?.message ?? "Could not generate an activation code");
       return null;
     }
-    setCodes((c) => ({ ...c, [siteId]: data as string }));
-    if (!quiet) toast.success("Activation code generated");
+    setOpen((o) => ({ ...o, [siteId]: true }));
+    await load();
+    if (!quiet) toast.success(`Activation code ${data} — valid for 24 hours`);
     return data as string;
   }
 
@@ -100,13 +129,23 @@ function HospitalsPage() {
     void load();
   }
 
+  async function setStatus(id: string, status: string) {
+    const { error } = await supabase.from("devices").update({ status }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    void load();
+  }
+
   return (
     <>
       <div>
         <p className="label-caps">Network</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Hospitals & units</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Hospitals, units & tablets</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Add a unit, hand its activation code to the field tech, and deactivate a unit to cut its tablets off instantly.
+          Add a unit, hand its activation code to the field tech, and manage the bedside tablets registered to it.
+          Deactivating a unit immediately stops its tablets from reaching physicians.
         </p>
       </div>
 
@@ -145,35 +184,120 @@ function HospitalsPage() {
           <p className="text-sm text-muted-foreground">No units yet.</p>
         ) : (
           <ul className="divide-y divide-border">
-            {sites.map((s) => (
-              <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
-                <div>
-                  <p className="text-sm font-medium">{s.hospital}</p>
-                  <p className="text-xs text-muted-foreground">{s.unit}</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {codes[s.id] ? (
+            {sites.map((s) => {
+              const siteDevices = devices.filter((d) => d.site_id === s.id);
+              const siteCodes = codes.filter((c) => c.site_id === s.id);
+              const expanded = open[s.id] ?? false;
+              return (
+                <li key={s.id} className="py-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                     <button
                       type="button"
-                      onClick={() => void copy(codes[s.id]!)}
-                      className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1 font-mono text-sm tracking-widest text-primary"
-                      title="Copy activation code"
+                      onClick={() => setOpen((o) => ({ ...o, [s.id]: !expanded }))}
+                      className="flex items-center gap-2 text-left"
                     >
-                      {codes[s.id]}
-                      {copied === codes[s.id] ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                      {expanded ? (
+                        <ChevronDown className="size-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="size-4 text-muted-foreground" />
+                      )}
+                      <span>
+                        <span className="block text-sm font-medium">{s.hospital}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {s.unit} · {siteDevices.length} tablet{siteDevices.length === 1 ? "" : "s"}
+                          {siteCodes.length > 0 ? ` · ${siteCodes.length} open code${siteCodes.length === 1 ? "" : "s"}` : ""}
+                        </span>
+                      </span>
                     </button>
-                  ) : null}
-                  <Button size="sm" variant="outline" className="gap-2" onClick={() => void issueCode(s.id)}>
-                    <KeyRound className="size-4" /> {codes[s.id] ? "New code" : "Activation code"}
-                  </Button>
-                  <Badge variant={s.is_active ? "default" : "secondary"}>{s.is_active ? "active" : "inactive"}</Badge>
-                  <Button size="sm" variant="ghost" className="gap-2" onClick={() => toggle(s)}>
-                    {s.is_active ? <PowerOff className="size-4" /> : <Power className="size-4" />}
-                    {s.is_active ? "Deactivate" : "Activate"}
-                  </Button>
-                </div>
-              </li>
-            ))}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button size="sm" variant="outline" className="gap-2" onClick={() => void issueCode(s.id)}>
+                        <KeyRound className="size-4" /> Activation code
+                      </Button>
+                      <Badge variant={s.is_active ? "default" : "secondary"}>{s.is_active ? "active" : "inactive"}</Badge>
+                      <Button size="sm" variant="ghost" className="gap-2" onClick={() => toggle(s)}>
+                        {s.is_active ? <PowerOff className="size-4" /> : <Power className="size-4" />}
+                        {s.is_active ? "Deactivate" : "Activate"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {expanded && (
+                    <div className="mt-3 ml-6 space-y-4 border-l border-border pl-4">
+                      <div>
+                        <p className="label-caps">Open activation codes</p>
+                        {siteCodes.length === 0 ? (
+                          <p className="mt-1 text-sm text-muted-foreground">No unused codes.</p>
+                        ) : (
+                          <ul className="mt-1.5 space-y-1.5">
+                            {siteCodes.map((c) => (
+                              <li key={c.id} className="flex flex-wrap items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => void copy(c.code)}
+                                  className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1 font-mono text-sm tracking-widest text-primary"
+                                  title="Copy activation code"
+                                >
+                                  {c.code}
+                                  {copied === c.code ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                                </button>
+                                <span className="text-xs text-muted-foreground">
+                                  expires {new Date(c.expires_at).toLocaleString()}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="label-caps">Bedside tablets</p>
+                        {siteDevices.length === 0 ? (
+                          <p className="mt-1 text-sm text-muted-foreground">No tablets activated on this unit yet.</p>
+                        ) : (
+                          <ul className="mt-1.5 divide-y divide-border">
+                            {siteDevices.map((d) => (
+                              <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
+                                <div className="flex items-center gap-2">
+                                  <Tablet className="size-4 text-muted-foreground" />
+                                  <div>
+                                    <p className="text-sm font-medium">{d.label}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      last seen {d.last_seen ? new Date(d.last_seen).toLocaleString() : "never"}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant={d.status === "active" ? "default" : "secondary"}>{d.status}</Badge>
+                                  {d.status === "active" ? (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="gap-2"
+                                      onClick={() => setStatus(d.id, "revoked")}
+                                    >
+                                      <ShieldOff className="size-4" /> Revoke
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="gap-2"
+                                      onClick={() => setStatus(d.id, "active")}
+                                    >
+                                      <ShieldCheck className="size-4" /> Reactivate
+                                    </Button>
+                                  )}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
