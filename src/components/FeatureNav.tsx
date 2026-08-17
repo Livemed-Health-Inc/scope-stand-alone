@@ -56,12 +56,22 @@ export function FeatureNav({ className }: { className?: string }) {
       setEmbedUrl(null);
       return;
     }
-    void supabase.auth.getSession().then(({ data }) => {
+    void (async () => {
+      // Use a freshly refreshed session so the embedded product never receives
+      // an about-to-expire token.
+      let session = (await supabase.auth.getSession()).data.session;
+      if (session && (session.expires_at ?? 0) * 1000 - Date.now() < 5 * 60_000) {
+        session = (await supabase.auth.refreshSession()).data.session ?? session;
+      }
       if (cancelled) return;
       const url = new URL(open.href!);
-      const s = data.session;
+      const s = session;
       if (s?.access_token && s.refresh_token) {
         url.searchParams.set("sso", "virtualis");
+        // Identity claims let the receiving product auto-provision the account
+        // on first hand-off instead of prompting for a login.
+        if (s.user?.email) url.searchParams.set("sso_email", s.user.email);
+        if (s.user?.id) url.searchParams.set("sso_uid", s.user.id);
         const hash = new URLSearchParams({
           access_token: s.access_token,
           refresh_token: s.refresh_token,
@@ -73,11 +83,12 @@ export function FeatureNav({ className }: { className?: string }) {
         url.hash = hash.toString();
       }
       setEmbedUrl(url.toString());
-    });
+    })();
     return () => {
       cancelled = true;
     };
   }, [open]);
+
 
 
   const seen = new Set<string>();
