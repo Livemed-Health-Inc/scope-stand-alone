@@ -48,7 +48,7 @@ const ASSIGNABLE = PERSONAS.filter((p) => !p.legacy);
 
 
 function PersonasPage() {
-  const { personas: myPersonas } = useAuth();
+  const { personas: myPersonas, refresh } = useAuth();
   const isSuper = myPersonas.includes("super_admin");
   const fetchAccounts = useServerFn(listAccounts);
   const provision = useServerFn(provisionPersonaAccount);
@@ -62,11 +62,26 @@ function PersonasPage() {
   const [specialty, setSpecialty] = useState("");
   const [busy, setBusy] = useState(false);
   const [issued, setIssued] = useState<{ email: string; password: string; reset: boolean } | null>(null);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [matrix, setMatrix] = useState<Record<string, Set<string>>>({});
+  const [flagBusy, setFlagBusy] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
     try {
-      setAccounts((await fetchAccounts()) as Account[]);
+      const [rows, perms, rolePerms] = await Promise.all([
+        fetchAccounts(),
+        supabase.from("permissions").select("key, label, category, sort_order").order("sort_order"),
+        supabase.from("role_permissions").select("role, permission_key"),
+      ]);
+      setAccounts(rows as Account[]);
+      setPermissions((perms.data ?? []) as Permission[]);
+      const next: Record<string, Set<string>> = {};
+      (rolePerms.data ?? []).forEach((rp) => {
+        const role = rp.role as string;
+        next[role] = (next[role] ?? new Set<string>()).add(rp.permission_key);
+      });
+      setMatrix(next);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load accounts");
     }
@@ -76,6 +91,32 @@ function PersonasPage() {
   useEffect(() => {
     void load();
   }, []);
+
+  const flagGroups = useMemo(() => {
+    const map = new Map<string, Permission[]>();
+    permissions.forEach((p) => map.set(p.category, [...(map.get(p.category) ?? []), p]));
+    return [...map.entries()];
+  }, [permissions]);
+
+  async function toggleFlag(role: Persona, key: string, on: boolean) {
+    setFlagBusy(`${role}:${key}`);
+    const { error } = on
+      ? await supabase.from("role_permissions").insert({ role, permission_key: key })
+      : await supabase.from("role_permissions").delete().eq("role", role).eq("permission_key", key);
+    setFlagBusy(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setMatrix((prev) => {
+      const set = new Set(prev[role] ?? []);
+      if (on) set.add(key);
+      else set.delete(key);
+      return { ...prev, [role]: set };
+    });
+    void refresh();
+  }
+
 
   const counts = useMemo(() => {
     const map: Record<string, number> = {};
