@@ -104,9 +104,32 @@ function AdminLayout() {
           </nav>
           <Button
             variant="ghost"
+            size="sm"
+            className="ml-auto"
+            onClick={async () => {
+              const { data } = await supabase.auth.getUser();
+              const email = data.user?.email;
+              if (!email) {
+                toast.error("No email on this account.");
+                return;
+              }
+              const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/reset-password`,
+              });
+              if (error) {
+                toast.error(error.message);
+                return;
+              }
+              toast.success(`Password reset link sent to ${email}`);
+            }}
+          >
+            <KeyRound className="mr-2 size-4" />
+            Reset password
+          </Button>
+          <Button
+            variant="ghost"
             size="icon"
             aria-label="Sign out"
-            className="ml-auto"
             onClick={async () => {
               await supabase.auth.signOut();
               void navigate({ to: "/auth", replace: true });
@@ -114,6 +137,7 @@ function AdminLayout() {
           >
             <LogOut className="size-4" />
           </Button>
+
         </div>
       </header>
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
