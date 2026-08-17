@@ -42,7 +42,10 @@ type Account = {
   personas: string[];
 };
 
+type Permission = { key: string; label: string; category: string; sort_order: number };
+
 const ASSIGNABLE = PERSONAS.filter((p) => !p.legacy);
+
 
 function PersonasPage() {
   const { personas: myPersonas } = useAuth();
