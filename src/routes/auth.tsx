@@ -131,26 +131,63 @@ function AuthPage() {
             </TabsList>
 
             <TabsContent value="signin">
-              <form onSubmit={signIn} className="space-y-3">
-                <div>
-                  <Label htmlFor="email">Work email</Label>
-                  <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                </div>
-                <div>
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={busy}>
-                  Sign in
-                </Button>
-              </form>
+              {mode === "forgot" ? (
+                <form onSubmit={sendReset} className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Enter your email and we&apos;ll send a link to set a new password.
+                  </p>
+                  <div>
+                    <Label htmlFor="reset-email">Work email</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy}>
+                    Send reset link
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => setMode("credentials")}
+                  >
+                    Back to sign in
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={signIn} className="space-y-3">
+                  <div>
+                    <Label htmlFor="email">Work email</Label>
+                    <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy}>
+                    Sign in
+                  </Button>
+                  <button
+                    type="button"
+                    className="w-full text-center text-xs text-muted-foreground underline"
+                    onClick={() => setMode("forgot")}
+                  >
+                    Forgot password?
+                  </button>
+                </form>
+              )}
             </TabsContent>
+
 
             <TabsContent value="signup">
               <form onSubmit={signUp} className="space-y-3">
