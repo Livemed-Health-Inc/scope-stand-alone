@@ -47,7 +47,9 @@ export function FeatureNav({ className }: { className?: string }) {
   const [embedUrl, setEmbedUrl] = useState<string | null>(null);
 
   // Single sign-on hand-off: the digital front door has already authenticated
-  // the user, so we pass the live session through to the embedded product.
+  // the user, so we pass the live session through to the embedded product in the
+  // standard Supabase URL-hash format, which its client picks up automatically
+  // (detectSessionInUrl) — no second login prompt.
   useEffect(() => {
     let cancelled = false;
     if (!open?.href) {
@@ -57,10 +59,18 @@ export function FeatureNav({ className }: { className?: string }) {
     void supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
       const url = new URL(open.href!);
-      const token = data.session?.access_token;
-      if (token) {
+      const s = data.session;
+      if (s?.access_token && s.refresh_token) {
         url.searchParams.set("sso", "virtualis");
-        url.hash = `access_token=${token}`;
+        const hash = new URLSearchParams({
+          access_token: s.access_token,
+          refresh_token: s.refresh_token,
+          expires_in: String(s.expires_in ?? 3600),
+          expires_at: String(s.expires_at ?? ""),
+          token_type: s.token_type ?? "bearer",
+          type: "magiclink",
+        });
+        url.hash = hash.toString();
       }
       setEmbedUrl(url.toString());
     });
@@ -68,6 +78,7 @@ export function FeatureNav({ className }: { className?: string }) {
       cancelled = true;
     };
   }, [open]);
+
 
   const seen = new Set<string>();
   const items = FEATURES.filter((f) => {
