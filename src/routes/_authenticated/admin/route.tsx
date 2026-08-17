@@ -26,7 +26,7 @@ const NAV: {
   permission: PermissionKey;
 }[] = [
   { to: "/admin", label: "Overview", exact: true, permission: "analytics.view" },
-  { to: "/admin/hospitals", label: "Hospitals", permission: "admin.hospitals" },
+  { to: "/admin/hospitals", label: "Hospital Onboarding", permission: "admin.hospitals" },
   { to: "/admin/personas", label: "Roles", permission: "admin.users" },
   { to: "/admin/access", label: "People & personas", permission: "admin.roles" },
   { to: "/admin/admins", label: "Admins", permission: "admin.users" },
