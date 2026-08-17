@@ -33,10 +33,10 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [staffRole, setStaffRole] = useState<"hospital" | "doctor" | "patient">("doctor");
+  const [staffRole, setStaffRole] = useState<"doctor" | "patient">("doctor");
   const [fullName, setFullName] = useState("");
   const [specialty, setSpecialty] = useState("");
-  const [unit, setUnit] = useState("ICU - 4 West");
+  const unit = "ICU - 4 West";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -135,8 +135,8 @@ function AuthPage() {
               <form onSubmit={signUp} className="space-y-3">
                 <div>
                   <Label>I am a</Label>
-                  <div className="mt-1 grid grid-cols-3 gap-2">
-                    {(["doctor", "hospital", "patient"] as const).map((r) => (
+                  <div className="mt-1 grid grid-cols-2 gap-2">
+                    {(["doctor", "patient"] as const).map((r) => (
                       <Button
                         key={r}
                         type="button"
@@ -144,13 +144,16 @@ function AuthPage() {
                         onClick={() => setStaffRole(r)}
                         className="capitalize"
                       >
-                        {r === "doctor" ? "Physician" : r === "hospital" ? "Hospital" : "Patient"}
+                        {r === "doctor" ? "Physician" : "Patient"}
                       </Button>
                     ))}
                   </div>
                   <p className="mt-1.5 text-xs text-muted-foreground">
-                    Technician, analytics and administrator personas are granted internally by a LiveMed admin.
+                    Hospital access is device-based — a field technician activates the bedside device with an
+                    enrollment code, no login needed. Technician, analytics and administrator roles are granted
+                    internally by a LiveMed admin.
                   </p>
+
 
                 </div>
                 <div>
@@ -167,11 +170,6 @@ function AuthPage() {
                       value={specialty}
                       onChange={(e) => setSpecialty(e.target.value)}
                     />
-                  </div>
-                ) : staffRole === "hospital" ? (
-                  <div>
-                    <Label htmlFor="unit">Unit</Label>
-                    <Input id="unit" required value={unit} onChange={(e) => setUnit(e.target.value)} />
                   </div>
                 ) : null}
                 <div>

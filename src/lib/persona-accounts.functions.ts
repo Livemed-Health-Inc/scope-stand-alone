@@ -36,6 +36,8 @@ function validate(input: { email: string; fullName?: string; persona: string; sp
   const email = input.email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid email address");
   if (!(PERSONAS as readonly string[]).includes(input.persona)) throw new Error("Unknown persona");
+  if (input.persona === "hospital")
+    throw new Error("Hospital access is device-based — activate a bedside device with an enrollment code instead");
   return {
     email,
     persona: input.persona,
@@ -105,6 +107,8 @@ export const setPersona = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { userId: string; persona: string; grant: boolean }) => {
     if (!(PERSONAS as readonly string[]).includes(input.persona)) throw new Error("Unknown persona");
+    if (input.persona === "hospital" && input.grant)
+      throw new Error("Hospital access is device-based — activate a bedside device with an enrollment code instead");
     if (!input.userId) throw new Error("Missing account");
     return { userId: input.userId, persona: input.persona, grant: Boolean(input.grant) };
   })

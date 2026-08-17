@@ -50,7 +50,7 @@ function PersonasPage() {
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
-  const [active, setActive] = useState<Persona>("hospital");
+  const [active, setActive] = useState<Persona>("doctor");
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [specialty, setSpecialty] = useState("");
@@ -84,6 +84,7 @@ function PersonasPage() {
 
   const activeMeta = ASSIGNABLE.find((p) => p.value === active);
   const locked = active === "super_admin" && !isSuper;
+  const deviceOnly = active === "hospital";
 
   async function create() {
     if (!email.trim()) return;
@@ -149,11 +150,24 @@ function PersonasPage() {
 
       <section className="panel-surface space-y-3 p-5">
         <div>
-          <h2 className="text-lg font-semibold">Add a {activeMeta?.label.toLowerCase()} login</h2>
+          <h2 className="text-lg font-semibold">
+            {deviceOnly ? "Hospital access is device-based" : `Add a ${activeMeta?.label.toLowerCase()} login`}
+          </h2>
           <p className="text-sm text-muted-foreground">{activeMeta?.blurb}</p>
         </div>
 
-        {locked ? (
+        {deviceOnly ? (
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              Hospitals do not get email logins. A field technician activates each bedside device with an
+              enrollment code, and that device inherits the hospital role for its registered unit.
+            </p>
+            <p>
+              Issue or review enrollment codes and devices under{" "}
+              <span className="font-medium text-foreground">Hospital Onboarding</span>.
+            </p>
+          </div>
+        ) : locked ? (
           <p className="text-sm text-muted-foreground">Only a super admin can manage this persona.</p>
         ) : (
           <div className="flex flex-wrap items-end gap-3">
@@ -212,7 +226,7 @@ function PersonasPage() {
       {active === "doctor" ? <PhysiciansPage /> : null}
       {active === "tech" ? <TechsPage /> : null}
 
-      <section className="panel-surface p-5">
+      <section className="panel-surface p-5" hidden={deviceOnly}>
         <h2 className="text-lg font-semibold">{activeMeta?.label} accounts</h2>
         {loading ? (
           <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
