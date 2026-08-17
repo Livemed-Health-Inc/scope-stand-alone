@@ -1,6 +1,8 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { LogOut } from "lucide-react";
+import { KeyRound, LogOut } from "lucide-react";
+import { toast } from "sonner";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
