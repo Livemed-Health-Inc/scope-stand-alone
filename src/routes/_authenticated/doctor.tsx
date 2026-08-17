@@ -7,6 +7,7 @@ import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { DoctorStation } from "@/components/DoctorStation";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/BrandMark";
+import { PermissionGate } from "@/components/PermissionGate";
 
 export const Route = createFileRoute("/_authenticated/doctor")({
   head: () => ({
@@ -26,7 +27,11 @@ export const Route = createFileRoute("/_authenticated/doctor")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: DoctorAppPage,
+  component: () => (
+    <PermissionGate permission="doctor.station" title="Physician access required">
+      <DoctorAppPage />
+    </PermissionGate>
+  ),
 });
 
 function DoctorAppPage() {
