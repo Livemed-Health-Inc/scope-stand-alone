@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Plus, UserMinus, Copy, ToggleRight } from "lucide-react";
+import { Loader2, Plus, UserMinus, Copy, ToggleRight, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { listAccounts } from "@/lib/access.functions";
-import { provisionPersonaAccount, setPersona } from "@/lib/persona-accounts.functions";
+import { provisionPersonaAccount, setPersona, resetAccountPassword } from "@/lib/persona-accounts.functions";
 import { PERSONAS, personaLabel, type Persona } from "@/lib/permissions";
 import { useAuth } from "@/lib/auth";
 import { PhysiciansPage } from "./physicians";
@@ -53,6 +53,7 @@ function PersonasPage() {
   const fetchAccounts = useServerFn(listAccounts);
   const provision = useServerFn(provisionPersonaAccount);
   const changePersona = useServerFn(setPersona);
+  const resetPassword = useServerFn(resetAccountPassword);
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,6 +149,18 @@ function PersonasPage() {
       await load();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not create the login");
+    }
+    setBusy(false);
+  }
+
+  async function resetFor(account: Account) {
+    setBusy(true);
+    try {
+      const result = await resetPassword({ data: { userId: account.id } });
+      setIssued({ email: result.email || account.email, password: result.password, reset: true });
+      toast.success(`New temporary password issued for ${account.email}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not reset the password");
     }
     setBusy(false);
   }
@@ -348,6 +361,15 @@ function PersonasPage() {
                         {personaLabel(p)}
                       </Badge>
                     ))}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="gap-2"
+                    disabled={busy}
+                    onClick={() => void resetFor(account)}
+                  >
+                    <KeyRound className="size-4" /> Reset password
+                  </Button>
                   <Button
                     size="sm"
                     variant="ghost"
