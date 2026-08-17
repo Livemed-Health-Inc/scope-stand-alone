@@ -32,7 +32,7 @@ async function assertCanManage(context: Ctx, persona: string) {
   }
 }
 
-function validate(input: { email: string; fullName?: string; persona: string; specialty?: string }) {
+function validate(input: { email: string; fullName?: string; persona: string; specialty?: string | undefined }) {
   const email = input.email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid email address");
   if (!(PERSONAS as readonly string[]).includes(input.persona)) throw new Error("Unknown persona");
