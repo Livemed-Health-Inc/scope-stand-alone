@@ -13,7 +13,14 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 const NAV: {
-  to: "/admin" | "/admin/hospitals" | "/admin/physicians" | "/admin/techs" | "/admin/admins" | "/admin/access";
+  to:
+    | "/admin"
+    | "/admin/hospitals"
+    | "/admin/physicians"
+    | "/admin/techs"
+    | "/admin/admins"
+    | "/admin/access"
+    | "/admin/personas";
   label: string;
   exact?: boolean;
   permission: PermissionKey;
@@ -22,6 +29,7 @@ const NAV: {
   { to: "/admin/hospitals", label: "Hospitals", permission: "admin.hospitals" },
   { to: "/admin/physicians", label: "Physicians", permission: "admin.physicians" },
   { to: "/admin/techs", label: "Field techs", permission: "admin.techs" },
+  { to: "/admin/personas", label: "Personas", permission: "admin.users" },
   { to: "/admin/access", label: "People & personas", permission: "admin.roles" },
   { to: "/admin/admins", label: "Admins", permission: "admin.users" },
 ];

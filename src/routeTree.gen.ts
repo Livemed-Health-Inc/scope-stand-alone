@@ -24,6 +24,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminAccessRouteImport } from './routes/_authenticated/admin/access'
 import { Route as AuthenticatedAdminAdminsRouteImport } from './routes/_authenticated/admin/admins'
 import { Route as AuthenticatedAdminHospitalsRouteImport } from './routes/_authenticated/admin/hospitals'
+import { Route as AuthenticatedAdminPersonasRouteImport } from './routes/_authenticated/admin/personas'
 import { Route as AuthenticatedAdminPhysiciansRouteImport } from './routes/_authenticated/admin/physicians'
 import { Route as AuthenticatedAdminTechsRouteImport } from './routes/_authenticated/admin/techs'
 import { Route as AuthenticatedTechIndexRouteImport } from './routes/_authenticated/tech/index'
@@ -107,6 +108,12 @@ const AuthenticatedAdminHospitalsRoute =
     path: '/hospitals',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminPersonasRoute =
+  AuthenticatedAdminPersonasRouteImport.update({
+    id: '/personas',
+    path: '/personas',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminPhysiciansRoute =
   AuthenticatedAdminPhysiciansRouteImport.update({
     id: '/physicians',
@@ -150,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
+  '/admin/personas': typeof AuthenticatedAdminPersonasRoute
   '/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
   '/admin/techs': typeof AuthenticatedAdminTechsRoute
   '/tech/activate': typeof AuthenticatedTechActivateRoute
@@ -169,6 +177,7 @@ export interface FileRoutesByTo {
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
+  '/admin/personas': typeof AuthenticatedAdminPersonasRoute
   '/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
   '/admin/techs': typeof AuthenticatedAdminTechsRoute
   '/tech/activate': typeof AuthenticatedTechActivateRoute
@@ -192,6 +201,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/access': typeof AuthenticatedAdminAccessRoute
   '/_authenticated/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/_authenticated/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
+  '/_authenticated/admin/personas': typeof AuthenticatedAdminPersonasRoute
   '/_authenticated/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
   '/_authenticated/admin/techs': typeof AuthenticatedAdminTechsRoute
   '/_authenticated/tech/activate': typeof AuthenticatedTechActivateRoute
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/admin/access'
     | '/admin/admins'
     | '/admin/hospitals'
+    | '/admin/personas'
     | '/admin/physicians'
     | '/admin/techs'
     | '/tech/activate'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/admin/access'
     | '/admin/admins'
     | '/admin/hospitals'
+    | '/admin/personas'
     | '/admin/physicians'
     | '/admin/techs'
     | '/tech/activate'
@@ -256,6 +268,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/access'
     | '/_authenticated/admin/admins'
     | '/_authenticated/admin/hospitals'
+    | '/_authenticated/admin/personas'
     | '/_authenticated/admin/physicians'
     | '/_authenticated/admin/techs'
     | '/_authenticated/tech/activate'
@@ -379,6 +392,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminHospitalsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/personas': {
+      id: '/_authenticated/admin/personas'
+      path: '/personas'
+      fullPath: '/admin/personas'
+      preLoaderRoute: typeof AuthenticatedAdminPersonasRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/physicians': {
       id: '/_authenticated/admin/physicians'
       path: '/physicians'
@@ -421,6 +441,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminAccessRoute: typeof AuthenticatedAdminAccessRoute
   AuthenticatedAdminAdminsRoute: typeof AuthenticatedAdminAdminsRoute
   AuthenticatedAdminHospitalsRoute: typeof AuthenticatedAdminHospitalsRoute
+  AuthenticatedAdminPersonasRoute: typeof AuthenticatedAdminPersonasRoute
   AuthenticatedAdminPhysiciansRoute: typeof AuthenticatedAdminPhysiciansRoute
   AuthenticatedAdminTechsRoute: typeof AuthenticatedAdminTechsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -431,6 +452,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminAccessRoute: AuthenticatedAdminAccessRoute,
     AuthenticatedAdminAdminsRoute: AuthenticatedAdminAdminsRoute,
     AuthenticatedAdminHospitalsRoute: AuthenticatedAdminHospitalsRoute,
+    AuthenticatedAdminPersonasRoute: AuthenticatedAdminPersonasRoute,
     AuthenticatedAdminPhysiciansRoute: AuthenticatedAdminPhysiciansRoute,
     AuthenticatedAdminTechsRoute: AuthenticatedAdminTechsRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
