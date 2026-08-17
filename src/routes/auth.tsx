@@ -36,7 +36,7 @@ function AuthPage() {
   const [staffRole, setStaffRole] = useState<"doctor" | "patient">("doctor");
   const [fullName, setFullName] = useState("");
   const [specialty, setSpecialty] = useState("");
-  const [unit, setUnit] = useState("ICU - 4 West");
+  const unit = "ICU - 4 West";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
