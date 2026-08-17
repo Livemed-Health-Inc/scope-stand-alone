@@ -30,6 +30,7 @@ import { Route as AuthenticatedAdminTechsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedTechIndexRouteImport } from './routes/_authenticated/tech/index'
 import { Route as AuthenticatedTechActivateRouteImport } from './routes/_authenticated/tech/activate'
 import { Route as AuthenticatedTechFacilitiesRouteImport } from './routes/_authenticated/tech/facilities'
+import { Route as ApiPublicIdentityRouteImport } from './routes/api/public/identity'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -142,6 +143,11 @@ const AuthenticatedTechFacilitiesRoute =
     path: '/facilities',
     getParentRoute: () => AuthenticatedTechRouteRoute,
   } as any)
+const ApiPublicIdentityRoute = ApiPublicIdentityRouteImport.update({
+  id: '/api/public/identity',
+  path: '/api/public/identity',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/admin/techs': typeof AuthenticatedAdminTechsRoute
   '/tech/activate': typeof AuthenticatedTechActivateRoute
   '/tech/facilities': typeof AuthenticatedTechFacilitiesRoute
+  '/api/public/identity': typeof ApiPublicIdentityRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/tech/': typeof AuthenticatedTechIndexRoute
 }
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/admin/techs': typeof AuthenticatedAdminTechsRoute
   '/tech/activate': typeof AuthenticatedTechActivateRoute
   '/tech/facilities': typeof AuthenticatedTechFacilitiesRoute
+  '/api/public/identity': typeof ApiPublicIdentityRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/tech': typeof AuthenticatedTechIndexRoute
 }
@@ -206,6 +214,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/techs': typeof AuthenticatedAdminTechsRoute
   '/_authenticated/tech/activate': typeof AuthenticatedTechActivateRoute
   '/_authenticated/tech/facilities': typeof AuthenticatedTechFacilitiesRoute
+  '/api/public/identity': typeof ApiPublicIdentityRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/tech/': typeof AuthenticatedTechIndexRoute
 }
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
     | '/admin/techs'
     | '/tech/activate'
     | '/tech/facilities'
+    | '/api/public/identity'
     | '/admin/'
     | '/tech/'
   fileRoutesByTo: FileRoutesByTo
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/admin/techs'
     | '/tech/activate'
     | '/tech/facilities'
+    | '/api/public/identity'
     | '/admin'
     | '/tech'
   id:
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/techs'
     | '/_authenticated/tech/activate'
     | '/_authenticated/tech/facilities'
+    | '/api/public/identity'
     | '/_authenticated/admin/'
     | '/_authenticated/tech/'
   fileRoutesById: FileRoutesById
@@ -283,6 +295,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   NurseRoute: typeof NurseRoute
   NurseActivateRoute: typeof NurseActivateRoute
+  ApiPublicIdentityRoute: typeof ApiPublicIdentityRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -434,6 +447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTechFacilitiesRouteImport
       parentRoute: typeof AuthenticatedTechRouteRoute
     }
+    '/api/public/identity': {
+      id: '/api/public/identity'
+      path: '/api/public/identity'
+      fullPath: '/api/public/identity'
+      preLoaderRoute: typeof ApiPublicIdentityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -508,6 +528,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   NurseRoute: NurseRoute,
   NurseActivateRoute: NurseActivateRoute,
+  ApiPublicIdentityRoute: ApiPublicIdentityRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
