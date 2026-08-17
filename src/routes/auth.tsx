@@ -135,7 +135,7 @@ function AuthPage() {
               <form onSubmit={signUp} className="space-y-3">
                 <div>
                   <Label>I am a</Label>
-                  <div className="mt-1 grid grid-cols-3 gap-2">
+                  <div className="mt-1 grid grid-cols-2 gap-2">
                     {(["doctor", "patient"] as const).map((r) => (
                       <Button
                         key={r}
@@ -144,13 +144,16 @@ function AuthPage() {
                         onClick={() => setStaffRole(r)}
                         className="capitalize"
                       >
-                        {r === "doctor" ? "Physician" : r === "hospital" ? "Hospital" : "Patient"}
+                        {r === "doctor" ? "Physician" : "Patient"}
                       </Button>
                     ))}
                   </div>
                   <p className="mt-1.5 text-xs text-muted-foreground">
-                    Technician, analytics and administrator personas are granted internally by a LiveMed admin.
+                    Hospital access is device-based — a field technician activates the bedside device with an
+                    enrollment code, no login needed. Technician, analytics and administrator roles are granted
+                    internally by a LiveMed admin.
                   </p>
+
 
                 </div>
                 <div>
