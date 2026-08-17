@@ -254,6 +254,30 @@ export type Database = {
         }
         Relationships: []
       }
+      permissions: {
+        Row: {
+          category: string
+          created_at: string
+          key: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          key: string
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          key?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -283,6 +307,32 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          created_at: string
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          permission_key?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_key_fkey"
+            columns: ["permission_key"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       rounding_queue: {
         Row: {
@@ -388,6 +438,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      available_physicians: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+          in_consult: boolean
+          is_online: boolean
+          specialty: string
+        }[]
+      }
       claim_admin_role: { Args: never; Returns: boolean }
       claim_staff_role: { Args: { _role: string }; Returns: boolean }
       clear_rounding: {
@@ -455,6 +515,10 @@ export type Database = {
           status: string
         }[]
       }
+      has_permission: {
+        Args: { _key: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -464,10 +528,17 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       is_tech: { Args: { _user_id: string }; Returns: boolean }
       mark_rounding_ready: {
         Args: { _device_token: string; _note?: string; _room: string }
         Returns: string
+      }
+      my_permissions: {
+        Args: never
+        Returns: {
+          permission_key: string
+        }[]
       }
       on_call_directory: {
         Args: { _device_token: string }
@@ -501,7 +572,16 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "doctor" | "nurse" | "admin"
+      app_role:
+        | "doctor"
+        | "nurse"
+        | "admin"
+        | "hospital"
+        | "patient"
+        | "tech"
+        | "analytics"
+        | "system_admin"
+        | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -629,7 +709,17 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["doctor", "nurse", "admin"],
+      app_role: [
+        "doctor",
+        "nurse",
+        "admin",
+        "hospital",
+        "patient",
+        "tech",
+        "analytics",
+        "system_admin",
+        "super_admin",
+      ],
     },
   },
 } as const

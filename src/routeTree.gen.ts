@@ -15,10 +15,13 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as NurseRouteImport } from './routes/nurse'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedDoctorRouteImport } from './routes/_authenticated/doctor'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedPatientRouteImport } from './routes/_authenticated/patient'
 import { Route as AuthenticatedStationRouteImport } from './routes/_authenticated/station'
 import { Route as AuthenticatedTechRouteRouteImport } from './routes/_authenticated/tech/route'
 import { Route as NurseActivateRouteImport } from './routes/nurse_.activate'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminAccessRouteImport } from './routes/_authenticated/admin/access'
 import { Route as AuthenticatedAdminAdminsRouteImport } from './routes/_authenticated/admin/admins'
 import { Route as AuthenticatedAdminHospitalsRouteImport } from './routes/_authenticated/admin/hospitals'
 import { Route as AuthenticatedAdminPhysiciansRouteImport } from './routes/_authenticated/admin/physicians'
@@ -56,6 +59,16 @@ const AuthenticatedDoctorRoute = AuthenticatedDoctorRouteImport.update({
   path: '/doctor',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPatientRoute = AuthenticatedPatientRouteImport.update({
+  id: '/patient',
+  path: '/patient',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedStationRoute = AuthenticatedStationRouteImport.update({
   id: '/station',
   path: '/station',
@@ -76,6 +89,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+const AuthenticatedAdminAccessRoute =
+  AuthenticatedAdminAccessRouteImport.update({
+    id: '/access',
+    path: '/access',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminAdminsRoute =
   AuthenticatedAdminAdminsRouteImport.update({
     id: '/admins',
@@ -124,8 +143,11 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/tech': typeof AuthenticatedTechRouteRouteWithChildren
   '/doctor': typeof AuthenticatedDoctorRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/patient': typeof AuthenticatedPatientRoute
   '/station': typeof AuthenticatedStationRoute
   '/nurse/activate': typeof NurseActivateRoute
+  '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
   '/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
@@ -140,8 +162,11 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/nurse': typeof NurseRoute
   '/doctor': typeof AuthenticatedDoctorRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/patient': typeof AuthenticatedPatientRoute
   '/station': typeof AuthenticatedStationRoute
   '/nurse/activate': typeof NurseActivateRoute
+  '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
   '/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
@@ -160,8 +185,11 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/tech': typeof AuthenticatedTechRouteRouteWithChildren
   '/_authenticated/doctor': typeof AuthenticatedDoctorRoute
+  '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_authenticated/patient': typeof AuthenticatedPatientRoute
   '/_authenticated/station': typeof AuthenticatedStationRoute
   '/nurse_/activate': typeof NurseActivateRoute
+  '/_authenticated/admin/access': typeof AuthenticatedAdminAccessRoute
   '/_authenticated/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/_authenticated/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
   '/_authenticated/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
@@ -180,8 +208,11 @@ export interface FileRouteTypes {
     | '/admin'
     | '/tech'
     | '/doctor'
+    | '/home'
+    | '/patient'
     | '/station'
     | '/nurse/activate'
+    | '/admin/access'
     | '/admin/admins'
     | '/admin/hospitals'
     | '/admin/physicians'
@@ -196,8 +227,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/nurse'
     | '/doctor'
+    | '/home'
+    | '/patient'
     | '/station'
     | '/nurse/activate'
+    | '/admin/access'
     | '/admin/admins'
     | '/admin/hospitals'
     | '/admin/physicians'
@@ -215,8 +249,11 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/tech'
     | '/_authenticated/doctor'
+    | '/_authenticated/home'
+    | '/_authenticated/patient'
     | '/_authenticated/station'
     | '/nurse_/activate'
+    | '/_authenticated/admin/access'
     | '/_authenticated/admin/admins'
     | '/_authenticated/admin/hospitals'
     | '/_authenticated/admin/physicians'
@@ -279,6 +316,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDoctorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/patient': {
+      id: '/_authenticated/patient'
+      path: '/patient'
+      fullPath: '/patient'
+      preLoaderRoute: typeof AuthenticatedPatientRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/station': {
       id: '/_authenticated/station'
       path: '/station'
@@ -305,6 +356,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/access': {
+      id: '/_authenticated/admin/access'
+      path: '/access'
+      fullPath: '/admin/access'
+      preLoaderRoute: typeof AuthenticatedAdminAccessRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/admins': {
@@ -360,6 +418,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminAccessRoute: typeof AuthenticatedAdminAccessRoute
   AuthenticatedAdminAdminsRoute: typeof AuthenticatedAdminAdminsRoute
   AuthenticatedAdminHospitalsRoute: typeof AuthenticatedAdminHospitalsRoute
   AuthenticatedAdminPhysiciansRoute: typeof AuthenticatedAdminPhysiciansRoute
@@ -369,6 +428,7 @@ interface AuthenticatedAdminRouteRouteChildren {
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminAccessRoute: AuthenticatedAdminAccessRoute,
     AuthenticatedAdminAdminsRoute: AuthenticatedAdminAdminsRoute,
     AuthenticatedAdminHospitalsRoute: AuthenticatedAdminHospitalsRoute,
     AuthenticatedAdminPhysiciansRoute: AuthenticatedAdminPhysiciansRoute,
@@ -403,6 +463,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedTechRouteRoute: typeof AuthenticatedTechRouteRouteWithChildren
   AuthenticatedDoctorRoute: typeof AuthenticatedDoctorRoute
+  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedPatientRoute: typeof AuthenticatedPatientRoute
   AuthenticatedStationRoute: typeof AuthenticatedStationRoute
 }
 
@@ -410,6 +472,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedTechRouteRoute: AuthenticatedTechRouteRouteWithChildren,
   AuthenticatedDoctorRoute: AuthenticatedDoctorRoute,
+  AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedPatientRoute: AuthenticatedPatientRoute,
   AuthenticatedStationRoute: AuthenticatedStationRoute,
 }
 

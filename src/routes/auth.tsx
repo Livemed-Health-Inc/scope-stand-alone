@@ -33,23 +33,12 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [staffRole, setStaffRole] = useState<"nurse" | "doctor">("doctor");
+  const [staffRole, setStaffRole] = useState<"hospital" | "doctor" | "patient">("doctor");
   const [fullName, setFullName] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [unit, setUnit] = useState("ICU - 4 West");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  async function landing() {
-    const { data: userRes } = await supabase.auth.getUser();
-    const uid = userRes.user?.id;
-    if (!uid) return "/doctor" as const;
-    const { data: isAdmin } = await supabase.rpc("is_admin", { _user_id: uid });
-    if (isAdmin) return "/admin" as const;
-    const { data: isTech } = await supabase.rpc("is_tech", { _user_id: uid });
-    if (isTech) return "/tech" as const;
-    return "/doctor" as const;
-  }
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
@@ -60,7 +49,7 @@ function AuthPage() {
       toast.error(error.message);
       return;
     }
-    void navigate({ to: await landing() });
+    void navigate({ to: "/home" });
   }
 
   async function signUp(e: React.FormEvent) {
@@ -70,7 +59,7 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/doctor`,
+        emailRedirectTo: `${window.location.origin}/home`,
         data: {
           full_name: fullName,
           staff_role: staffRole,
@@ -85,7 +74,7 @@ function AuthPage() {
       return;
     }
     if (data.session) {
-      void navigate({ to: "/doctor" });
+      void navigate({ to: "/home" });
     } else {
       toast.success("Check your email to confirm your account.");
     }
@@ -98,7 +87,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    void navigate({ to: "/doctor" });
+    void navigate({ to: "/home" });
   }
 
   return (
@@ -146,8 +135,8 @@ function AuthPage() {
               <form onSubmit={signUp} className="space-y-3">
                 <div>
                   <Label>I am a</Label>
-                  <div className="mt-1 grid grid-cols-2 gap-2">
-                    {(["nurse", "doctor"] as const).map((r) => (
+                  <div className="mt-1 grid grid-cols-3 gap-2">
+                    {(["doctor", "hospital", "patient"] as const).map((r) => (
                       <Button
                         key={r}
                         type="button"
@@ -155,12 +144,12 @@ function AuthPage() {
                         onClick={() => setStaffRole(r)}
                         className="capitalize"
                       >
-                        {r === "doctor" ? "Physician" : "Nurse"}
+                        {r === "doctor" ? "Physician" : r === "hospital" ? "Hospital" : "Patient"}
                       </Button>
                     ))}
                   </div>
                   <p className="mt-1.5 text-xs text-muted-foreground">
-                    LiveMed administrator access is granted internally and cannot be requested here.
+                    Technician, analytics and administrator personas are granted internally by a LiveMed admin.
                   </p>
 
                 </div>
@@ -179,12 +168,12 @@ function AuthPage() {
                       onChange={(e) => setSpecialty(e.target.value)}
                     />
                   </div>
-                ) : (
+                ) : staffRole === "hospital" ? (
                   <div>
                     <Label htmlFor="unit">Unit</Label>
                     <Input id="unit" required value={unit} onChange={(e) => setUnit(e.target.value)} />
                   </div>
-                )}
+                ) : null}
                 <div>
                   <Label htmlFor="email2">Work email</Label>
                   <Input id="email2" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />

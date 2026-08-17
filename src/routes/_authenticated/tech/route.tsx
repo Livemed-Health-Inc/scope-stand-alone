@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BrandMark } from "@/components/BrandMark";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/tech")({
   component: TechLayout,
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/_authenticated/tech")({
 function TechLayout() {
   const navigate = useNavigate();
   const [allowed, setAllowed] = useState<boolean | null>(null);
+  const { permissions } = useAuth();
 
   useEffect(() => {
     let active = true;
@@ -21,12 +23,12 @@ function TechLayout() {
       const uid = userRes.user?.id;
       if (!uid) return;
       const { data: isTech } = await supabase.rpc("is_tech", { _user_id: uid });
-      if (active) setAllowed(Boolean(isTech));
+      if (active) setAllowed(Boolean(isTech) || permissions.includes("tech.provision"));
     })();
     return () => {
       active = false;
     };
-  }, []);
+  }, [permissions.join(",")]);
 
   if (allowed === null) {
     return (
