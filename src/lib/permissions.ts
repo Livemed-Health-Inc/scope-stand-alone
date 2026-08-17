@@ -46,7 +46,7 @@ export const PERSONAS: { value: Persona; label: string; blurb: string; legacy?: 
   {
     value: "doctor",
     label: "Doctor",
-    blurb: "Telemedicine platform (A/V + stethoscope + waiting room), Virtualis Chat and Virtualis One",
+    blurb: "Telemedicine platform (A/V + stethoscope + waiting room), Virtualis Chat, Virtualis One and Virtualis Note",
   },
   { value: "patient", label: "Patient / consumer", blurb: "Direct-to-consumer virtual visits" },
   {
