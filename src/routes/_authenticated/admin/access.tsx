@@ -136,10 +136,13 @@ function AccessPage() {
         <TabsTrigger value="people">
           <UserCog className="size-4" /> People
         </TabsTrigger>
-        <TabsTrigger value="matrix">
-          <ShieldCheck className="size-4" /> Persona permissions
-        </TabsTrigger>
+        {isSuper ? (
+          <TabsTrigger value="matrix">
+            <ShieldCheck className="size-4" /> Feature flags
+          </TabsTrigger>
+        ) : null}
       </TabsList>
+
 
       <TabsContent value="people" className="space-y-4">
         <div className="panel-surface space-y-3 p-5">
