@@ -270,8 +270,61 @@ function PersonasPage() {
         ) : null}
       </section>
 
+      <section className="panel-surface space-y-4 p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <ToggleRight className="size-4 text-primary" /> Feature flags — {activeMeta?.label}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {isSuper
+                ? "Turn features on or off for every account holding this role. Changes apply on their next screen load."
+                : "Only a super admin can change feature flags."}
+            </p>
+          </div>
+          <Badge variant="outline">{matrix[active]?.size ?? 0} on</Badge>
+        </div>
+
+        {loading ? (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Loading feature flags…
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {flagGroups.map(([category, perms]) => (
+              <div key={category} className="space-y-1">
+                <h3 className="label-caps">{category}</h3>
+                <ul className="divide-y divide-border">
+                  {perms.map((perm) => {
+                    const on = matrix[active]?.has(perm.key) ?? false;
+                    return (
+                      <li key={perm.key} className="flex items-center justify-between gap-3 py-2.5">
+                        <div>
+                          <p className="text-sm font-medium">{perm.label}</p>
+                          <p className="font-mono text-xs text-muted-foreground">{perm.key}</p>
+                        </div>
+                        <Switch
+                          checked={on}
+                          disabled={!isSuper || flagBusy === `${active}:${perm.key}`}
+                          aria-label={`${activeMeta?.label} — ${perm.label}`}
+                          onCheckedChange={(v) => void toggleFlag(active, perm.key, Boolean(v))}
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+            {flagGroups.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No features defined yet.</p>
+            ) : null}
+          </div>
+        )}
+      </section>
+
       {active === "doctor" ? <PhysiciansPage /> : null}
       {active === "tech" ? <TechsPage /> : null}
+
 
       <section className="panel-surface p-5" hidden={deviceOnly}>
         <h2 className="text-lg font-semibold">{activeMeta?.label} accounts</h2>
