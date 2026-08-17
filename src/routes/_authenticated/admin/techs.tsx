@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/admin/techs")({
 
 type Entry = { email: string; note: string | null; created_at: string };
 
-function TechsPage() {
+export function TechsPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [email, setEmail] = useState("");
   const [note, setNote] = useState("");

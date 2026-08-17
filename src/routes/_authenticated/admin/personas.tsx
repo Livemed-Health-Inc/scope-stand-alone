@@ -7,6 +7,8 @@ import { listAccounts } from "@/lib/access.functions";
 import { provisionPersonaAccount, setPersona } from "@/lib/persona-accounts.functions";
 import { PERSONAS, personaLabel, type Persona } from "@/lib/permissions";
 import { useAuth } from "@/lib/auth";
+import { PhysiciansPage } from "./physicians";
+import { TechsPage } from "./techs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -206,6 +208,9 @@ function PersonasPage() {
           </div>
         ) : null}
       </section>
+
+      {active === "doctor" ? <PhysiciansPage /> : null}
+      {active === "tech" ? <TechsPage /> : null}
 
       <section className="panel-surface p-5">
         <h2 className="text-lg font-semibold">{activeMeta?.label} accounts</h2>

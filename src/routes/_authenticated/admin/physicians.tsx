@@ -23,7 +23,7 @@ type Site = { id: string; hospital: string; unit: string; is_active: boolean };
 type Doctor = { id: string; full_name: string; specialty: string | null };
 type Assignment = { id: string; doctor_id: string; site_id: string; is_active: boolean };
 
-function PhysiciansPage() {
+export function PhysiciansPage() {
   const [sites, setSites] = useState<Site[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
