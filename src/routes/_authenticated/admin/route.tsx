@@ -36,6 +36,10 @@ function AdminLayout() {
   useEffect(() => {
     let active = true;
     void (async () => {
+      if (permissions.some((p) => p.startsWith("admin.") || p === "analytics.view")) {
+        if (active) setAllowed(true);
+        return;
+      }
       const { data: userRes } = await supabase.auth.getUser();
       const uid = userRes.user?.id;
       if (!uid) return;
@@ -46,13 +50,13 @@ function AdminLayout() {
         isAdmin = Boolean(claimed);
         if (isAdmin) void refresh();
       }
-      if (!isAdmin && permissions.some((p) => p.startsWith("admin.") || p === "analytics.view")) isAdmin = true;
-      if (active) setAllowed(Boolean(isAdmin));
+      if (active && (isAdmin || permissions.length > 0)) setAllowed(Boolean(isAdmin));
     })();
     return () => {
       active = false;
     };
-  }, []);
+  }, [permissions.join(",")]);
+
 
   if (allowed === null) {
     return <main className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Checking access…</main>;
