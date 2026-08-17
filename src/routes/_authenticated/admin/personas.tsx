@@ -50,7 +50,7 @@ function PersonasPage() {
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
-  const [active, setActive] = useState<Persona>("hospital");
+  const [active, setActive] = useState<Persona>("doctor");
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [specialty, setSpecialty] = useState("");
