@@ -33,7 +33,7 @@ export function FeatureNav({ className }: { className?: string }) {
   const seen = new Set<string>();
   const items = FEATURES.filter((f) => {
     if (!can(f.permission)) return false;
-    const key = f.to ?? f.href ?? f.label;
+    const key = f.to ?? f.label;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
