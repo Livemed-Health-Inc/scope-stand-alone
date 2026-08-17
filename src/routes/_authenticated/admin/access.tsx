@@ -45,7 +45,7 @@ function AccessPage() {
     setLoading(true);
     try {
       const [rows, perms, rolePerms] = await Promise.all([
-        fetchAccounts({ data: {} }),
+        fetchAccounts(),
         supabase.from("permissions").select("key, label, category, sort_order").order("sort_order"),
         supabase.from("role_permissions").select("role, permission_key"),
       ]);
