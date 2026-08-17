@@ -1,8 +1,22 @@
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Stethoscope, MessageSquare, LayoutGrid, FileText, BedDouble, BarChart3, Shield, Wrench, User } from "lucide-react";
+import {
+  Stethoscope,
+  MessageSquare,
+  LayoutGrid,
+  FileText,
+  BedDouble,
+  BarChart3,
+  Shield,
+  Wrench,
+  User,
+  Loader2,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import type { PermissionKey } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Feature = {
   permission: PermissionKey;
@@ -10,7 +24,7 @@ type Feature = {
   icon: typeof Stethoscope;
   /** internal route */
   to?: string;
-  /** external product */
+  /** external product, opened in an in-app window */
   href?: string;
 };
 
@@ -29,6 +43,31 @@ const FEATURES: Feature[] = [
 
 export function FeatureNav({ className }: { className?: string }) {
   const { can } = useAuth();
+  const [open, setOpen] = useState<Feature | null>(null);
+  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
+
+  // Single sign-on hand-off: the digital front door has already authenticated
+  // the user, so we pass the live session through to the embedded product.
+  useEffect(() => {
+    let cancelled = false;
+    if (!open?.href) {
+      setEmbedUrl(null);
+      return;
+    }
+    void supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      const url = new URL(open.href!);
+      const token = data.session?.access_token;
+      if (token) {
+        url.searchParams.set("sso", "virtualis");
+        url.hash = `access_token=${token}`;
+      }
+      setEmbedUrl(url.toString());
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
 
   const seen = new Set<string>();
   const items = FEATURES.filter((f) => {
@@ -45,26 +84,51 @@ export function FeatureNav({ className }: { className?: string }) {
     "flex items-center gap-1.5 rounded-lg border border-border/70 bg-panel/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground";
 
   return (
-    <nav className={cn("flex flex-wrap items-center gap-2", className)} aria-label="Your features">
-      {items.map((f) => {
-        const Icon = f.icon;
-        return f.to ? (
-          <Link
-            key={f.label}
-            to={f.to}
-            className={base}
-            activeProps={{ className: "border-primary/60 text-foreground bg-primary/10" }}
-          >
-            <Icon className="size-3.5" />
-            {f.label}
-          </Link>
-        ) : (
-          <a key={f.label} href={f.href} target="_blank" rel="noreferrer" className={base}>
-            <Icon className="size-3.5" />
-            {f.label}
-          </a>
-        );
-      })}
-    </nav>
+    <>
+      <nav className={cn("flex flex-wrap items-center gap-2", className)} aria-label="Your features">
+        {items.map((f) => {
+          const Icon = f.icon;
+          return f.to ? (
+            <Link
+              key={f.label}
+              to={f.to}
+              className={base}
+              activeProps={{ className: "border-primary/60 text-foreground bg-primary/10" }}
+            >
+              <Icon className="size-3.5" />
+              {f.label}
+            </Link>
+          ) : (
+            <button key={f.label} type="button" className={base} onClick={() => setOpen(f)}>
+              <Icon className="size-3.5" />
+              {f.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      <Dialog open={!!open} onOpenChange={(v) => !v && setOpen(null)}>
+        <DialogContent className="h-[85vh] max-w-[95vw] gap-0 overflow-hidden p-0 sm:max-w-5xl">
+          <DialogHeader className="border-b border-border px-4 py-3">
+            <DialogTitle className="text-sm">{open?.label}</DialogTitle>
+          </DialogHeader>
+          <div className="h-full w-full bg-background">
+            {embedUrl ? (
+              <iframe
+                key={embedUrl}
+                src={embedUrl}
+                title={open?.label ?? "Feature"}
+                className="h-full w-full border-0"
+                allow="camera; microphone; clipboard-write; fullscreen"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" /> Opening {open?.label}…
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
