@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Plus, UserMinus, Copy } from "lucide-react";
+import { Loader2, Plus, UserMinus, Copy, ToggleRight } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { listAccounts } from "@/lib/access.functions";
 import { provisionPersonaAccount, setPersona } from "@/lib/persona-accounts.functions";
 import { PERSONAS, personaLabel, type Persona } from "@/lib/permissions";
@@ -13,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+
 
 export const Route = createFileRoute("/_authenticated/admin/personas")({
   head: () => ({
@@ -39,10 +42,13 @@ type Account = {
   personas: string[];
 };
 
+type Permission = { key: string; label: string; category: string; sort_order: number };
+
 const ASSIGNABLE = PERSONAS.filter((p) => !p.legacy);
 
+
 function PersonasPage() {
-  const { personas: myPersonas } = useAuth();
+  const { personas: myPersonas, refresh } = useAuth();
   const isSuper = myPersonas.includes("super_admin");
   const fetchAccounts = useServerFn(listAccounts);
   const provision = useServerFn(provisionPersonaAccount);
@@ -56,11 +62,26 @@ function PersonasPage() {
   const [specialty, setSpecialty] = useState("");
   const [busy, setBusy] = useState(false);
   const [issued, setIssued] = useState<{ email: string; password: string; reset: boolean } | null>(null);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [matrix, setMatrix] = useState<Record<string, Set<string>>>({});
+  const [flagBusy, setFlagBusy] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
     try {
-      setAccounts((await fetchAccounts()) as Account[]);
+      const [rows, perms, rolePerms] = await Promise.all([
+        fetchAccounts(),
+        supabase.from("permissions").select("key, label, category, sort_order").order("sort_order"),
+        supabase.from("role_permissions").select("role, permission_key"),
+      ]);
+      setAccounts(rows as Account[]);
+      setPermissions((perms.data ?? []) as Permission[]);
+      const next: Record<string, Set<string>> = {};
+      (rolePerms.data ?? []).forEach((rp) => {
+        const role = rp.role as string;
+        next[role] = (next[role] ?? new Set<string>()).add(rp.permission_key);
+      });
+      setMatrix(next);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load accounts");
     }
@@ -70,6 +91,32 @@ function PersonasPage() {
   useEffect(() => {
     void load();
   }, []);
+
+  const flagGroups = useMemo(() => {
+    const map = new Map<string, Permission[]>();
+    permissions.forEach((p) => map.set(p.category, [...(map.get(p.category) ?? []), p]));
+    return [...map.entries()];
+  }, [permissions]);
+
+  async function toggleFlag(role: Persona, key: string, on: boolean) {
+    setFlagBusy(`${role}:${key}`);
+    const { error } = on
+      ? await supabase.from("role_permissions").insert({ role, permission_key: key })
+      : await supabase.from("role_permissions").delete().eq("role", role).eq("permission_key", key);
+    setFlagBusy(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setMatrix((prev) => {
+      const set = new Set(prev[role] ?? []);
+      if (on) set.add(key);
+      else set.delete(key);
+      return { ...prev, [role]: set };
+    });
+    void refresh();
+  }
+
 
   const counts = useMemo(() => {
     const map: Record<string, number> = {};
@@ -223,8 +270,61 @@ function PersonasPage() {
         ) : null}
       </section>
 
+      <section className="panel-surface space-y-4 p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <ToggleRight className="size-4 text-primary" /> Feature flags — {activeMeta?.label}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {isSuper
+                ? "Turn features on or off for every account holding this role. Changes apply on their next screen load."
+                : "Only a super admin can change feature flags."}
+            </p>
+          </div>
+          <Badge variant="outline">{matrix[active]?.size ?? 0} on</Badge>
+        </div>
+
+        {loading ? (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Loading feature flags…
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {flagGroups.map(([category, perms]) => (
+              <div key={category} className="space-y-1">
+                <h3 className="label-caps">{category}</h3>
+                <ul className="divide-y divide-border">
+                  {perms.map((perm) => {
+                    const on = matrix[active]?.has(perm.key) ?? false;
+                    return (
+                      <li key={perm.key} className="flex items-center justify-between gap-3 py-2.5">
+                        <div>
+                          <p className="text-sm font-medium">{perm.label}</p>
+                          <p className="font-mono text-xs text-muted-foreground">{perm.key}</p>
+                        </div>
+                        <Switch
+                          checked={on}
+                          disabled={!isSuper || flagBusy === `${active}:${perm.key}`}
+                          aria-label={`${activeMeta?.label} — ${perm.label}`}
+                          onCheckedChange={(v) => void toggleFlag(active, perm.key, Boolean(v))}
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+            {flagGroups.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No features defined yet.</p>
+            ) : null}
+          </div>
+        )}
+      </section>
+
       {active === "doctor" ? <PhysiciansPage /> : null}
       {active === "tech" ? <TechsPage /> : null}
+
 
       <section className="panel-surface p-5" hidden={deviceOnly}>
         <h2 className="text-lg font-semibold">{activeMeta?.label} accounts</h2>
