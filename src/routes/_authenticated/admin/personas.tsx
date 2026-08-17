@@ -15,13 +15,13 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/_authenticated/admin/personas")({
   head: () => ({
     meta: [
-      { title: "Personas — LiveMed Admin" },
+      { title: "Roles — LiveMed Admin" },
       {
         name: "description",
-        content: "Create and manage hospital, physician, patient, field tech, analytics and admin logins by persona.",
+        content: "Create and manage hospital, physician, patient, field tech, analytics and admin logins by role.",
       },
-      { property: "og:title", content: "Personas — LiveMed Admin" },
-      { property: "og:description", content: "Directory of every LiveMed login grouped by persona." },
+      { property: "og:title", content: "Roles — LiveMed Admin" },
+      { property: "og:description", content: "Directory of every LiveMed login grouped by role." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -120,9 +120,9 @@ function PersonasPage() {
     <>
       <div>
         <p className="label-caps">Access control</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Personas</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Roles</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Every login belongs to one or more personas. Create logins here; tune what each persona can do on the
+          Every login belongs to one or more roles. Create logins here; tune what each role can do on the
           People &amp; personas screen.
         </p>
       </div>
