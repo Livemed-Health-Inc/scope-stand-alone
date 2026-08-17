@@ -66,6 +66,7 @@ function PersonasPage() {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [matrix, setMatrix] = useState<Record<string, Set<string>>>({});
   const [flagBusy, setFlagBusy] = useState<string | null>(null);
+  const [resetIssued, setResetFor_] = useState<{ id: string; password: string } | null>(null);
 
   async function load() {
     setLoading(true);
@@ -158,6 +159,8 @@ function PersonasPage() {
     try {
       const result = await resetPassword({ data: { userId: account.id } });
       setIssued({ email: result.email || account.email, password: result.password, reset: true });
+      setResetFor_({ id: account.id, password: result.password });
+      void navigator.clipboard.writeText(result.password).catch(() => {});
       toast.success(`New temporary password issued for ${account.email}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not reset the password");
@@ -352,6 +355,24 @@ function PersonasPage() {
                 <div>
                   <p className="text-sm font-medium">{account.full_name || account.email}</p>
                   <p className="text-xs text-muted-foreground">{account.email}</p>
+                  {resetIssued?.id === account.id ? (
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <code className="select-all rounded bg-muted px-2 py-1 font-mono text-xs">
+                        {resetIssued.password}
+                      </code>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 gap-1.5 px-2"
+                        onClick={() => {
+                          void navigator.clipboard.writeText(resetIssued.password);
+                          toast.success("Temporary password copied");
+                        }}
+                      >
+                        <Copy className="size-3.5" /> Copy
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {account.personas
