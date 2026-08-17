@@ -226,7 +226,7 @@ function PersonasPage() {
       {active === "doctor" ? <PhysiciansPage /> : null}
       {active === "tech" ? <TechsPage /> : null}
 
-      <section className="panel-surface p-5">
+      <section className="panel-surface p-5" hidden={deviceOnly}>
         <h2 className="text-lg font-semibold">{activeMeta?.label} accounts</h2>
         {loading ? (
           <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
