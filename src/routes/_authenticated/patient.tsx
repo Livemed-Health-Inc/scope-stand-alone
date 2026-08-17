@@ -124,7 +124,7 @@ function PatientPortal() {
       <VideoVisit
         key={callId}
         roomId={callId}
-        role="local"
+        role="patient"
         patient={profile?.full_name ?? "Patient"}
         hospital="Virtualis Direct"
         unit="Consumer telehealth"
