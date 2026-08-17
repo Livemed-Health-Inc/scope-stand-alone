@@ -136,7 +136,7 @@ function AuthPage() {
                 <div>
                   <Label>I am a</Label>
                   <div className="mt-1 grid grid-cols-3 gap-2">
-                    {(["doctor", "hospital", "patient"] as const).map((r) => (
+                    {(["doctor", "patient"] as const).map((r) => (
                       <Button
                         key={r}
                         type="button"
