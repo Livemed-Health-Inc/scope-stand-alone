@@ -21,6 +21,7 @@ export type PermissionKey =
   | "platform.telemedicine"
   | "platform.chat"
   | "platform.one"
+  | "platform.note"
   | "patient.dtc"
   | "nurse.station"
   | "nurse.rounding"
