@@ -8,6 +8,7 @@ import { DoctorStation } from "@/components/DoctorStation";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/BrandMark";
 import { PermissionGate } from "@/components/PermissionGate";
+import { FeatureNav } from "@/components/FeatureNav";
 
 export const Route = createFileRoute("/_authenticated/doctor")({
   head: () => ({
@@ -68,6 +69,7 @@ function DoctorAppPage() {
               </p>
             </div>
           </div>
+          <FeatureNav className="order-last w-full sm:order-none sm:w-auto" />
           <div className="ml-auto flex items-center gap-3">
             <ConnectionStatus />
             <Button
