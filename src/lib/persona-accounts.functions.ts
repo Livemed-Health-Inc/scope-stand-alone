@@ -133,3 +133,43 @@ export const setPersona = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/** Issues a new temporary password for an existing login. Admin only. */
+export const resetAccountPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string }) => {
+    if (!input?.userId) throw new Error("Missing account");
+    return { userId: input.userId };
+  })
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as Ctx;
+    const { data: isAdmin } = await ctx.supabase.rpc("is_admin", { _user_id: ctx.userId });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: target, error: getError } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    if (getError || !target?.user) throw new Error("Account not found");
+
+    // Only a super admin may reset another admin-level account.
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId);
+    const privileged = (roles ?? []).some((r) =>
+      ["admin", "system_admin", "super_admin"].includes(String(r.role)),
+    );
+    if (privileged) {
+      const { data: isSuper } = await ctx.supabase.rpc("is_super_admin", { _user_id: ctx.userId });
+      if (!isSuper) throw new Error("Only a super admin can reset an admin account");
+    }
+
+    const password = generatePassword();
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+      password,
+      email_confirm: true,
+    });
+    if (error) throw new Error(error.message);
+
+    return { email: target.user.email ?? "", password, reset: true };
+  });
