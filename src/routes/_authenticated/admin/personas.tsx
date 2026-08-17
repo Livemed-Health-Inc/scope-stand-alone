@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Plus, UserMinus, Copy } from "lucide-react";
+import { Loader2, Plus, UserMinus, Copy, ToggleRight } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { listAccounts } from "@/lib/access.functions";
 import { provisionPersonaAccount, setPersona } from "@/lib/persona-accounts.functions";
 import { PERSONAS, personaLabel, type Persona } from "@/lib/permissions";
@@ -13,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+
 
 export const Route = createFileRoute("/_authenticated/admin/personas")({
   head: () => ({
