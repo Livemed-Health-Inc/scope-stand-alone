@@ -171,11 +171,6 @@ function AuthPage() {
                       onChange={(e) => setSpecialty(e.target.value)}
                     />
                   </div>
-                ) : staffRole === "hospital" ? (
-                  <div>
-                    <Label htmlFor="unit">Unit</Label>
-                    <Input id="unit" required value={unit} onChange={(e) => setUnit(e.target.value)} />
-                  </div>
                 ) : null}
                 <div>
                   <Label htmlFor="email2">Work email</Label>
