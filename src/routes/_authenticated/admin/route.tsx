@@ -27,8 +27,6 @@ const NAV: {
 }[] = [
   { to: "/admin", label: "Overview", exact: true, permission: "analytics.view" },
   { to: "/admin/hospitals", label: "Hospitals", permission: "admin.hospitals" },
-  { to: "/admin/physicians", label: "Physicians", permission: "admin.physicians" },
-  { to: "/admin/techs", label: "Field techs", permission: "admin.techs" },
   { to: "/admin/personas", label: "Roles", permission: "admin.users" },
   { to: "/admin/access", label: "People & personas", permission: "admin.roles" },
   { to: "/admin/admins", label: "Admins", permission: "admin.users" },
