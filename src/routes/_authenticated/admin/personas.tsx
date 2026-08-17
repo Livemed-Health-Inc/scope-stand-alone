@@ -84,6 +84,7 @@ function PersonasPage() {
 
   const activeMeta = ASSIGNABLE.find((p) => p.value === active);
   const locked = active === "super_admin" && !isSuper;
+  const deviceOnly = active === "hospital";
 
   async function create() {
     if (!email.trim()) return;
