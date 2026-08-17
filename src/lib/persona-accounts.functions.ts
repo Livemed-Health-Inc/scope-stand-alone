@@ -12,6 +12,8 @@ const PERSONAS = [
   "patient",
   "tech",
   "analytics",
+  "nurse",
+
   "system_admin",
   "super_admin",
 ] as const;
