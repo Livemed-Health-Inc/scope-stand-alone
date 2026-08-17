@@ -31,7 +31,11 @@ export type PermissionKey =
   | "admin.roles";
 
 export const PERSONAS: { value: Persona; label: string; blurb: string; legacy?: boolean }[] = [
-  { value: "hospital", label: "Hospital", blurb: "Bedside nurse login for a registered unit" },
+  {
+    value: "hospital",
+    label: "Hospital",
+    blurb: "Device-based access — granted when a field tech activates a bedside device with an enrollment code. No login.",
+  },
   { value: "doctor", label: "Doctor", blurb: "On-call physician waiting room and consults" },
   { value: "patient", label: "Patient / consumer", blurb: "Direct-to-consumer virtual visits" },
   { value: "tech", label: "Field technician", blurb: "Activates facilities and bedside devices" },
