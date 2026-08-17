@@ -33,7 +33,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [staffRole, setStaffRole] = useState<"nurse" | "doctor">("doctor");
+  const [staffRole, setStaffRole] = useState<"hospital" | "doctor" | "patient">("doctor");
   const [fullName, setFullName] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [unit, setUnit] = useState("ICU - 4 West");
@@ -135,8 +135,8 @@ function AuthPage() {
               <form onSubmit={signUp} className="space-y-3">
                 <div>
                   <Label>I am a</Label>
-                  <div className="mt-1 grid grid-cols-2 gap-2">
-                    {(["nurse", "doctor"] as const).map((r) => (
+                  <div className="mt-1 grid grid-cols-3 gap-2">
+                    {(["doctor", "hospital", "patient"] as const).map((r) => (
                       <Button
                         key={r}
                         type="button"
@@ -144,12 +144,12 @@ function AuthPage() {
                         onClick={() => setStaffRole(r)}
                         className="capitalize"
                       >
-                        {r === "doctor" ? "Physician" : "Nurse"}
+                        {r === "doctor" ? "Physician" : r === "hospital" ? "Hospital" : "Patient"}
                       </Button>
                     ))}
                   </div>
                   <p className="mt-1.5 text-xs text-muted-foreground">
-                    LiveMed administrator access is granted internally and cannot be requested here.
+                    Technician, analytics and administrator personas are granted internally by a LiveMed admin.
                   </p>
 
                 </div>
@@ -168,12 +168,12 @@ function AuthPage() {
                       onChange={(e) => setSpecialty(e.target.value)}
                     />
                   </div>
-                ) : (
+                ) : staffRole === "hospital" ? (
                   <div>
                     <Label htmlFor="unit">Unit</Label>
                     <Input id="unit" required value={unit} onChange={(e) => setUnit(e.target.value)} />
                   </div>
-                )}
+                ) : null}
                 <div>
                   <Label htmlFor="email2">Work email</Label>
                   <Input id="email2" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
