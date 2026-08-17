@@ -150,11 +150,24 @@ function PersonasPage() {
 
       <section className="panel-surface space-y-3 p-5">
         <div>
-          <h2 className="text-lg font-semibold">Add a {activeMeta?.label.toLowerCase()} login</h2>
+          <h2 className="text-lg font-semibold">
+            {deviceOnly ? "Hospital access is device-based" : `Add a ${activeMeta?.label.toLowerCase()} login`}
+          </h2>
           <p className="text-sm text-muted-foreground">{activeMeta?.blurb}</p>
         </div>
 
-        {locked ? (
+        {deviceOnly ? (
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              Hospitals do not get email logins. A field technician activates each bedside device with an
+              enrollment code, and that device inherits the hospital role for its registered unit.
+            </p>
+            <p>
+              Issue or review enrollment codes and devices under{" "}
+              <span className="font-medium text-foreground">Hospital Onboarding</span>.
+            </p>
+          </div>
+        ) : locked ? (
           <p className="text-sm text-muted-foreground">Only a super admin can manage this persona.</p>
         ) : (
           <div className="flex flex-wrap items-end gap-3">
