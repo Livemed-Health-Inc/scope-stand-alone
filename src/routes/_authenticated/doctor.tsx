@@ -8,6 +8,7 @@ import { DoctorStation } from "@/components/DoctorStation";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/BrandMark";
 import { PermissionGate } from "@/components/PermissionGate";
+import { FeatureNav } from "@/components/FeatureNav";
 
 export const Route = createFileRoute("/_authenticated/doctor")({
   head: () => ({
