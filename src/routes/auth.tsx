@@ -40,17 +40,6 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  async function landing() {
-    const { data: userRes } = await supabase.auth.getUser();
-    const uid = userRes.user?.id;
-    if (!uid) return "/doctor" as const;
-    const { data: isAdmin } = await supabase.rpc("is_admin", { _user_id: uid });
-    if (isAdmin) return "/admin" as const;
-    const { data: isTech } = await supabase.rpc("is_tech", { _user_id: uid });
-    if (isTech) return "/tech" as const;
-    return "/doctor" as const;
-  }
-
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -60,7 +49,7 @@ function AuthPage() {
       toast.error(error.message);
       return;
     }
-    void navigate({ to: await landing() });
+    void navigate({ to: "/home" });
   }
 
   async function signUp(e: React.FormEvent) {
@@ -70,7 +59,7 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/doctor`,
+        emailRedirectTo: `${window.location.origin}/home`,
         data: {
           full_name: fullName,
           staff_role: staffRole,
@@ -85,7 +74,7 @@ function AuthPage() {
       return;
     }
     if (data.session) {
-      void navigate({ to: "/doctor" });
+      void navigate({ to: "/home" });
     } else {
       toast.success("Check your email to confirm your account.");
     }
@@ -98,7 +87,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    void navigate({ to: "/doctor" });
+    void navigate({ to: "/home" });
   }
 
   return (

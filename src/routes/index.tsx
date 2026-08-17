@@ -31,7 +31,7 @@ function Landing() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && user) void navigate({ to: "/doctor" });
+    if (!loading && user) void navigate({ to: "/home" });
   }, [loading, user]);
 
   return (
