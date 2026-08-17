@@ -194,13 +194,20 @@ function AccessPage() {
       </TabsContent>
 
       <TabsContent value="matrix" className="space-y-4">
+        {!isSuper ? (
+          <div className="panel-surface p-5 text-sm text-muted-foreground">
+            Only a super admin can change feature flags.
+          </div>
+        ) : (
+        <>
         <div className="panel-surface space-y-2 p-5">
-          <h2 className="text-lg font-semibold">Persona permissions</h2>
+          <h2 className="text-lg font-semibold">Feature flags</h2>
           <p className="text-sm text-muted-foreground">
-            Tick a feature to grant it to every account holding that persona. Changes apply on the person&apos;s next
+            Tick a feature to turn it on for every account holding that role. Changes apply on the person&apos;s next
             screen load.
           </p>
         </div>
+
 
         {grouped.map(([category, perms]) => (
           <div key={category} className="panel-surface overflow-x-auto p-4">
