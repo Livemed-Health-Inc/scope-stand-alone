@@ -26,13 +26,14 @@ export async function ensureStaffRecords(user: User) {
   const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
   if (!roles || roles.length === 0) {
     const role = meta["staff_role"] === "doctor" ? "doctor" : "nurse";
-    await supabase.from("user_roles").insert({ user_id: user.id, role });
+    await supabase.rpc("claim_staff_role", { _role: role });
     if (role === "doctor") {
       await supabase
         .from("doctor_presence")
         .insert({ user_id: user.id, is_online: false, in_consult: false });
     }
   }
+
 }
 
 export async function setDoctorPresence(

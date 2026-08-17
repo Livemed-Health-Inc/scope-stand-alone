@@ -389,6 +389,7 @@ export type Database = {
     }
     Functions: {
       claim_admin_role: { Args: never; Returns: boolean }
+      claim_staff_role: { Args: { _role: string }; Returns: boolean }
       clear_rounding: {
         Args: { _device_token: string; _id: string }
         Returns: undefined
