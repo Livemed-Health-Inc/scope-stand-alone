@@ -246,7 +246,10 @@ function AccessPage() {
             </table>
           </div>
         ))}
+        </>
+        )}
       </TabsContent>
+
     </Tabs>
   );
 }
