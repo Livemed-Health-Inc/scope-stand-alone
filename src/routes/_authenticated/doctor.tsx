@@ -68,6 +68,7 @@ function DoctorAppPage() {
               </p>
             </div>
           </div>
+          <FeatureNav className="order-last w-full sm:order-none sm:w-auto" />
           <div className="ml-auto flex items-center gap-3">
             <ConnectionStatus />
             <Button
