@@ -39,6 +39,7 @@ function AuthPage() {
   const unit = "ICU - 4 West";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<"credentials" | "forgot">("credentials");
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
@@ -51,6 +52,26 @@ function AuthPage() {
     }
     void navigate({ to: "/home" });
   }
+
+  async function sendReset(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim()) {
+      toast.error("Enter your work email first");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Check your email for the password reset link.");
+    setMode("credentials");
+  }
+
 
   async function signUp(e: React.FormEvent) {
     e.preventDefault();
