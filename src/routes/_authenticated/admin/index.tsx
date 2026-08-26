@@ -319,7 +319,116 @@ function AnalyticsPage() {
           </ul>
         )}
       </section>
+
+      <DoctorDetail
+        name={selectedDoctor}
+        rows={rows}
+        periodLabel={periodLabel}
+        onClose={() => setSelectedDoctor(null)}
+      />
     </>
+  );
+}
+
+function DoctorDetail({
+  name,
+  rows,
+  periodLabel,
+  onClose,
+}: {
+  name: string | null;
+  rows: Row[];
+  periodLabel: (iso: string) => string;
+  onClose: () => void;
+}) {
+  const mine = useMemo(() => (name ? rows.filter((r) => r.doctor_name === name) : []), [rows, name]);
+  const totals = useMemo(() => mine.reduce(add, EMPTY), [mine]);
+  const specialties = useMemo(() => groupBy(mine, (r) => r.specialty), [mine]);
+  const facilities = useMemo(() => groupBy(mine, (r) => `${r.hospital} · ${r.unit}`), [mine]);
+  const periods = useMemo(() => {
+    const m = new Map<string, Agg>();
+    for (const r of mine) m.set(r.period, add(m.get(r.period) ?? EMPTY, r));
+    return [...m.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  }, [mine]);
+
+  const stats = [
+    { label: "Consults placed", value: String(totals.placed) },
+    { label: "Answered", value: `${totals.answered} (${pct(totals.answered, totals.placed)})` },
+    { label: "Unanswered", value: String(totals.missed) },
+    { label: "Total call time", value: hhmm(totals.seconds) },
+    { label: "Avg consult", value: hhmm(totals.answered ? totals.seconds / totals.answered : 0) },
+    { label: "Avg time to answer", value: hhmm(totals.answered ? totals.wait / totals.answered : 0) },
+    { label: "Auscultation time", value: hhmm(totals.steth) },
+    { label: "Auscultation sessions / clips", value: `${totals.ausc} / ${totals.recordings}` },
+  ];
+
+  return (
+    <Dialog open={!!name} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{name}</DialogTitle>
+          <DialogDescription>Consult performance, facilities and auscultation usage for this period.</DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {stats.map((s) => (
+            <div key={s.label} className="rounded-lg border border-border p-3">
+              <p className="label-caps text-[10px] text-muted-foreground">{s.label}</p>
+              <p className="mt-1 text-base font-semibold tabular-nums">{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <MiniTable title="Specialties" first="Specialty" rows={specialties} />
+        <MiniTable title="Facilities" first="Facility" rows={facilities} />
+        <MiniTable title="Activity" first="Period" rows={periods.map(([p, v]) => [periodLabel(p), v])} />
+
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-2"
+            disabled={mine.length === 0}
+            onClick={() => downloadRows(mine, `physician-${(name ?? "report").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`)}
+          >
+            <Download className="size-4" /> Export physician report
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MiniTable({ title, first, rows }: { title: string; first: string; rows: [string, Agg][] }) {
+  if (rows.length === 0) return null;
+  return (
+    <section className="space-y-2">
+      <h3 className="text-sm font-medium">{title}</h3>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[420px] text-sm">
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-widest text-muted-foreground">
+              <th className="py-1.5">{first}</th>
+              <th className="py-1.5 text-right">Consults</th>
+              <th className="py-1.5 text-right">Answered</th>
+              <th className="py-1.5 text-right">Call time</th>
+              <th className="py-1.5 text-right">Auscultation</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {rows.map(([label, v]) => (
+              <tr key={label}>
+                <td className="py-1.5 font-medium">{label}</td>
+                <td className="py-1.5 text-right tabular-nums">{v.placed}</td>
+                <td className="py-1.5 text-right tabular-nums text-muted-foreground">{v.answered}</td>
+                <td className="py-1.5 text-right tabular-nums">{hhmm(v.seconds)}</td>
+                <td className="py-1.5 text-right tabular-nums text-muted-foreground">{hhmm(v.steth)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 
