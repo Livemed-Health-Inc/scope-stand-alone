@@ -44,9 +44,12 @@ export interface VideoVisitProps {
   allowRoleSwitch?: boolean;
   /** Let the remote (doctor) device pair its own scope and monitor locally. */
   allowRemoteLocalScope?: boolean;
+  /** Consult id used to attribute analytics events. Defaults to roomId. */
+  callId?: string;
   /** Called when the user taps the back arrow or "End visit". */
   onEnd?: () => void;
 }
+
 
 /**
  * Self-contained telehealth video visit: two-way WebRTC video + audio, PiP
