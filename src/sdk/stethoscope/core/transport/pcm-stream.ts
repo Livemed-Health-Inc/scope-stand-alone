@@ -16,15 +16,21 @@ class PcmQueueProcessor extends AudioWorkletProcessor {
     this.lastOut = 0;
     this.primed = false;
     this.prime = Math.round(sampleRate * 0.12);
+    // Allow the queue to breathe with BLE bursts, but never let latency grow
+    // unbounded. Above this we crossfade forward instead of hard-dropping.
+    this.maxDepth = Math.round(sampleRate * 0.35);
     this.fadeSamples = Math.round(sampleRate * 0.012);
     this.fadeLeft = 0;
+    this.xfade = 0;
+    this.xfadeLen = Math.round(sampleRate * 0.006);
+    this.xfadeRead = 0;
     this.port.onmessage = (e) => {
-      if (e.data === 'flush') { this.read = this.write = 0; this.primed = false; this.lastOut = 0; this.fadeLeft = 0; return; }
+      if (e.data === 'flush') {
+        this.read = this.write = 0; this.primed = false; this.lastOut = 0;
+        this.fadeLeft = 0; this.xfade = 0; return;
+      }
       const chunk = e.data;
       for (let i = 0; i < chunk.length; i++) {
-        // Never let a producer burst lap the reader. Dropping the oldest audio
-        // preserves a continuous live feed instead of turning a full ring into
-        // an apparent empty ring (and an audible restart pop).
         const next = (this.write + 1) % this.size;
         if (next === this.read) this.read = (this.read + 1) % this.size;
         this.buf[this.write] = chunk[i];
@@ -44,6 +50,13 @@ class PcmQueueProcessor extends AudioWorkletProcessor {
       // presenting that discontinuity as a full-scale click.
       this.fadeLeft = this.fadeSamples;
     }
+    // Latency drift correction: skip ahead with an equal-power crossfade so the
+    // splice is inaudible, rather than jumping the read pointer (a click).
+    if (this.xfade === 0 && this.available() > this.maxDepth + this.xfadeLen) {
+      const skip = this.available() - Math.round(sampleRate * 0.18);
+      this.xfadeRead = (this.read + skip) % this.size;
+      this.xfade = this.xfadeLen;
+    }
     for (let i = 0; i < out.length; i++) {
       if (this.read === this.write) {
         // Underrun: decay from the last sample instead of slamming to zero,
@@ -51,9 +64,18 @@ class PcmQueueProcessor extends AudioWorkletProcessor {
         this.lastOut *= 0.995;
         out[i] = this.lastOut;
         this.primed = false;
+        this.xfade = 0;
         continue;
       }
-      const sample = this.buf[this.read];
+      let sample = this.buf[this.read];
+      if (this.xfade > 0) {
+        const t = 1 - this.xfade / this.xfadeLen;
+        const g = Math.sin((t * Math.PI) / 2);
+        sample = sample * (1 - g) * (1 - g) + this.buf[this.xfadeRead] * g * g;
+        this.xfadeRead = (this.xfadeRead + 1) % this.size;
+        this.xfade--;
+        if (this.xfade === 0) this.read = (this.xfadeRead - 1 + this.size) % this.size;
+      }
       if (this.fadeLeft > 0) {
         const mix = 1 - this.fadeLeft / this.fadeSamples;
         this.lastOut = sample * mix;
@@ -69,6 +91,7 @@ class PcmQueueProcessor extends AudioWorkletProcessor {
 }
 registerProcessor('pcm-queue', PcmQueueProcessor);
 `;
+
 
 export interface PcmStreamNode {
   node: AudioNode;
