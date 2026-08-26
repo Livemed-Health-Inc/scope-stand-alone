@@ -1,0 +1,17 @@
+{
+  "name": "Virtualis Consult",
+  "short_name": "Virtualis",
+  "description": "Bedside-to-physician consults with live presence and a remote digital stethoscope exam.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#121936",
+  "theme_color": "#121936",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
+import { getDeviceToken } from "@/lib/device";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,12 +24,16 @@ export const Route = createFileRoute("/")({
   component: RootRedirect,
 });
 
-/** No marketing page: personas decide where you land, so go straight to sign-in. */
+/** No marketing page: an activated bedside device goes to the nurse station, everyone else signs in. */
 function RootRedirect() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (getDeviceToken()) {
+      void navigate({ to: "/nurse", replace: true });
+      return;
+    }
     if (loading) return;
     void navigate({ to: user ? "/home" : "/auth", replace: true });
   }, [loading, user]);
