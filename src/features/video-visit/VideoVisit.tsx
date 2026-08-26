@@ -393,7 +393,7 @@ export function VideoVisit({
         </div>
 
         {/* Right column on wide screens */}
-        <div className="contents lg:col-start-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-2">
+        <div className={isBedside ? "flex flex-col gap-2" : "contents lg:col-start-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-2"}>
       {showScribeBanner && (
         <div className="mt-2 flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2">
           <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
