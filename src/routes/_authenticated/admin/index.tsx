@@ -263,7 +263,13 @@ function AnalyticsPage() {
       </div>
 
       <Breakdown title="By specialty" rows={bySpecialty} loading={loading} firstHeader="Specialty" />
-      <Breakdown title="By physician" rows={byDoctor} loading={loading} firstHeader="Physician" />
+      <Breakdown
+        title="By physician"
+        rows={byDoctor}
+        loading={loading}
+        firstHeader="Physician"
+        onRowClick={setSelectedDoctor}
+      />
       <Breakdown title="By hospital & unit" rows={byHospital} loading={loading} firstHeader="Facility" />
 
       <section className="panel-surface space-y-3 p-5">
