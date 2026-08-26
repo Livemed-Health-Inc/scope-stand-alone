@@ -21,7 +21,22 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
   const [locked, setLocked] = useState(false);
 
   async function verify() {
-    const token = getDeviceToken();
+    let token = getDeviceToken();
+
+    // Hospital bedside login: a signed-in unit account gets a fresh, tab-scoped
+    // bedside session without ever registering this browser as a tablet.
+    if (!token) {
+      const { data: session } = await supabase.auth.getSession();
+      if (session.session) {
+        const { data: minted } = await supabase.rpc("bedside_session_token");
+        const row = (minted ?? [])[0] as { device_token: string } | undefined;
+        if (row?.device_token) {
+          setPreviewToken(row.device_token);
+          token = row.device_token;
+        }
+      }
+    }
+
     if (!token) {
       setChecking(false);
       return;
@@ -37,6 +52,7 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
     }
     setChecking(false);
   }
+
 
   useEffect(() => {
     // Admin bedside preview: consume ?preview=<token> into a tab-scoped slot.
