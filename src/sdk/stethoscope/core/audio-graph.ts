@@ -146,12 +146,19 @@ export async function createAudioGraph(s: GraphSettings): Promise<AudioGraph> {
 /** Re-point the band filters when the auscultation mode changes. */
 export function applyMode(g: AudioGraph, mode: AuscultationMode) {
   const band = MODE_FILTERS[mode];
-  g.hp.frequency.value = band.low;
-  g.hp2.frequency.value = band.low;
-  g.lp.frequency.value = band.high;
-  g.lp2.frequency.value = band.high;
-  g.lp3.frequency.value = band.high * 1.6;
-  g.heartPeak.gain.value = mode === "bell" ? 8 : 0;
+  const now = g.ctx.currentTime;
+  const smooth = (param: AudioParam, value: number) => {
+    param.cancelScheduledValues(now);
+    param.setTargetAtTime(value, now, 0.02);
+  };
+  // Ramping the biquad coefficients avoids an impulse when clinicians change
+  // modes while audio is flowing through filters with existing internal state.
+  smooth(g.hp.frequency, band.low);
+  smooth(g.hp2.frequency, band.low);
+  smooth(g.lp.frequency, band.high);
+  smooth(g.lp2.frequency, band.high);
+  smooth(g.lp3.frequency, band.high * 1.6);
+  smooth(g.heartPeak.gain, mode === "bell" ? 8 : 0);
 }
 
 export function disposeGraph(g: AudioGraph) {

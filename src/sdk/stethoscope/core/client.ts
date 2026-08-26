@@ -175,9 +175,14 @@ export class StethoscopeClient {
         mode: ECHO_MODE_CODE[patch.mode === "bell" ? "bell" : "diaphragm"],
       });
     }
-    if (g && patch.gain !== undefined) g.gain.gain.value = patch.gain;
-    if (g && patch.bass !== undefined) g.shelf.gain.value = patch.bass;
-    if (g && patch.monitoring !== undefined) g.monitor.gain.value = patch.monitoring ? 1 : 0;
+    if (g) {
+      const now = g.ctx.currentTime;
+      if (patch.gain !== undefined) g.gain.gain.setTargetAtTime(patch.gain, now, 0.015);
+      if (patch.bass !== undefined) g.shelf.gain.setTargetAtTime(patch.bass, now, 0.02);
+      if (patch.monitoring !== undefined) {
+        g.monitor.gain.setTargetAtTime(patch.monitoring ? 1 : 0, now, 0.01);
+      }
+    }
   }
 
   // ---- lifecycle ---------------------------------------------------------
@@ -413,6 +418,8 @@ export class StethoscopeClient {
   setTransport(kind: TransportKind) {
     this.transport?.dispose();
     this.transport = null;
+    if (this.graph) disposeGraph(this.graph);
+    this.graph = null;
     this.kind = kind;
     this.set({
       hostKind: kind,
@@ -421,6 +428,8 @@ export class StethoscopeClient {
       audioCharId: null,
       deviceId: null,
       capturing: false,
+      analyser: null,
+      callStream: null,
       status: "idle",
       error: null,
     });
