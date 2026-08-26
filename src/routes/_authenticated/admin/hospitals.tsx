@@ -336,6 +336,67 @@ function HospitalsPage() {
                   {expanded && (
                     <div className="mt-3 ml-6 space-y-4 border-l border-border pl-4">
                       <div>
+                        <p className="label-caps">Bedside view login</p>
+                        {siteLogin ? (
+                          <div className="mt-1.5 space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => void copy(siteLogin.email)}
+                                className="flex items-center gap-2 rounded-md border border-border px-2.5 py-1 font-mono text-xs"
+                                title="Copy sign-in email"
+                              >
+                                {siteLogin.email}
+                                {copied === siteLogin.email ? (
+                                  <Check className="size-3.5" />
+                                ) : (
+                                  <Copy className="size-3.5" />
+                                )}
+                              </button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 gap-1.5 px-2 text-xs"
+                                onClick={() => void issueLogin(s.id)}
+                              >
+                                <KeyRound className="size-3.5" /> New password
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 gap-1.5 px-2 text-xs"
+                                onClick={() => void dropLogin(siteLogin)}
+                              >
+                                <ShieldOff className="size-3.5" /> Remove
+                              </Button>
+                            </div>
+                            {siteCred ? (
+                              <p className="text-xs text-muted-foreground">
+                                Temporary password:{" "}
+                                <button
+                                  type="button"
+                                  onClick={() => void copy(siteCred.password)}
+                                  className="font-mono text-foreground underline"
+                                  title="Copy password"
+                                >
+                                  {siteCred.password}
+                                </button>{" "}
+                                — shown once, share it securely.
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                            <p className="text-sm text-muted-foreground">No bedside login for this unit yet.</p>
+                            <Button size="sm" variant="outline" className="h-7 gap-1.5 px-2 text-xs" onClick={() => void issueLogin(s.id)}>
+                              <LogIn className="size-3.5" /> Create login
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+
                         <p className="label-caps">Open activation codes</p>
                         {siteCodes.length === 0 ? (
                           <p className="mt-1 text-sm text-muted-foreground">No unused codes.</p>
