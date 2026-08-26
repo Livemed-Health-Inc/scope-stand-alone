@@ -81,6 +81,8 @@ export function VideoVisit({
   useEffect(() => {
     setRole(roleProp);
   }, [roleProp]);
+  const isBedside = role === "patient";
+
   const [scopeStream, setScopeStream] = useState<MediaStream | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const [listening, setListening] = useState(true);
