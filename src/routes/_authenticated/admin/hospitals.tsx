@@ -118,7 +118,8 @@ function HospitalsPage() {
   }
 
   async function openBedside(site: Site) {
-    const tab = window.open("", "_blank", "noopener,noreferrer");
+    // Open the tab synchronously (no noopener, so we keep the handle) to survive popup blockers.
+    const tab = window.open("about:blank", "_blank");
     const { data, error } = await supabase.rpc("admin_preview_device", { _site_id: site.id });
     const row = (data ?? [])[0] as { device_token: string } | undefined;
     if (error || !row) {
@@ -127,8 +128,13 @@ function HospitalsPage() {
       return;
     }
     const url = `${window.location.origin}/nurse?preview=${encodeURIComponent(row.device_token)}`;
-    if (tab) tab.location.href = url;
-    else window.open(url, "_blank", "noopener,noreferrer");
+    if (tab && !tab.closed) {
+      tab.location.replace(url);
+    } else {
+      // Popup blocked (common inside the preview iframe) — navigate the top-level window instead.
+      const target = window.top ?? window;
+      target.location.href = url;
+    }
     void load();
   }
 
