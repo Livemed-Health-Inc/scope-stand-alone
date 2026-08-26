@@ -45,6 +45,65 @@ const newId = () =>
     : Math.random().toString(36).slice(2);
 
 /**
+ * Heart sounds are not speech: Opus' default narrowband/DTX/variable-rate
+ * behaviour chops the low thumps and injects sharp static on the listening
+ * side. Force full-band, constant-rate, no-DTX audio in the SDP.
+ */
+const HIFI_OPUS = [
+  "stereo=0",
+  "sprop-stereo=0",
+  "maxaveragebitrate=128000",
+  "maxplaybackrate=48000",
+  "sprop-maxcapturerate=48000",
+  "useinbandfec=1",
+  "usedtx=0",
+  "cbr=1",
+].join(";");
+
+function hifiAudio(sdp: string): string {
+  const pts = [...sdp.matchAll(/^a=rtpmap:(\d+)\s+opus\/48000/gim)].map((m) => m[1]);
+  let out = sdp;
+  for (const pt of pts) {
+    const fmtp = new RegExp(`^a=fmtp:${pt} (.*)$`, "im");
+    if (fmtp.test(out)) {
+      out = out.replace(fmtp, (_m, params: string) => {
+        const kept = params
+          .split(";")
+          .filter((p) => !/^(stereo|sprop-stereo|maxaveragebitrate|maxplaybackrate|sprop-maxcapturerate|useinbandfec|usedtx|cbr)=/i.test(p.trim()))
+          .filter(Boolean);
+        return `a=fmtp:${pt} ${[...kept, HIFI_OPUS].join(";")}`;
+      });
+    } else {
+      out = out.replace(
+        new RegExp(`^(a=rtpmap:${pt} opus/48000.*)$`, "im"),
+        `$1\r\na=fmtp:${pt} ${HIFI_OPUS}`,
+      );
+    }
+  }
+  return out;
+}
+
+/** Give the audio encoder enough headroom for full-band auscultation. */
+async function raiseAudioBitrate(pc: RTCPeerConnection) {
+  for (const sender of pc.getSenders()) {
+    if (sender.track?.kind !== "audio") continue;
+    const params = sender.getParameters();
+    if (!params.encodings || !params.encodings.length) params.encodings = [{}];
+    params.encodings.forEach((e) => {
+      e.maxBitrate = 128000;
+      (e as RTCRtpEncodingParameters & { networkPriority?: string }).networkPriority = "high";
+      e.priority = "high";
+    });
+    try {
+      await sender.setParameters(params);
+    } catch {
+      /* browser may reject mid-negotiation; retried on the next pass */
+    }
+  }
+}
+
+
+/**
  * Two-way visit link: camera + microphone in both directions, plus the
  * processed stethoscope audio published from the patient-side device.
  * Signalling rides a Lovable Cloud realtime broadcast channel keyed on the
