@@ -24,12 +24,12 @@ export async function auditLog(event: AuditEvent): Promise<void> {
   try {
     const { error } = await supabase.rpc("log_audit_event", {
       _action: event.action,
-      _entity: event.entity ?? null,
-      _entity_id: event.entityId ?? null,
+      _entity: event.entity ?? undefined,
+      _entity_id: event.entityId ?? undefined,
       _phi_accessed: event.phi ?? false,
       _outcome: event.outcome ?? "success",
-      _details: scrubPhiDeep(event.details ?? {}),
-      _device_token: event.withDevice ? getDeviceToken() : null,
+      _details: scrubPhiDeep(event.details ?? {}) as never,
+      _device_token: (event.withDevice ? getDeviceToken() : null) ?? undefined,
     });
     if (error) console.warn("[audit] write failed", error.message);
   } catch (err) {
