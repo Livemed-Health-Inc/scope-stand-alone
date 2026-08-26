@@ -22,15 +22,18 @@ export type AuditEvent = {
  */
 export async function auditLog(event: AuditEvent): Promise<void> {
   try {
-    const { error } = await supabase.rpc("log_audit_event", {
+    const deviceToken = event.withDevice ? getDeviceToken() : null;
+    const args: Record<string, unknown> = {
       _action: event.action,
-      _entity: event.entity ?? undefined,
-      _entity_id: event.entityId ?? undefined,
       _phi_accessed: event.phi ?? false,
       _outcome: event.outcome ?? "success",
-      _details: scrubPhiDeep(event.details ?? {}) as never,
-      _device_token: (event.withDevice ? getDeviceToken() : null) ?? undefined,
-    });
+      _details: scrubPhiDeep(event.details ?? {}),
+    };
+    if (event.entity) args["_entity"] = event.entity;
+    if (event.entityId) args["_entity_id"] = event.entityId;
+    if (deviceToken) args["_device_token"] = deviceToken;
+
+    const { error } = await supabase.rpc("log_audit_event", args as never);
     if (error) console.warn("[audit] write failed", error.message);
   } catch (err) {
     console.warn("[audit] write failed", err);
