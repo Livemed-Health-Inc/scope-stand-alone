@@ -47,9 +47,12 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) {
+      // Failed attempts are recorded for the required access-monitoring review.
+      void auditLog({ action: "auth.sign_in", outcome: "denied", details: { reason: "invalid_credentials" } });
       toast.error(error.message);
       return;
     }
+    void auditLog({ action: "auth.sign_in" });
     void navigate({ to: "/home" });
   }
 
