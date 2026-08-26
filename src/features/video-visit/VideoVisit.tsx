@@ -100,10 +100,8 @@ export function VideoVisit({
   useEffect(() => {
     let cancelled = false;
     let stream: MediaStream | null = null;
-    const video: MediaTrackConstraints = cameraId
-      ? { deviceId: { exact: cameraId } }
-      : { facingMode: "user" };
     const md = navigator.mediaDevices;
+
     const attach = (s: MediaStream) => {
       if (cancelled) {
         s.getTracks().forEach((t) => t.stop());
@@ -111,24 +109,61 @@ export function VideoVisit({
       }
       stream = s;
       setSelfStream(s);
-      setSelfError(false);
+      setSelfError(null);
     };
-    md
-      ?.getUserMedia({ video, audio: true })
-      .then(attach)
-      .catch(() =>
-        // External camera vanished or is busy — fall back to any camera.
-        md
-          ?.getUserMedia({ video: true, audio: true })
-          .then(attach)
-          .catch(() => !cancelled && setSelfError(true)),
+
+    if (!md?.getUserMedia) {
+      setSelfError(
+        window.isSecureContext === false
+          ? "Camera needs a secure (https) connection"
+          : "This browser blocks camera access",
       );
+      return;
+    }
+
+    // Try the picked camera first, then any camera, then camera-only (mic busy),
+    // then audio-only. Some Edge/Windows setups reject `exact` device IDs or
+    // fail when another app already holds the webcam.
+    const attempts: MediaStreamConstraints[] = [
+      ...(cameraId ? [{ video: { deviceId: { exact: cameraId } }, audio: true } as MediaStreamConstraints] : []),
+      { video: true, audio: true },
+      { video: true, audio: false },
+    ];
+
+    void (async () => {
+      let lastErr: unknown = null;
+      for (const constraints of attempts) {
+        if (cancelled) return;
+        try {
+          const s = await md.getUserMedia(constraints);
+          attach(s);
+          return;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      if (cancelled) return;
+      const name = (lastErr as DOMException | null)?.name;
+      setSelfError(
+        name === "NotAllowedError"
+          ? "Camera blocked — allow camera access in the browser address bar, then retry"
+          : name === "NotFoundError"
+            ? "No camera detected on this device"
+            : name === "NotReadableError"
+              ? "Camera is in use by another app — close it and retry"
+              : "Could not start the camera",
+      );
+      // A saved external camera that no longer exists shouldn't stick around.
+      if (cameraId && (name === "NotFoundError" || name === "OverconstrainedError")) setCameraId(null);
+    })();
+
     return () => {
       cancelled = true;
       stream?.getTracks().forEach((t) => t.stop());
       setSelfStream(null);
     };
-  }, [cameraId]);
+  }, [cameraId, retryKey, setCameraId]);
+
 
 
   // Camera / mic toggles just enable or disable the published tracks.
