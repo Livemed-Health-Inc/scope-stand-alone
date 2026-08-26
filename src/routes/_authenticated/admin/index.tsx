@@ -86,7 +86,76 @@ function add(a: Agg, r: Row): Agg {
   };
 }
 
+function csvCell(value: unknown) {
+  const s = String(value ?? "");
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function downloadCsv(filename: string, header: string[], rows: (string | number)[][]) {
+  const csv = [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${filename}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Row-level export: every period × specialty × physician × facility bucket. */
+function downloadRows(rows: Row[], filename: string) {
+  downloadCsv(
+    filename,
+    [
+      "Period",
+      "Specialty",
+      "Physician",
+      "Hospital",
+      "Unit",
+      "Placed",
+      "Answered",
+      "Missed",
+      "Call seconds",
+      "Wait seconds",
+      "Auscultation seconds",
+      "Site checks",
+      "Recordings",
+    ],
+    rows.map((r) => [
+      r.period,
+      r.specialty,
+      r.doctor_name,
+      r.hospital,
+      r.unit,
+      r.placed,
+      r.answered,
+      r.missed,
+      r.total_seconds,
+      r.wait_seconds,
+      r.steth_seconds,
+      r.ausc_events,
+      r.recordings,
+    ]),
+  );
+}
+
+function downloadBreakdown(title: string, firstHeader: string, rows: [string, Agg][]) {
+  downloadCsv(
+    title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    [firstHeader, "Consults", "Answered", "Call seconds", "Avg seconds", "Auscultation seconds", "Recordings"],
+    rows.map(([label, v]) => [
+      label,
+      v.placed,
+      v.answered,
+      v.seconds,
+      v.answered ? Math.round(v.seconds / v.answered) : 0,
+      v.steth,
+      v.recordings,
+    ]),
+  );
+}
+
 function groupBy(rows: Row[], key: (r: Row) => string) {
+
   const m = new Map<string, Agg>();
   for (const r of rows) m.set(key(r), add(m.get(key(r)) ?? EMPTY, r));
   return [...m.entries()].sort((a, b) => b[1].placed - a[1].placed);
