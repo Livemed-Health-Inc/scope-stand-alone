@@ -28,11 +28,19 @@ function fmt(sec: number) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+export type StethoscopeUsageEvent = {
+  kind: "stethoscope_session" | "auscultation_site" | "recording";
+  site?: string;
+  durationMs?: number;
+  details?: Record<string, unknown>;
+};
+
 export function StethoscopePanel({
   className = "",
   onCallStream,
   localMonitor = true,
   brandIconUrl,
+  onEvent,
 }: {
   className?: string;
   /** Receives the processed heart-sound stream for remote streaming. */
@@ -41,7 +49,10 @@ export function StethoscopePanel({
   localMonitor?: boolean;
   /** Optional logo shown in the panel header; falls back to a stethoscope icon. */
   brandIconUrl?: string;
+  /** Usage telemetry: auscultation sessions, site changes and recordings. */
+  onEvent?: (event: StethoscopeUsageEvent) => void;
 }) {
+
 
   const s = useStethoscope();
   const { devices, deviceId, connect, connected, capturing, startCapture, autoPair } = s;
