@@ -231,6 +231,16 @@ function HospitalsPage() {
                       </span>
                     </button>
                     <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2"
+                        disabled={!s.is_active}
+                        title={s.is_active ? "Open the live bedside station for this unit" : "Activate this unit first"}
+                        onClick={() => void openBedside(s)}
+                      >
+                        <MonitorPlay className="size-4" /> Bedside view
+                      </Button>
                       <Button size="sm" variant="outline" className="gap-2" onClick={() => void issueCode(s.id)}>
                         <KeyRound className="size-4" /> Activation code
                       </Button>
@@ -240,6 +250,7 @@ function HospitalsPage() {
                         {s.is_active ? "Deactivate" : "Activate"}
                       </Button>
                     </div>
+
                   </div>
 
                   {expanded && (
