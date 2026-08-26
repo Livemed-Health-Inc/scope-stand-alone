@@ -89,7 +89,8 @@ export function VideoVisit({
   const [audioBlocked, setAudioBlocked] = useState(false);
   const selfVideoRef = useRef<HTMLVideoElement>(null);
   const [selfStream, setSelfStream] = useState<MediaStream | null>(null);
-  const [selfError, setSelfError] = useState(false);
+  const [selfError, setSelfError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const [camPicker, setCamPicker] = useState(false);
   const { cameras, cameraId, setCameraId } = useCameraDevices(!!selfStream);
@@ -99,10 +100,8 @@ export function VideoVisit({
   useEffect(() => {
     let cancelled = false;
     let stream: MediaStream | null = null;
-    const video: MediaTrackConstraints = cameraId
-      ? { deviceId: { exact: cameraId } }
-      : { facingMode: "user" };
     const md = navigator.mediaDevices;
+
     const attach = (s: MediaStream) => {
       if (cancelled) {
         s.getTracks().forEach((t) => t.stop());
@@ -110,24 +109,61 @@ export function VideoVisit({
       }
       stream = s;
       setSelfStream(s);
-      setSelfError(false);
+      setSelfError(null);
     };
-    md
-      ?.getUserMedia({ video, audio: true })
-      .then(attach)
-      .catch(() =>
-        // External camera vanished or is busy — fall back to any camera.
-        md
-          ?.getUserMedia({ video: true, audio: true })
-          .then(attach)
-          .catch(() => !cancelled && setSelfError(true)),
+
+    if (!md?.getUserMedia) {
+      setSelfError(
+        window.isSecureContext === false
+          ? "Camera needs a secure (https) connection"
+          : "This browser blocks camera access",
       );
+      return;
+    }
+
+    // Try the picked camera first, then any camera, then camera-only (mic busy),
+    // then audio-only. Some Edge/Windows setups reject `exact` device IDs or
+    // fail when another app already holds the webcam.
+    const attempts: MediaStreamConstraints[] = [
+      ...(cameraId ? [{ video: { deviceId: { exact: cameraId } }, audio: true } as MediaStreamConstraints] : []),
+      { video: true, audio: true },
+      { video: true, audio: false },
+    ];
+
+    void (async () => {
+      let lastErr: unknown = null;
+      for (const constraints of attempts) {
+        if (cancelled) return;
+        try {
+          const s = await md.getUserMedia(constraints);
+          attach(s);
+          return;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      if (cancelled) return;
+      const name = (lastErr as DOMException | null)?.name;
+      setSelfError(
+        name === "NotAllowedError"
+          ? "Camera blocked — allow camera access in the browser address bar, then retry"
+          : name === "NotFoundError"
+            ? "No camera detected on this device"
+            : name === "NotReadableError"
+              ? "Camera is in use by another app — close it and retry"
+              : "Could not start the camera",
+      );
+      // A saved external camera that no longer exists shouldn't stick around.
+      if (cameraId && (name === "NotFoundError" || name === "OverconstrainedError")) setCameraId(null);
+    })();
+
     return () => {
       cancelled = true;
       stream?.getTracks().forEach((t) => t.stop());
       setSelfStream(null);
     };
-  }, [cameraId]);
+  }, [cameraId, retryKey, setCameraId]);
+
 
 
   // Camera / mic toggles just enable or disable the published tracks.
@@ -349,6 +385,19 @@ export function VideoVisit({
               : "Waiting for the other side to join…"}
         </span>
 
+        {selfError && (
+          <div className="absolute inset-x-3 top-3 z-10 flex flex-wrap items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/15 px-3 py-2 text-xs text-destructive-foreground">
+            <span className="flex-1">{selfError}</span>
+            <button
+              type="button"
+              onClick={() => setRetryKey((k) => k + 1)}
+              className="rounded-full bg-destructive px-3 py-1 text-[11px] font-semibold text-destructive-foreground"
+            >
+              Retry camera
+            </button>
+          </div>
+        )}
+
         <div className="absolute right-3 top-3 w-20 overflow-hidden rounded-xl border border-navy-700/80 bg-navy-700 shadow-lg sm:w-24 lg:w-32">
           <div className="relative aspect-3/4 w-full">
             <video
@@ -367,6 +416,7 @@ export function VideoVisit({
               </div>
             )}
           </div>
+
           <p className="bg-navy-900/70 py-0.5 text-center text-[9px] font-medium text-slate-300">
             You
           </p>
