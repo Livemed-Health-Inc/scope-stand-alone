@@ -8,7 +8,9 @@ import {
   ExternalLink,
   KeyRound,
   Link as LinkIcon,
+  MonitorPlay,
   Plus,
+
   Power,
   PowerOff,
   ShieldCheck,
