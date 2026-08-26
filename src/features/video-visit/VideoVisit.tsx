@@ -213,11 +213,15 @@ export function VideoVisit({
       }
 
       const name = (lastErr as DOMException | null)?.name;
+      const embedded = typeof window !== "undefined" && window.self !== window.top;
       setSelfError(
         name === "NotAllowedError" || name === "PermissionDeniedError" || name === "SecurityError"
-          ? "Camera blocked — select the camera icon in Chrome's address bar, allow access, then retry"
-          : name === "NotFoundError"
-            ? "No camera detected on this device"
+          ? "Camera blocked — select the camera icon in the address bar, allow access, then retry"
+          : name === "NotFoundError" || name === "DevicesNotFoundError"
+            ? embedded
+              ? "No camera available in this embedded view — open the app in its own browser tab"
+              : "No camera detected — plug in or enable a webcam (check Windows camera privacy settings), then retry"
+
             : name === "NotReadableError" || name === "TrackStartError" || name === "AbortError"
               ? "Chrome could not start the camera — close other camera apps or tabs, then retry"
               : name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError"
