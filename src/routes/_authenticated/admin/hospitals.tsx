@@ -127,6 +127,7 @@ function HospitalsPage() {
       toast.error(error?.message ?? "Could not open the bedside view");
       return;
     }
+    void auditLog({ action: "bedside.admin_preview", entity: "hospital_sites", entityId: site.id, phi: true });
     const url = `${window.location.origin}/nurse?preview=${encodeURIComponent(row.device_token)}`;
     if (tab && !tab.closed) {
       tab.location.replace(url);
