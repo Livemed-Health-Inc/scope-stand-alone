@@ -203,9 +203,17 @@ export function NurseStation({ device }: { device: DeviceContext }) {
     });
 
     if (error || !data) {
+      void auditLog({ action: "consult.placed", entity: "calls", outcome: "error", withDevice: true });
       toast.error(error?.message ?? "Could not place the call.");
       return;
     }
+    void auditLog({
+      action: "consult.placed",
+      entity: "calls",
+      entityId: data as string,
+      phi: true,
+      withDevice: true,
+    });
     setActiveCall({
       id: data as string,
       doctor_id: target.id,

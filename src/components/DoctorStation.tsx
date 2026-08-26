@@ -187,6 +187,7 @@ export function DoctorStation() {
       .from("calls")
       .update({ status: "accepted", answered_at: new Date().toISOString() })
       .eq("id", call.id);
+    void auditLog({ action: "consult.accepted", entity: "calls", entityId: call.id, phi: true });
     setActive({ ...call, status: "accepted" });
     setIncoming((c) => c.filter((x) => x.id !== call.id));
   }
