@@ -294,7 +294,7 @@ export function VideoVisit({
       <section className={`relative overflow-hidden rounded-3xl bg-navy-800 ${isBedside ? "flex-1 min-h-0" : ""}`}>
         <video
           ref={remoteVideoRef}
-          className={`aspect-4/3 w-full object-cover lg:aspect-video ${remoteHasVideo ? "" : "hidden"}`}
+          className={`w-full object-cover ${isBedside ? "absolute inset-0 h-full" : "aspect-4/3 lg:aspect-video"} ${remoteHasVideo ? "" : "hidden"}`}
           playsInline
           autoPlay
         />
