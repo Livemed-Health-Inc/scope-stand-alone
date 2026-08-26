@@ -93,11 +93,13 @@ export function VideoVisit({
   const [retryKey, setRetryKey] = useState(0);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const [camPicker, setCamPicker] = useState(false);
-  const { cameras, cameraId, setCameraId } = useCameraDevices(!!selfStream);
+  const { cameras, cameraId, preferenceReady, setCameraId, refresh: refreshCameras } = useCameraDevices(!!selfStream);
 
   // Local camera + microphone, acquired once for the whole visit.
   // Re-acquired when the clinician switches to an external camera.
   useEffect(() => {
+    if (!preferenceReady) return;
+
     let cancelled = false;
     let stream: MediaStream | null = null;
     const md = navigator.mediaDevices;
@@ -121,9 +123,8 @@ export function VideoVisit({
       return;
     }
 
-    // Try the picked camera first, then any camera, then camera-only (mic busy),
-    // then audio-only. Some Edge/Windows setups reject `exact` device IDs or
-    // fail when another app already holds the webcam.
+    // Try the picked camera first, then any camera, then camera-only (mic busy).
+    // Chrome can reject a stale persisted device ID after an OS or USB change.
     const attempts: MediaStreamConstraints[] = [
       ...(cameraId ? [{ video: { deviceId: { exact: cameraId } }, audio: true } as MediaStreamConstraints] : []),
       { video: true, audio: true },
@@ -145,12 +146,14 @@ export function VideoVisit({
       if (cancelled) return;
       const name = (lastErr as DOMException | null)?.name;
       setSelfError(
-        name === "NotAllowedError"
-          ? "Camera blocked — allow camera access in the browser address bar, then retry"
+        name === "NotAllowedError" || name === "PermissionDeniedError" || name === "SecurityError"
+          ? "Camera blocked — select the camera icon in Chrome's address bar, allow access, then retry"
           : name === "NotFoundError"
             ? "No camera detected on this device"
-            : name === "NotReadableError"
-              ? "Camera is in use by another app — close it and retry"
+            : name === "NotReadableError" || name === "TrackStartError" || name === "AbortError"
+              ? "Chrome could not start the camera — close other camera apps or tabs, then retry"
+              : name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError"
+                ? "The selected camera is unavailable — choose another camera and retry"
               : "Could not start the camera",
       );
       // A saved external camera that no longer exists shouldn't stick around.
@@ -162,7 +165,12 @@ export function VideoVisit({
       stream?.getTracks().forEach((t) => t.stop());
       setSelfStream(null);
     };
-  }, [cameraId, retryKey, setCameraId]);
+  }, [cameraId, preferenceReady, retryKey, setCameraId]);
+
+  const retryCamera = useCallback(() => {
+    setSelfError(null);
+    void refreshCameras().finally(() => setRetryKey((key) => key + 1));
+  }, [refreshCameras]);
 
 
 
@@ -390,7 +398,7 @@ export function VideoVisit({
             <span className="flex-1">{selfError}</span>
             <button
               type="button"
-              onClick={() => setRetryKey((k) => k + 1)}
+              onClick={retryCamera}
               className="rounded-full bg-destructive px-3 py-1 text-[11px] font-semibold text-destructive-foreground"
             >
               Retry camera

@@ -12,12 +12,15 @@ export type CameraDevice = { deviceId: string; label: string };
 export function useCameraDevices(ready: boolean) {
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [cameraId, setCameraIdState] = useState<string | null>(null);
+  const [preferenceReady, setPreferenceReady] = useState(false);
 
   useEffect(() => {
     try {
       setCameraIdState(localStorage.getItem(STORAGE_KEY));
     } catch {
       /* storage unavailable */
+    } finally {
+      setPreferenceReady(true);
     }
   }, []);
 
@@ -53,5 +56,5 @@ export function useCameraDevices(ready: boolean) {
     }
   }, []);
 
-  return { cameras, cameraId, setCameraId, refresh };
+  return { cameras, cameraId, preferenceReady, setCameraId, refresh };
 }
