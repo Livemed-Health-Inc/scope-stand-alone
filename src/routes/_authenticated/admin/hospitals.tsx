@@ -117,6 +117,22 @@ function HospitalsPage() {
     return `${window.location.origin}/nurse/activate?code=${encodeURIComponent(code)}`;
   }
 
+  async function openBedside(site: Site) {
+    const tab = window.open("", "_blank", "noopener,noreferrer");
+    const { data, error } = await supabase.rpc("admin_preview_device", { _site_id: site.id });
+    const row = (data ?? [])[0] as { device_token: string } | undefined;
+    if (error || !row) {
+      tab?.close();
+      toast.error(error?.message ?? "Could not open the bedside view");
+      return;
+    }
+    const url = `${window.location.origin}/nurse?preview=${encodeURIComponent(row.device_token)}`;
+    if (tab) tab.location.href = url;
+    else window.open(url, "_blank", "noopener,noreferrer");
+    void load();
+  }
+
+
   async function copy(code: string) {
     try {
       await navigator.clipboard.writeText(code);
