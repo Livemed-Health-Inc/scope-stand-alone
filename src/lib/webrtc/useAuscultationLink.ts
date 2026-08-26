@@ -249,8 +249,13 @@ export function useAuscultationLink(opts: {
       try {
         makingOffer = true;
         await pc.setLocalDescription();
-        if (pc.localDescription) send({ kind: "offer", sdp: pc.localDescription.toJSON() });
+        if (pc.localDescription) {
+          const d = pc.localDescription.toJSON();
+          send({ kind: "offer", sdp: { ...d, sdp: hifiAudio(d.sdp ?? "") } });
+        }
+        void raiseAudioBitrate(pc);
         setState((s) => (s === "live" ? s : "connecting"));
+
       } catch {
         /* renegotiation races settle on the next attempt */
       } finally {
