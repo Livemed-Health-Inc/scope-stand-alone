@@ -67,6 +67,41 @@ function PersonasPage() {
   const [matrix, setMatrix] = useState<Record<string, Set<string>>>({});
   const [flagBusy, setFlagBusy] = useState<string | null>(null);
   const [resetIssued, setResetFor_] = useState<{ id: string; password: string } | null>(null);
+  const [sites, setSites] = useState<Site[]>([]);
+  const [bedsideLogins, setBedsideLogins] = useState<BedsideLogin[]>([]);
+  const [bedsideCreds, setBedsideCreds] = useState<Record<string, { email: string; password: string }>>({});
+  const [bedsideBusy, setBedsideBusy] = useState<string | null>(null);
+  const createBedside = useServerFn(provisionBedsideLogin);
+
+  async function loadBedside() {
+    const [s, l] = await Promise.all([
+      supabase.from("hospital_sites").select("id, hospital, unit").order("hospital").order("unit"),
+      supabase.from("bedside_logins").select("user_id, site_id, email"),
+    ]);
+    setSites((s.data as Site[] | null) ?? []);
+    setBedsideLogins((l.data as BedsideLogin[] | null) ?? []);
+  }
+
+  function copyText(value: string) {
+    void navigator.clipboard.writeText(value).catch(() => {});
+    toast.success("Copied");
+  }
+
+  /** Creates the unit's bedside sign-in, or issues a fresh password for it. */
+  async function issueBedside(siteId: string) {
+    setBedsideBusy(siteId);
+    try {
+      const result = await createBedside({ data: { siteId } });
+      setBedsideCreds((c) => ({ ...c, [siteId]: { email: result.email, password: result.password } }));
+      await loadBedside();
+      toast.success(result.reset ? "New bedside password issued" : "Bedside login created");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not create the bedside login");
+    }
+    setBedsideBusy(null);
+  }
+
+
 
   async function load() {
     setLoading(true);
