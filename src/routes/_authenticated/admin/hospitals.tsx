@@ -152,13 +152,17 @@ function HospitalsPage() {
     }
     setUnit("");
     await load();
+    // Every onboarded unit gets its bedside sign-in straight away.
+    const login = await issueLogin((data as Site).id, true);
     if (withCode) {
       const code = await issueCode((data as Site).id, true);
       if (code) toast.success(`Unit added — activation code ${code}`);
     } else {
       toast.success("Unit added");
     }
+    if (login) toast.success(`Bedside login ${login.email} — password ${login.password}`);
     setBusy(false);
+
   }
 
   function activationUrl(code: string) {
