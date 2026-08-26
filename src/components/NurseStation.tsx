@@ -1,5 +1,24 @@
-import { useEffect, useMemo, useState } from "react";
-import { PhoneCall, Loader2, Users, X, Stethoscope, ChevronRight, BellRing, CheckCircle2 } from "lucide-react";
+import { useEffect, useMemo, useState, type ElementType } from "react";
+import {
+  PhoneCall,
+  Loader2,
+  Users,
+  X,
+  Stethoscope,
+  ChevronRight,
+  BellRing,
+  CheckCircle2,
+  HeartPulse,
+  Wind,
+  Brain,
+  ShieldAlert,
+  Droplets,
+  Activity,
+  Building2,
+  Clock,
+  UserX,
+  Radio,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { auditLog } from "@/lib/audit";
@@ -60,10 +79,26 @@ const MOCK_DOCTORS: Record<string, string[]> = {
   Hospitalist: ["Nina Duarte", "Owen Blackwell"],
 };
 
+const SPECIALTY_ICONS: Record<string, ElementType<{ className?: string }>> = {
+  Cardiology: HeartPulse,
+  Pulmonology: Wind,
+  Neurology: Brain,
+  "Infectious Disease": ShieldAlert,
+  Nephrology: Droplets,
+  "Critical Care": Activity,
+  Hospitalist: Building2,
+};
+
 function specialtyFor(specialty: string | null): string {
   const s = (specialty ?? "").toLowerCase();
   const hit = SPECIALTIES.find((sp) => sp.keywords.some((k) => s.includes(k)));
   return hit?.name ?? "Hospitalist";
+}
+
+function statusFor(d: Doctor) {
+  if (d.in_consult) return { label: "In consult", color: "warning" as const, icon: Clock };
+  if (d.is_online) return { label: "Online · Available", color: "success" as const, icon: Radio };
+  return { label: "Offline", color: "muted" as const, icon: UserX };
 }
 
 export function NurseStation({ device }: { device: DeviceContext }) {
@@ -131,7 +166,6 @@ export function NurseStation({ device }: { device: DeviceContext }) {
     setLoading(false);
   }
 
-
   useEffect(() => {
     void loadDoctors();
     void loadStaged();
@@ -161,7 +195,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       if (!next) return;
       setActiveCall((prev) => {
         if (!prev || prev.status === next.status) return prev;
-        if (next.status === "declined") toast.error("Call declined — try another physician.");
+        if (next.status === "declined") toast.error("Call declined \u2014 try another physician.");
         if (next.status === "accepted") toast.success("Physician connected.");
         if (next.status === "ended") return null;
         return next;
@@ -188,7 +222,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
   async function placeCall() {
     if (!target) return;
     if (target.in_consult) {
-      toast.warning(`Dr. ${target.full_name} is currently in a consult — please hold.`);
+      toast.warning(`Dr. ${target.full_name} is currently in a consult \u2014 please hold.`);
       return;
     }
     const token = getDeviceToken();
@@ -235,8 +269,6 @@ export function NurseStation({ device }: { device: DeviceContext }) {
     setActiveCall(null);
   }
 
-
-
   if (activeCall?.status === "accepted") {
     const doc = doctors.find((d) => d.id === activeCall.doctor_id);
     const docName = doc ? (/^dr\.?\s/i.test(doc.full_name) ? doc.full_name : `Dr. ${doc.full_name}`) : "Physician";
@@ -255,7 +287,6 @@ export function NurseStation({ device }: { device: DeviceContext }) {
     );
   }
 
-
   const bySpecialty = SPECIALTIES.map((sp) => {
     const real = doctors.filter((d) => specialtyFor(d.specialty) === sp.name);
     const mocks: Doctor[] = (MOCK_DOCTORS[sp.name] ?? []).map((n, i) => ({
@@ -272,20 +303,34 @@ export function NurseStation({ device }: { device: DeviceContext }) {
   const current = bySpecialty.find((s) => s.name === selectedSpecialty);
 
   return (
-    <div className="space-y-4">
-      <div className="panel-surface flex flex-col gap-1 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="label-caps">{device.hospital}</p>
-          <h2 className="text-lg font-semibold tracking-tight">{device.unit}</h2>
+    <div className="space-y-5 animate-in fade-in duration-500">
+      <div className="glass-card -mx-4 rounded-none border-x-0 border-l-4 border-l-primary px-4 py-5 sm:-mx-0 sm:rounded-xl sm:border-x sm:border-l-primary">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="label-caps">{device.hospital}</p>
+            <h2 className="text-xl font-semibold tracking-tight">{device.unit}</h2>
+          </div>
+          <Badge variant="outline" className="w-fit gap-2 border-success/30 bg-success/10 text-success">
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-success" />
+            </span>
+            {online} online
+          </Badge>
         </div>
-        <Badge variant="outline" className="w-fit gap-1.5 border-primary/30 text-primary">
-          <Users className="size-3.5" /> {online} online
-        </Badge>
       </div>
 
       {alerting && (
-        <div className="panel-surface flex flex-wrap items-center gap-4 border-warning/60 bg-warning/10 p-5 ring-2 ring-warning/50">
-          <div className="flex size-14 items-center justify-center rounded-full bg-warning/20 text-warning ring-pulse">
+        <div
+          className="glass-card flex flex-wrap items-center gap-4 border-l-4 border-l-warning p-5 ring-1 ring-warning/30"
+          onClick={() => primeAudio()}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") primeAudio();
+          }}
+        >
+          <div className="flex size-14 items-center justify-center rounded-full bg-warning/15 text-warning ring-pulse-soft">
             <BellRing className="size-6" />
           </div>
           <div className="min-w-0 flex-1">
@@ -295,7 +340,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
                 : `${roundingDocs.length} physicians are ready to round`}
             </p>
             <p className="text-sm text-muted-foreground">
-              Acknowledge and stage the cart at the bedside — the physician will be notified.
+              Acknowledge and stage the cart at the bedside \u2014 the physician will be notified.
             </p>
           </div>
           <Button size="lg" className="gap-2" onClick={() => setAckOpen(true)}>
@@ -305,13 +350,13 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       )}
 
       {staged.length > 0 && (
-        <ul className="space-y-2">
+        <ul className="flex flex-col gap-3">
           {staged.map((s) => (
-            <li key={s.id} className="panel-surface flex items-center gap-4 p-4 ring-1 ring-success/40">
+            <li key={s.id} className="glass-card flex items-center gap-4 border-l-4 border-l-success p-4">
               <CheckCircle2 className="size-5 shrink-0 text-success" />
               <div className="min-w-0 flex-1">
-                <p className="font-medium">Cart staged — Room {s.room}</p>
-                <p className="text-xs text-muted-foreground">Physician has been notified you're ready to round.</p>
+                <p className="font-medium">Cart staged \u2014 Room {s.room}</p>
+                <p className="text-xs text-muted-foreground">Physician has been notified you&apos;re ready to round.</p>
               </div>
               <Button variant="secondary" size="sm" onClick={() => void clearStaged(s.id)}>
                 Cancel
@@ -320,8 +365,6 @@ export function NurseStation({ device }: { device: DeviceContext }) {
           ))}
         </ul>
       )}
-
-
 
       <div className="flex items-center justify-between">
         <div>
@@ -336,14 +379,14 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       </div>
 
       {activeCall && activeCall.status === "ringing" && (
-        <div className="panel-surface flex items-center justify-between gap-4 p-4">
+        <div className="glass-card flex animate-pulse items-center justify-between gap-4 border-l-4 border-l-primary p-4">
           <div className="flex items-center gap-3">
             <Loader2 className="size-5 animate-spin text-primary" />
             <div>
               <p className="font-medium">
-                Ringing {doctors.find((d) => d.id === activeCall.doctor_id)?.full_name ?? "physician"}…
+                Ringing {doctors.find((d) => d.id === activeCall.doctor_id)?.full_name ?? "physician"}\u2026
               </p>
-              <p className="text-xs text-muted-foreground">Room {activeCall.patient_room} · waiting for pickup</p>
+              <p className="text-xs text-muted-foreground">Room {activeCall.patient_room} \u00b7 waiting for pickup</p>
             </div>
           </div>
           <Button variant="secondary" onClick={cancelCall} className="gap-2">
@@ -353,93 +396,114 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       )}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading directory…</p>
+        <p className="text-sm text-muted-foreground">Loading directory\u2026</p>
       ) : !current ? (
-        <ul className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+        <ul className="flex flex-col gap-3">
           {bySpecialty.map((sp) => {
+            const Icon = SPECIALTY_ICONS[sp.name] ?? Stethoscope;
             const availableCount = sp.doctors.filter((d) => d.is_online && !d.in_consult).length;
             return (
               <li key={sp.name}>
                 <button
                   type="button"
                   onClick={() => setSelectedSpecialty(sp.name)}
-                  className="panel-surface flex w-full items-center gap-4 p-4 text-left transition hover:border-primary/50"
+                  className={`glass-card group flex w-full items-center gap-5 p-5 text-left transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 border-l-4 ${
+                    availableCount ? "border-l-success/50" : "border-l-muted/50"
+                  }`}
                 >
-                  <div className="flex size-12 items-center justify-center rounded-full bg-primary/15 text-primary">
-                    <Stethoscope className="size-5" />
+                  <div
+                    className={`flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary transition group-hover:scale-105 ${
+                      availableCount ? "" : "opacity-60 grayscale"
+                    }`}
+                  >
+                    <Icon className="size-7" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{sp.name}</p>
-                    <p className="text-xs text-muted-foreground">{sp.doctors.length} physicians on service</p>
+                    <p className="text-lg font-semibold">{sp.name}</p>
+                    <p className="text-sm text-muted-foreground">{sp.doctors.length} physicians on service</p>
                     <p
                       className={`mt-1 text-[0.68rem] font-semibold uppercase tracking-widest ${
                         availableCount ? "text-success" : "text-muted-foreground"
                       }`}
                     >
-                      {availableCount ? `${availableCount} available` : "None available"}
+                      {availableCount ? `${availableCount} available now` : "None available"}
                     </p>
                   </div>
-                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                  <ChevronRight className="size-5 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
                 </button>
               </li>
             );
           })}
         </ul>
       ) : current.doctors.length === 0 ? (
-        <div className="panel-surface p-8 text-center text-sm text-muted-foreground">
+        <div className="glass-card p-8 text-center text-sm text-muted-foreground">
           No physicians on service for {current.name} right now.
         </div>
       ) : (
         <ul className="flex flex-col gap-3">
-          {current.doctors.map((d) => (
-            <li key={d.id} className="panel-surface flex w-full items-center gap-4 p-4">
-              <div className="relative">
-                <div className="flex size-12 items-center justify-center rounded-full bg-primary/15 font-semibold text-primary">
-                  {d.full_name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .slice(0, 2)
-                    .join("")}
+          {current.doctors.map((d) => {
+            const status = statusFor(d);
+            const isMock = d.id.startsWith("mock:");
+            const initials = d.full_name
+              .split(" ")
+              .map((n) => n[0])
+              .slice(0, 2)
+              .join("");
+            return (
+              <li key={d.id} className="glass-card flex w-full items-center gap-4 p-4">
+                <div className="relative shrink-0">
+                  <div className="flex size-14 items-center justify-center rounded-full bg-primary/15 text-lg font-semibold text-primary">
+                    {initials}
+                  </div>
+                  <span
+                    className={`absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 border-card ${
+                      d.in_consult ? "bg-warning" : d.is_online ? "bg-success" : "bg-muted-foreground"
+                    }`}
+                  />
                 </div>
-                <span
-                  className={`absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 border-card ${
-                    d.in_consult ? "bg-warning" : d.is_online ? "bg-success" : "bg-muted-foreground"
-                  }`}
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">Dr. {d.full_name}</p>
-                <p className="truncate text-xs text-muted-foreground">{d.specialty ?? current.name}</p>
-                <p
-                  className={`mt-1 text-[0.68rem] font-semibold uppercase tracking-widest ${
-                    d.in_consult ? "text-warning" : d.is_online ? "text-success" : "text-muted-foreground"
-                  }`}
-                >
-                  {d.in_consult ? "In consult" : d.is_online ? "Online" : "Offline"}
-                </p>
-              </div>
-              <Button
-                onClick={() => {
-                  if (d.id.startsWith("mock:")) {
-                    toast.info(`Dr. ${d.full_name} is a demo listing — no physician account connected yet.`);
-                    return;
-                  }
-                  if (d.in_consult) {
-                    toast.warning(`Dr. ${d.full_name} is in a consult — please hold.`);
-                    return;
-                  }
-                  setTarget(d);
-                }}
-                disabled={!d.is_online || !!activeCall}
-                className="gap-2"
-              >
-                <PhoneCall className="size-4" /> Call
-              </Button>
-            </li>
-          ))}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-lg font-semibold">
+                    {isMock ? "" : "Dr. "}
+                    {d.full_name}
+                  </p>
+                  <p className="truncate text-sm text-muted-foreground">{d.specialty ?? current.name}</p>
+                  <div
+                    className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-wider ${
+                      status.color === "success"
+                        ? "border-success/20 bg-success/10 text-success"
+                        : status.color === "warning"
+                          ? "border-warning/20 bg-warning/10 text-warning"
+                          : "border-muted bg-muted/40 text-muted-foreground"
+                    }`}
+                  >
+                    <status.icon className="size-3.5" />
+                    {status.label}
+                  </div>
+                </div>
+                {isMock ? (
+                  <Badge variant="outline" className="shrink-0 text-muted-foreground">
+                    Demo
+                  </Badge>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      if (d.in_consult) {
+                        toast.warning(`Dr. ${d.full_name} is in a consult \u2014 please hold.`);
+                        return;
+                      }
+                      setTarget(d);
+                    }}
+                    disabled={!d.is_online || !!activeCall}
+                    className="gap-2"
+                  >
+                    <PhoneCall className="size-4" /> Call
+                  </Button>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
-
 
       <Dialog open={ackOpen} onOpenChange={setAckOpen}>
         <DialogContent>
