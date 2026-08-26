@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Eye } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { ActivationForm } from "@/components/ActivationForm";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -14,7 +14,6 @@ import {
 export function DeviceGate({ children }: { children: (device: DeviceContext) => React.ReactNode }) {
   const [device, setDevice] = useState<DeviceContext | null>(null);
   const [checking, setChecking] = useState(true);
-  const [preview, setPreview] = useState(false);
 
   async function verify() {
     const token = getDeviceToken();
@@ -31,7 +30,6 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
     } else {
       setDevice(ctx);
     }
-    setPreview(isPreviewSession());
     setChecking(false);
   }
 
@@ -63,18 +61,5 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
     return <ActivationForm onRegistered={verify} />;
   }
 
-  return (
-    <>
-      {preview && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-foreground">
-          <Eye className="size-4 shrink-0" />
-          <span>
-            <strong>Admin preview</strong> — this is the live bedside station for {device.hospital} · {device.unit}. Calls
-            placed here really ring physicians.
-          </span>
-        </div>
-      )}
-      {children(device)}
-    </>
-  );
+  return <>{children(device)}</>;
 }
