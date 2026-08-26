@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Activity, Clock, Download, Headphones, PhoneMissed, Stethoscope, Timer, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({
