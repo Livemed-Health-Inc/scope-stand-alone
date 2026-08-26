@@ -484,8 +484,15 @@ function Breakdown({
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map(([label, v]) => (
-                <tr key={label}>
-                  <td className="py-2 font-medium">{label}</td>
+                <tr
+                  key={label}
+                  onClick={onRowClick ? () => onRowClick(label) : undefined}
+                  className={onRowClick ? "cursor-pointer transition-colors hover:bg-muted/60" : undefined}
+                >
+                  <td className="py-2 font-medium">
+                    {label}
+                    {onRowClick ? <span className="ml-2 text-xs text-muted-foreground">View details</span> : null}
+                  </td>
                   <td className="py-2 text-right tabular-nums">{v.placed}</td>
                   <td className="py-2 text-right tabular-nums text-muted-foreground">
                     {v.answered} · {pct(v.answered, v.placed)}
