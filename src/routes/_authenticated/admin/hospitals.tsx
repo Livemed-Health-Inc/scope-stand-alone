@@ -26,6 +26,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { auditLog } from "@/lib/audit";
+import { provisionBedsideLogin, revokeBedsideLogin } from "@/lib/bedside-logins.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin/hospitals")({
   head: () => ({
