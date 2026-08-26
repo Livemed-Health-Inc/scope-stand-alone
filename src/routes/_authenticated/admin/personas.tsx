@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { listAccounts } from "@/lib/access.functions";
 import { provisionPersonaAccount, setPersona, resetAccountPassword } from "@/lib/persona-accounts.functions";
+import { provisionBedsideLogin } from "@/lib/bedside-logins.functions";
+
 import { PERSONAS, personaLabel, type Persona } from "@/lib/permissions";
 import { useAuth } from "@/lib/auth";
 import { PhysiciansPage } from "./physicians";
