@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, ChevronLeft, Mic, MicOff, Radio, Stethoscope, Video, VideoOff, X } from "lucide-react";
 import { useCameraDevices } from "@/lib/media/useCameraDevices";
+import { logCallEvent, type CallEvent } from "@/lib/analytics";
+
 
 import { StethoscopePanel } from "@/features/stethoscope";
 import { Waveform } from "@/features/stethoscope";
@@ -44,9 +46,12 @@ export interface VideoVisitProps {
   allowRoleSwitch?: boolean;
   /** Let the remote (doctor) device pair its own scope and monitor locally. */
   allowRemoteLocalScope?: boolean;
+  /** Consult id used to attribute analytics events. Defaults to roomId. */
+  callId?: string;
   /** Called when the user taps the back arrow or "End visit". */
   onEnd?: () => void;
 }
+
 
 /**
  * Self-contained telehealth video visit: two-way WebRTC video + audio, PiP
@@ -69,6 +74,7 @@ export function VideoVisit({
   showScribeBanner = false,
   allowRoleSwitch = false,
   allowRemoteLocalScope = false,
+  callId,
   onEnd,
 }: VideoVisitProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -82,6 +88,33 @@ export function VideoVisit({
     setRole(roleProp);
   }, [roleProp]);
   const isBedside = role === "patient";
+
+  // ---- Consult analytics ---------------------------------------------
+  const analyticsCallId = callId ?? roomId;
+  const track = useCallback(
+    (event: Omit<CallEvent, "callId">) => {
+      void logCallEvent({ ...event, callId: analyticsCallId });
+    },
+    [analyticsCallId],
+  );
+  useEffect(() => {
+    const joinedAt = Date.now();
+    void logCallEvent({
+      kind: "visit_join",
+      callId: analyticsCallId,
+      details: { role: roleProp, hospital, unit },
+    });
+    return () => {
+      void logCallEvent({
+        kind: "visit_leave",
+        callId: analyticsCallId,
+        durationMs: Date.now() - joinedAt,
+        details: { role: roleProp },
+      });
+    };
+  }, [analyticsCallId, roleProp, hospital, unit]);
+
+
 
   const [scopeStream, setScopeStream] = useState<MediaStream | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
@@ -642,14 +675,14 @@ export function VideoVisit({
         </div>
 
         {role === "patient" ? (
-          <StethoscopePanel onCallStream={handleCallStream} localMonitor={false} />
+          <StethoscopePanel onCallStream={handleCallStream} localMonitor={false} onEvent={track} />
         ) : allowRemoteLocalScope ? (
           <>
             <p className="mb-2 rounded-xl bg-muted px-3 py-2 text-center text-[11px] text-muted-foreground">
               Testing build: you can pair a stethoscope on this device and listen through your own
               speakers. In the field it stays at the patient&apos;s bedside.
             </p>
-            <StethoscopePanel onCallStream={handleCallStream} localMonitor />
+            <StethoscopePanel onCallStream={handleCallStream} localMonitor onEvent={track} />
           </>
         ) : null}
       </section>
@@ -657,19 +690,30 @@ export function VideoVisit({
 
         <div className="mt-4 flex items-center justify-center gap-3 lg:col-start-1 lg:row-start-2 lg:mt-0">
         <button
-          onClick={() => setMicOn((v) => !v)}
+          onClick={() =>
+            setMicOn((v) => {
+              track({ kind: "mic_toggle", details: { on: !v } });
+              return !v;
+            })
+          }
           aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
           className="flex size-12 shrink-0 items-center justify-center rounded-full bg-navy-700"
         >
           {micOn ? <Mic className="size-6" /> : <MicOff className="size-6 text-destructive" />}
         </button>
         <button
-          onClick={() => setCamOn((v) => !v)}
+          onClick={() =>
+            setCamOn((v) => {
+              track({ kind: "camera_toggle", details: { on: !v } });
+              return !v;
+            })
+          }
           aria-label={camOn ? "Turn camera off" : "Turn camera on"}
           className="flex size-12 shrink-0 items-center justify-center rounded-full bg-navy-700"
         >
           {camOn ? <Video className="size-6" /> : <VideoOff className="size-6 text-destructive" />}
         </button>
+
         {cameras.length > 1 && (
           <div className="relative shrink-0">
             <button
@@ -692,8 +736,10 @@ export function VideoVisit({
                       key={c.deviceId || "default"}
                       onClick={() => {
                         setCameraId(c.deviceId || null);
+                        track({ kind: "camera_switch", details: { label: c.label } });
                         setCamPicker(false);
                       }}
+
                       className={`block w-full truncate rounded-xl px-3 py-2 text-left text-xs ${
                         active ? "bg-primary/15 font-semibold text-primary" : "hover:bg-muted"
                       }`}

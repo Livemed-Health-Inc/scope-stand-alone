@@ -28,11 +28,19 @@ function fmt(sec: number) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+export type StethoscopeUsageEvent = {
+  kind: "stethoscope_session" | "auscultation_site" | "recording";
+  site?: string;
+  durationMs?: number;
+  details?: Record<string, unknown>;
+};
+
 export function StethoscopePanel({
   className = "",
   onCallStream,
   localMonitor = true,
   brandIconUrl,
+  onEvent,
 }: {
   className?: string;
   /** Receives the processed heart-sound stream for remote streaming. */
@@ -41,7 +49,10 @@ export function StethoscopePanel({
   localMonitor?: boolean;
   /** Optional logo shown in the panel header; falls back to a stethoscope icon. */
   brandIconUrl?: string;
+  /** Usage telemetry: auscultation sessions, site changes and recordings. */
+  onEvent?: (event: StethoscopeUsageEvent) => void;
 }) {
+
 
   const s = useStethoscope();
   const { devices, deviceId, connect, connected, capturing, startCapture, autoPair } = s;
@@ -70,6 +81,69 @@ export function StethoscopePanel({
   useEffect(() => {
     manualDisconnectRef.current = manualDisconnect;
   }, [manualDisconnect]);
+
+  // ---- Usage telemetry -----------------------------------------------
+  const onEventRef = useRef(onEvent);
+  useEffect(() => {
+    onEventRef.current = onEvent;
+  }, [onEvent]);
+  const modeLabel = MODES.find((m) => m.id === s.mode)?.label ?? s.mode;
+  const modeLabelRef = useRef(modeLabel);
+  useEffect(() => {
+    modeLabelRef.current = modeLabel;
+  }, [modeLabel]);
+
+  // One "stethoscope_session" per continuous auscultation run.
+  const sessionStart = useRef<number | null>(null);
+  useEffect(() => {
+    if (capturing) {
+      sessionStart.current = Date.now();
+      return;
+    }
+    if (sessionStart.current !== null) {
+      const durationMs = Date.now() - sessionStart.current;
+      sessionStart.current = null;
+      onEventRef.current?.({ kind: "stethoscope_session", site: modeLabelRef.current, durationMs });
+    }
+  }, [capturing]);
+  useEffect(
+    () => () => {
+      if (sessionStart.current !== null) {
+        onEventRef.current?.({
+          kind: "stethoscope_session",
+          site: modeLabelRef.current,
+          durationMs: Date.now() - sessionStart.current,
+        });
+        sessionStart.current = null;
+      }
+    },
+    [],
+  );
+
+  // Site / chestpiece mode selection while listening.
+  const firstMode = useRef(true);
+  useEffect(() => {
+    if (firstMode.current) {
+      firstMode.current = false;
+      return;
+    }
+    onEventRef.current?.({ kind: "auscultation_site", site: modeLabel });
+  }, [modeLabel]);
+
+  // Saved clips.
+  const wasRecording = useRef(false);
+  useEffect(() => {
+    if (wasRecording.current && !s.recording) {
+      onEventRef.current?.({
+        kind: "recording",
+        site: modeLabelRef.current,
+        durationMs: (s.lastClip?.seconds ?? 0) * 1000,
+      });
+    }
+    wasRecording.current = s.recording;
+  }, [s.recording, s.lastClip]);
+
+
 
   // Keep the stethoscope paired at all times: re-acquire the remembered device forever.
   useEffect(() => {

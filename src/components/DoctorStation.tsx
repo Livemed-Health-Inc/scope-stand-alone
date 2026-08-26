@@ -209,6 +209,8 @@ export function DoctorStation() {
     return (
       <VideoVisit
         roomId={active.id}
+        callId={active.id}
+
         role="remote"
         patient={(active.nurse_id && nurseNames[active.nurse_id]) || "Bedside nurse"}
         room={active.patient_room ? `Room ${active.patient_room}` : ""}

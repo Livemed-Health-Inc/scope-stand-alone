@@ -136,6 +136,53 @@ export type Database = {
         }
         Relationships: []
       }
+      call_events: {
+        Row: {
+          actor: string
+          call_id: string | null
+          details: Json
+          device_id: string | null
+          doctor_id: string | null
+          duration_ms: number
+          id: number
+          kind: string
+          occurred_at: string
+          site: string | null
+        }
+        Insert: {
+          actor?: string
+          call_id?: string | null
+          details?: Json
+          device_id?: string | null
+          doctor_id?: string | null
+          duration_ms?: number
+          id?: number
+          kind: string
+          occurred_at?: string
+          site?: string | null
+        }
+        Update: {
+          actor?: string
+          call_id?: string | null
+          details?: Json
+          device_id?: string | null
+          doctor_id?: string | null
+          duration_ms?: number
+          id?: number
+          kind?: string
+          occurred_at?: string
+          site?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_events_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calls: {
         Row: {
           answered_at: string | null
@@ -579,6 +626,14 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      auscultation_breakdown: {
+        Args: { _since?: string }
+        Returns: {
+          seconds: number
+          site: string
+          uses: number
+        }[]
+      }
       available_physicians: {
         Args: never
         Returns: {
@@ -611,6 +666,25 @@ export type Database = {
           period: string
           specialty: string
           total_seconds: number
+        }[]
+      }
+      consult_analytics_detail: {
+        Args: { _bucket?: string; _since?: string }
+        Returns: {
+          answered: number
+          ausc_events: number
+          doctor_id: string
+          doctor_name: string
+          hospital: string
+          missed: number
+          period: string
+          placed: number
+          recordings: number
+          specialty: string
+          steth_seconds: number
+          total_seconds: number
+          unit: string
+          wait_seconds: number
         }[]
       }
       create_enrollment_code: { Args: { _site_id: string }; Returns: string }
@@ -692,6 +766,17 @@ export type Database = {
           _phi_accessed?: boolean
         }
         Returns: number
+      }
+      log_call_event: {
+        Args: {
+          _call_id?: string
+          _details?: Json
+          _device_token?: string
+          _duration_ms?: number
+          _kind: string
+          _site?: string
+        }
+        Returns: undefined
       }
       mark_rounding_ready: {
         Args: { _device_token: string; _note?: string; _room: string }

@@ -275,6 +275,8 @@ export function NurseStation({ device }: { device: DeviceContext }) {
     return (
       <VideoVisit
         roomId={activeCall.id}
+        callId={activeCall.id}
+
         role="patient"
         patient={docName}
         room={activeCall.patient_room ? `Room ${activeCall.patient_room}` : ""}
