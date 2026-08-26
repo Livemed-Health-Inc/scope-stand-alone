@@ -285,7 +285,10 @@ function HospitalsPage() {
             {sites.map((s) => {
               const siteDevices = devices.filter((d) => d.site_id === s.id);
               const siteCodes = codes.filter((c) => c.site_id === s.id);
+              const siteLogin = logins.find((l) => l.site_id === s.id) ?? null;
+              const siteCred = creds[s.id];
               const expanded = open[s.id] ?? false;
+
               return (
                 <li key={s.id} className="py-2.5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
