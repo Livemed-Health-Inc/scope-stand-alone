@@ -117,7 +117,7 @@ function downloadRows(rows: Row[], filename: string) {
       "Call seconds",
       "Wait seconds",
       "Auscultation seconds",
-      "Site checks",
+      "Auscultation sessions",
       "Recordings",
     ],
     rows.map((r) => [
