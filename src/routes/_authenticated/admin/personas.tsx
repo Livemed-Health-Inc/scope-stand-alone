@@ -43,6 +43,9 @@ type Account = {
 };
 
 type Permission = { key: string; label: string; category: string; sort_order: number };
+type Site = { id: string; hospital: string; unit: string };
+type BedsideLogin = { user_id: string; site_id: string; email: string };
+
 
 const ASSIGNABLE = PERSONAS.filter((p) => !p.legacy);
 
