@@ -87,29 +87,44 @@ export function VideoVisit({
   const [selfStream, setSelfStream] = useState<MediaStream | null>(null);
   const [selfError, setSelfError] = useState(false);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const [camPicker, setCamPicker] = useState(false);
+  const { cameras, cameraId, setCameraId } = useCameraDevices(!!selfStream);
 
   // Local camera + microphone, acquired once for the whole visit.
+  // Re-acquired when the clinician switches to an external camera.
   useEffect(() => {
     let cancelled = false;
     let stream: MediaStream | null = null;
-    navigator.mediaDevices
-      ?.getUserMedia({ video: { facingMode: "user" }, audio: true })
-      .then((s) => {
-        if (cancelled) {
-          s.getTracks().forEach((t) => t.stop());
-          return;
-        }
-        stream = s;
-        setSelfStream(s);
-        setSelfError(false);
-      })
-      .catch(() => !cancelled && setSelfError(true));
+    const video: MediaTrackConstraints = cameraId
+      ? { deviceId: { exact: cameraId } }
+      : { facingMode: "user" };
+    const md = navigator.mediaDevices;
+    const attach = (s: MediaStream) => {
+      if (cancelled) {
+        s.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      stream = s;
+      setSelfStream(s);
+      setSelfError(false);
+    };
+    md
+      ?.getUserMedia({ video, audio: true })
+      .then(attach)
+      .catch(() =>
+        // External camera vanished or is busy — fall back to any camera.
+        md
+          ?.getUserMedia({ video: true, audio: true })
+          .then(attach)
+          .catch(() => !cancelled && setSelfError(true)),
+      );
     return () => {
       cancelled = true;
       stream?.getTracks().forEach((t) => t.stop());
       setSelfStream(null);
     };
-  }, []);
+  }, [cameraId]);
+
 
   // Camera / mic toggles just enable or disable the published tracks.
   // While the nurse is auscultating, only the stethoscope feed goes out:
