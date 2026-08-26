@@ -736,8 +736,10 @@ export function VideoVisit({
                       key={c.deviceId || "default"}
                       onClick={() => {
                         setCameraId(c.deviceId || null);
+                        track({ kind: "camera_switch", details: { label: c.label } });
                         setCamPicker(false);
                       }}
+
                       className={`block w-full truncate rounded-xl px-3 py-2 text-left text-xs ${
                         active ? "bg-primary/15 font-semibold text-primary" : "hover:bg-muted"
                       }`}
