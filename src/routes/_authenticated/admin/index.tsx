@@ -441,11 +441,13 @@ function Breakdown({
   rows,
   loading,
   firstHeader,
+  onRowClick,
 }: {
   title: string;
   rows: [string, Agg][];
   loading: boolean;
   firstHeader: string;
+  onRowClick?: (label: string) => void;
 }) {
   return (
     <section className="panel-surface space-y-3 p-5">
