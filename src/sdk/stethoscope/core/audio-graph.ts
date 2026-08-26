@@ -152,8 +152,10 @@ export async function createAudioGraph(s: GraphSettings): Promise<AudioGraph> {
   softClip.connect(gain);
   softClip.connect(harmShaper);
   harmShaper.connect(harmBand);
-  harmBand.connect(harmGain);
+  harmBand.connect(harmTame);
+  harmTame.connect(harmGain);
   harmGain.connect(gain);
+
   gain.connect(analyser);
   gain.connect(broadcast);
   gain.connect(monitor);
