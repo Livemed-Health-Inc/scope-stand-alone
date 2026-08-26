@@ -690,19 +690,30 @@ export function VideoVisit({
 
         <div className="mt-4 flex items-center justify-center gap-3 lg:col-start-1 lg:row-start-2 lg:mt-0">
         <button
-          onClick={() => setMicOn((v) => !v)}
+          onClick={() =>
+            setMicOn((v) => {
+              track({ kind: "mic_toggle", details: { on: !v } });
+              return !v;
+            })
+          }
           aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
           className="flex size-12 shrink-0 items-center justify-center rounded-full bg-navy-700"
         >
           {micOn ? <Mic className="size-6" /> : <MicOff className="size-6 text-destructive" />}
         </button>
         <button
-          onClick={() => setCamOn((v) => !v)}
+          onClick={() =>
+            setCamOn((v) => {
+              track({ kind: "camera_toggle", details: { on: !v } });
+              return !v;
+            })
+          }
           aria-label={camOn ? "Turn camera off" : "Turn camera on"}
           className="flex size-12 shrink-0 items-center justify-center rounded-full bg-navy-700"
         >
           {camOn ? <Video className="size-6" /> : <VideoOff className="size-6 text-destructive" />}
         </button>
+
         {cameras.length > 1 && (
           <div className="relative shrink-0">
             <button
