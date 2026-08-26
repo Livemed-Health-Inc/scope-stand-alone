@@ -385,6 +385,19 @@ export function VideoVisit({
               : "Waiting for the other side to join…"}
         </span>
 
+        {selfError && (
+          <div className="absolute inset-x-3 top-3 z-10 flex flex-wrap items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/15 px-3 py-2 text-xs text-destructive-foreground">
+            <span className="flex-1">{selfError}</span>
+            <button
+              type="button"
+              onClick={() => setRetryKey((k) => k + 1)}
+              className="rounded-full bg-destructive px-3 py-1 text-[11px] font-semibold text-destructive-foreground"
+            >
+              Retry camera
+            </button>
+          </div>
+        )}
+
         <div className="absolute right-3 top-3 w-20 overflow-hidden rounded-xl border border-navy-700/80 bg-navy-700 shadow-lg sm:w-24 lg:w-32">
           <div className="relative aspect-3/4 w-full">
             <video
@@ -403,6 +416,7 @@ export function VideoVisit({
               </div>
             )}
           </div>
+
           <p className="bg-navy-900/70 py-0.5 text-center text-[9px] font-medium text-slate-300">
             You
           </p>
