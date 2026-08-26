@@ -291,7 +291,7 @@ export function VideoVisit({
         {/* Left column on wide screens, inline flow on mobile */}
         <div className={isBedside ? "flex flex-1 flex-col gap-2 min-h-0" : "contents lg:col-start-1 lg:row-start-1 lg:flex lg:flex-col lg:gap-2"}>
 
-      <section className="relative overflow-hidden rounded-3xl bg-navy-800">
+      <section className={`relative overflow-hidden rounded-3xl bg-navy-800 ${isBedside ? "flex-1 min-h-0" : ""}`}>
         <video
           ref={remoteVideoRef}
           className={`aspect-4/3 w-full object-cover lg:aspect-video ${remoteHasVideo ? "" : "hidden"}`}
