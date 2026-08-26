@@ -267,8 +267,8 @@ export function VideoVisit({
   }, [connecting]);
 
   return (
-    <main className="flex min-h-screen w-full flex-col bg-navy-900 px-3 pb-4 pt-3 text-slate-100 sm:px-5 lg:px-6">
-      <header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+    <main className={`flex min-h-screen w-full flex-col bg-navy-900 pb-4 pt-3 text-slate-100 ${isBedside ? "" : "px-3 sm:px-5 lg:px-6"}`}>
+      <header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-3">
         {onEnd && (
           <button onClick={onEnd} aria-label="Leave visit" className="shrink-0 text-slate-400">
             <ChevronLeft className="size-6" />
