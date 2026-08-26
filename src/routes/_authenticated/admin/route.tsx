@@ -91,7 +91,7 @@ function AdminLayout() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex w-full flex-wrap items-center gap-3 px-4 py-3">
           <BrandMark size={26} />
           <Badge variant="secondary" className="uppercase tracking-widest">
             LiveMed admin
@@ -144,7 +144,7 @@ function AdminLayout() {
 
         </div>
       </header>
-      <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
+      <main className="mx-auto w-full space-y-6 px-4 py-6">
         <Outlet />
       </main>
     </div>
