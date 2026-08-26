@@ -438,6 +438,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_preview_device: {
+        Args: { _site_id: string }
+        Returns: {
+          device_token: string
+          hospital: string
+          unit: string
+        }[]
+      }
       available_physicians: {
         Args: never
         Returns: {
