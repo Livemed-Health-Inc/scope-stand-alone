@@ -22,8 +22,13 @@ class PcmQueueProcessor extends AudioWorkletProcessor {
       if (e.data === 'flush') { this.read = this.write = 0; this.primed = false; this.lastOut = 0; this.fadeLeft = 0; return; }
       const chunk = e.data;
       for (let i = 0; i < chunk.length; i++) {
+        // Never let a producer burst lap the reader. Dropping the oldest audio
+        // preserves a continuous live feed instead of turning a full ring into
+        // an apparent empty ring (and an audible restart pop).
+        const next = (this.write + 1) % this.size;
+        if (next === this.read) this.read = (this.read + 1) % this.size;
         this.buf[this.write] = chunk[i];
-        this.write = (this.write + 1) % this.size;
+        this.write = next;
       }
     };
   }
@@ -51,7 +56,7 @@ class PcmQueueProcessor extends AudioWorkletProcessor {
       const sample = this.buf[this.read];
       if (this.fadeLeft > 0) {
         const mix = 1 - this.fadeLeft / this.fadeSamples;
-        this.lastOut = this.lastOut + (sample - this.lastOut) * mix;
+        this.lastOut = sample * mix;
         this.fadeLeft--;
       } else {
         this.lastOut = sample;
@@ -81,16 +86,12 @@ export async function createPcmStreamNode(
   URL.revokeObjectURL(url);
 
   const node = new AudioWorkletNode(ctx, "pcm-queue", { outputChannelCount: [1] });
-  // The firmware's effective frame rate is not exactly the nominal 8 kHz (and
-  // varies with BLE connection interval). A fixed ratio slowly drifts, which
-  // starves or floods the ring buffer and makes heart sounds click and warble,
-  // so the incoming rate is measured continuously and the ratio follows it.
-  let measuredRate = sourceRate;
-  let ratio = ctx.sampleRate / measuredRate;
-  let windowSamples = 0;
-  let windowStart = 0;
-  let carry = 0; // fractional position carried between frames
-  let last = 0;
+  // BLE delivery is bursty, but the samples themselves always represent the
+  // device's nominal clock. Deriving sample rate from packet arrival time makes
+  // the resampler chase BLE jitter, periodically draining the queue and popping.
+  const sourceStep = sourceRate / ctx.sampleRate;
+  let resampleBuffer = new Float32Array(0);
+  let sourcePosition = 0;
   // Running amplitude estimate used to spot single-sample decode glitches.
   let rms = 0.01;
   // One-pole DC blocker state (removes per-frame offset steps that click).
@@ -131,53 +132,43 @@ export async function createPcmStreamNode(
     return f;
   };
 
-  const trackRate = (count: number) => {
-    const now = ctx.currentTime;
-    if (windowStart === 0) {
-      windowStart = now;
-      return;
-    }
-    windowSamples += count;
-    const elapsed = now - windowStart;
-    if (elapsed < 2) return;
-    const observed = windowSamples / elapsed;
-    windowSamples = 0;
-    windowStart = now;
-    // Ignore nonsense readings from a stalled link.
-    if (observed < sourceRate / 4 || observed > sourceRate * 4) return;
-    measuredRate = measuredRate * 0.7 + observed * 0.3;
-    ratio = ctx.sampleRate / measuredRate;
-  };
-
   return {
     node,
     push(pcm) {
-      trackRate(pcm.length);
       const src = clean(pcm);
-      const outLen = Math.floor((pcm.length - carry) * ratio);
-      const out = new Float32Array(Math.max(0, outLen));
-      for (let i = 0; i < out.length; i++) {
-        const pos = carry + i / ratio;
-        const i0 = Math.floor(pos);
-        const frac = pos - i0;
-        const a = i0 <= 0 ? last : (src[i0 - 1] ?? 0);
-        const b = src[i0] ?? 0;
-        out[i] = a + (b - a) * frac;
+      const joined = new Float32Array(resampleBuffer.length + src.length);
+      joined.set(resampleBuffer);
+      joined.set(src, resampleBuffer.length);
+      resampleBuffer = joined;
+
+      // Keep one source sample ahead for interpolation. Retaining the last
+      // consumed sample and fractional phase makes adjacent BLE frames one
+      // continuous waveform rather than restarting interpolation per packet.
+      const output: number[] = [];
+      while (sourcePosition + 1 < resampleBuffer.length) {
+        const i0 = Math.floor(sourcePosition);
+        const frac = sourcePosition - i0;
+        const a = resampleBuffer[i0] ?? 0;
+        const b = resampleBuffer[i0 + 1] ?? a;
+        output.push(a + (b - a) * frac);
+        sourcePosition += sourceStep;
       }
-      carry = carry + out.length / ratio - pcm.length;
-      last = src[src.length - 1] ?? 0;
+      const consumed = Math.floor(sourcePosition);
+      if (consumed > 0) {
+        resampleBuffer = resampleBuffer.slice(consumed);
+        sourcePosition -= consumed;
+      }
+      const out = Float32Array.from(output);
       node.port.postMessage(out);
     },
     flush() {
       node.port.postMessage("flush");
-      carry = 0;
-      last = 0;
+      resampleBuffer = new Float32Array(0);
+      sourcePosition = 0;
       rms = 0.01;
       dcX = 0;
       dcY = 0;
       previousSample = 0;
-      windowSamples = 0;
-      windowStart = 0;
     },
     dispose() {
       node.port.postMessage("flush");
