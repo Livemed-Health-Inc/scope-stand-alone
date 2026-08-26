@@ -81,7 +81,9 @@ export function startBeatTracker(g: AudioGraph, o: BeatTrackerOptions): () => vo
 
     // Only re-level from real signal; silence must not pump the gain up.
     if (peak > 1e-4) {
-      const wanted = Math.min(Math.max(TARGET_PEAK / peak, 1), 32);
+      // Large automatic boosts expose the device noise floor and turn tiny BLE
+      // discontinuities into loud ticks. Eight-fold gain is ample for S1/S2.
+      const wanted = Math.min(Math.max(TARGET_PEAK / peak, 1), 8);
       auto = wanted > auto ? auto * 0.995 + wanted * 0.005 : auto * 0.9 + wanted * 0.1;
       g.makeup.gain.setTargetAtTime(auto, g.ctx.currentTime, 0.25);
     }

@@ -16,8 +16,10 @@ class PcmQueueProcessor extends AudioWorkletProcessor {
     this.lastOut = 0;
     this.primed = false;
     this.prime = Math.round(sampleRate * 0.12);
+    this.fadeSamples = Math.round(sampleRate * 0.012);
+    this.fadeLeft = 0;
     this.port.onmessage = (e) => {
-      if (e.data === 'flush') { this.read = this.write = 0; this.primed = false; this.lastOut = 0; return; }
+      if (e.data === 'flush') { this.read = this.write = 0; this.primed = false; this.lastOut = 0; this.fadeLeft = 0; return; }
       const chunk = e.data;
       for (let i = 0; i < chunk.length; i++) {
         this.buf[this.write] = chunk[i];
@@ -33,6 +35,9 @@ class PcmQueueProcessor extends AudioWorkletProcessor {
     if (!this.primed) {
       if (this.available() < this.prime) { out.fill(0); return true; }
       this.primed = true;
+      // BLE resumes on an arbitrary waveform sample. Fade back in instead of
+      // presenting that discontinuity as a full-scale click.
+      this.fadeLeft = this.fadeSamples;
     }
     for (let i = 0; i < out.length; i++) {
       if (this.read === this.write) {
@@ -43,7 +48,14 @@ class PcmQueueProcessor extends AudioWorkletProcessor {
         this.primed = false;
         continue;
       }
-      this.lastOut = this.buf[this.read];
+      const sample = this.buf[this.read];
+      if (this.fadeLeft > 0) {
+        const mix = 1 - this.fadeLeft / this.fadeSamples;
+        this.lastOut = this.lastOut + (sample - this.lastOut) * mix;
+        this.fadeLeft--;
+      } else {
+        this.lastOut = sample;
+      }
       out[i] = this.lastOut;
       this.read = (this.read + 1) % this.size;
     }
@@ -84,6 +96,7 @@ export async function createPcmStreamNode(
   // One-pole DC blocker state (removes per-frame offset steps that click).
   let dcX = 0;
   let dcY = 0;
+  let previousSample = 0;
 
   /** Replace isolated impulse samples (packet/decode glitches) with their neighbours. */
   const clean = (pcm: Int16Array) => {
@@ -96,15 +109,21 @@ export async function createPcmStreamNode(
     }
     const frameRms = Math.sqrt(sum / Math.max(1, pcm.length));
     rms = rms * 0.9 + frameRms * 0.1;
-    const limit = Math.max(rms * 6, 0.02);
+    const limit = Math.max(rms * 4, 0.015);
     for (let i = 1; i < f.length - 1; i++) {
       const prev = f[i - 1]!;
       const next = f[i + 1]!;
       const mid = (prev + next) / 2;
       if (Math.abs(f[i]! - mid) > limit) f[i] = mid;
     }
+    // Suppress packet-boundary and short multi-sample impulses. Genuine heart
+    // and lung energy changes much more slowly at the device's 8 kHz rate.
+    const maxStep = Math.max(rms * 1.5, 0.008);
     for (let i = 0; i < f.length; i++) {
-      const x = f[i]!;
+      const raw = f[i]!;
+      const delta = Math.max(-maxStep, Math.min(maxStep, raw - previousSample));
+      const x = previousSample + delta;
+      previousSample = x;
       dcY = x - dcX + 0.995 * dcY;
       dcX = x;
       f[i] = dcY;
@@ -156,6 +175,7 @@ export async function createPcmStreamNode(
       rms = 0.01;
       dcX = 0;
       dcY = 0;
+      previousSample = 0;
       windowSamples = 0;
       windowStart = 0;
     },
