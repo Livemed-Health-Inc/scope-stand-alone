@@ -289,7 +289,7 @@ export function VideoVisit({
 
       <div className={`mt-3 flex flex-1 flex-col gap-2 ${isBedside ? "" : "lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:items-start lg:gap-5"}`}>
         {/* Left column on wide screens, inline flow on mobile */}
-        <div className="contents lg:col-start-1 lg:row-start-1 lg:flex lg:flex-col lg:gap-2">
+        <div className={isBedside ? "flex flex-1 flex-col gap-2 min-h-0" : "contents lg:col-start-1 lg:row-start-1 lg:flex lg:flex-col lg:gap-2"}>
 
       <section className="relative overflow-hidden rounded-3xl bg-navy-800">
         <video
