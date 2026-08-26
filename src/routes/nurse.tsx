@@ -28,7 +28,7 @@ function NursePage() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-3">
+        <div className="mx-auto flex w-full flex-wrap items-center gap-4 px-4 py-3">
           <Link to="/" className="flex items-center gap-2">
             <BrandMark size={26} />
           </Link>
@@ -48,7 +48,7 @@ function NursePage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="w-full px-4 py-6">
         <DeviceGate>{(device) => <NurseStation device={device} />}</DeviceGate>
       </main>
     </div>
