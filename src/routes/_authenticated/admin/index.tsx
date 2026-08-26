@@ -332,7 +332,19 @@ function Breakdown({
 }) {
   return (
     <section className="panel-surface space-y-3 p-5">
-      <h2 className="font-medium">{title}</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-medium">{title}</h2>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="gap-2"
+          disabled={rows.length === 0}
+          onClick={() => downloadBreakdown(title, firstHeader, rows)}
+        >
+          <Download className="size-4" /> Export
+        </Button>
+      </div>
+
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : rows.length === 0 ? (
