@@ -82,6 +82,69 @@ export function StethoscopePanel({
     manualDisconnectRef.current = manualDisconnect;
   }, [manualDisconnect]);
 
+  // ---- Usage telemetry -----------------------------------------------
+  const onEventRef = useRef(onEvent);
+  useEffect(() => {
+    onEventRef.current = onEvent;
+  }, [onEvent]);
+  const modeLabel = MODES.find((m) => m.id === s.mode)?.label ?? s.mode;
+  const modeLabelRef = useRef(modeLabel);
+  useEffect(() => {
+    modeLabelRef.current = modeLabel;
+  }, [modeLabel]);
+
+  // One "stethoscope_session" per continuous auscultation run.
+  const sessionStart = useRef<number | null>(null);
+  useEffect(() => {
+    if (capturing) {
+      sessionStart.current = Date.now();
+      return;
+    }
+    if (sessionStart.current !== null) {
+      const durationMs = Date.now() - sessionStart.current;
+      sessionStart.current = null;
+      onEventRef.current?.({ kind: "stethoscope_session", site: modeLabelRef.current, durationMs });
+    }
+  }, [capturing]);
+  useEffect(
+    () => () => {
+      if (sessionStart.current !== null) {
+        onEventRef.current?.({
+          kind: "stethoscope_session",
+          site: modeLabelRef.current,
+          durationMs: Date.now() - sessionStart.current,
+        });
+        sessionStart.current = null;
+      }
+    },
+    [],
+  );
+
+  // Site / chestpiece mode selection while listening.
+  const firstMode = useRef(true);
+  useEffect(() => {
+    if (firstMode.current) {
+      firstMode.current = false;
+      return;
+    }
+    onEventRef.current?.({ kind: "auscultation_site", site: modeLabel });
+  }, [modeLabel]);
+
+  // Saved clips.
+  const wasRecording = useRef(false);
+  useEffect(() => {
+    if (wasRecording.current && !s.recording) {
+      onEventRef.current?.({
+        kind: "recording",
+        site: modeLabelRef.current,
+        durationMs: (s.lastClip?.seconds ?? 0) * 1000,
+      });
+    }
+    wasRecording.current = s.recording;
+  }, [s.recording, s.lastClip]);
+
+
+
   // Keep the stethoscope paired at all times: re-acquire the remembered device forever.
   useEffect(() => {
     void autoPair();
