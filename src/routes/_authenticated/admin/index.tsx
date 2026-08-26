@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Activity, Clock, Headphones, PhoneMissed, Stethoscope, Timer, Users } from "lucide-react";
+import { Activity, Clock, Download, Headphones, PhoneMissed, Stethoscope, Timer, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
