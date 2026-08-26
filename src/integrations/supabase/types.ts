@@ -77,6 +77,38 @@ export type Database = {
         }
         Relationships: []
       }
+      bedside_logins: {
+        Row: {
+          created_at: string
+          email: string
+          site_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          site_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          site_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bedside_logins_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "hospital_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       break_glass_events: {
         Row: {
           ended_at: string | null
@@ -555,6 +587,14 @@ export type Database = {
           in_consult: boolean
           is_online: boolean
           specialty: string
+        }[]
+      }
+      bedside_session_token: {
+        Args: never
+        Returns: {
+          device_token: string
+          hospital: string
+          unit: string
         }[]
       }
       break_glass_active: { Args: { _user_id?: string }; Returns: boolean }
