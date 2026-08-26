@@ -49,6 +49,10 @@
   --color-ring-offset-background: var(--background);
   --color-panel: var(--panel);
   --color-panel-foreground: var(--panel-foreground);
+  --color-glass: var(--glass);
+  --color-glass-border: var(--glass-border);
+  --color-glow-success: var(--glow-success);
+  --color-glow-warning: var(--glow-warning);
   --font-sans:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto,
     ui-sans-serif, system-ui, sans-serif;
@@ -87,6 +91,11 @@
   --navy-800: oklch(0.26 0.097 267);
   --navy-700: oklch(0.33 0.095 267);
   --navy-foreground: oklch(0.97 0.003 264.5);
+  --glass: oklch(1 0 0 / 0.55);
+  --glass-border: oklch(1 0 0 / 0.35);
+  --glass-shadow: 0 8px 32px -12px oklch(0.17 0.024 268 / 0.18);
+  --glow-success: oklch(0.686 0.167 154.9 / 0.45);
+  --glow-warning: oklch(0.747 0.17 62.1 / 0.45);
   --border: oklch(0.896 0.013 262.4);
   --input: oklch(0.896 0.013 262.4);
   --ring: oklch(0.553 0.246 265.9);
@@ -161,4 +170,23 @@
 
 @utility sweep-line {
   animation: sweep 2.4s linear infinite;
+}
+
+@utility glass-card {
+  background-color: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(16px) saturate(140%);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+@keyframes ring-pulse-soft {
+  0% { box-shadow: 0 0 0 0 oklch(0.747 0.17 62.1 / 35%); }
+  70% { box-shadow: 0 0 0 12px oklch(0.747 0.17 62.1 / 0%); }
+  100% { box-shadow: 0 0 0 0 oklch(0.747 0.17 62.1 / 0%); }
+}
+
+@utility ring-pulse-soft {
+  animation: ring-pulse-soft 2.4s ease-out infinite;
 }
