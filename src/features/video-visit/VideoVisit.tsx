@@ -152,6 +152,22 @@ export function VideoVisit({
         }
       }
 
+      // Chrome/Edge report NotFoundError before the user has granted access,
+      // and again for a moment while a USB camera is still enumerating.
+      // Re-enumerate and try once more before declaring "no camera".
+      if (!cameraStream && !cancelled && md.enumerateDevices) {
+        try {
+          const devices = await md.enumerateDevices();
+          if (devices.some((d) => d.kind === "videoinput")) {
+            await new Promise((r) => setTimeout(r, 400));
+            if (!cancelled) cameraStream = await md.getUserMedia({ video: true, audio: false });
+          }
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+
+
       if (cancelled) {
         cameraStream?.getTracks().forEach((track) => track.stop());
         return;
