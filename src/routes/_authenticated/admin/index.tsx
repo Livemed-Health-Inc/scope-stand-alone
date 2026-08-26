@@ -167,6 +167,7 @@ function AnalyticsPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [sites, setSites] = useState<SiteRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
