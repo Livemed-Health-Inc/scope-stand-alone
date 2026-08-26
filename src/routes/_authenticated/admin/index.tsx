@@ -117,7 +117,7 @@ function downloadRows(rows: Row[], filename: string) {
       "Call seconds",
       "Wait seconds",
       "Auscultation seconds",
-      "Site checks",
+      "Auscultation sessions",
       "Recordings",
     ],
     rows.map((r) => [
@@ -214,7 +214,7 @@ function AnalyticsPage() {
     { icon: Timer, label: "Avg consult", value: hhmm(totals.answered ? totals.seconds / totals.answered : 0) },
     { icon: Timer, label: "Avg time to answer", value: hhmm(totals.answered ? totals.wait / totals.answered : 0) },
     { icon: Stethoscope, label: "Auscultation time", value: hhmm(totals.steth) },
-    { icon: Headphones, label: "Site checks / clips", value: `${totals.ausc} / ${totals.recordings}` },
+    { icon: Headphones, label: "Auscultation sessions / clips", value: `${totals.ausc} / ${totals.recordings}` },
   ];
 
   return (
