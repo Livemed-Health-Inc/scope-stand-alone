@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BrandMark } from "@/components/BrandMark";
+import { auditLog } from "@/lib/audit";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
