@@ -14,6 +14,8 @@ export interface AudioGraph {
   lp: BiquadFilterNode;
   lp2: BiquadFilterNode;
   lp3: BiquadFilterNode;
+  postLp: BiquadFilterNode;
+  postLp2: BiquadFilterNode;
   heartPeak: BiquadFilterNode;
   shelf: BiquadFilterNode;
   makeup: GainNode;
@@ -67,13 +69,15 @@ export async function createAudioGraph(s: GraphSettings): Promise<AudioGraph> {
   const clarity = biquad("peaking", 42, 1.2, 1);
   const edge = biquad("peaking", 175, 0.9, 0);
 
-  // Fast safety limiter catches residual transport impulses before encoding.
+  // Slow, wide-knee levelling only. A 1 ms attack modulates gain *within* each
+  // 40-70 Hz cycle, which rewrites the waveform and is heard as a sharp pop on
+  // every S1/S2 rather than as a thump.
   const comp = ctx.createDynamicsCompressor();
-  comp.threshold.value = -10;
-  comp.knee.value = 3;
-  comp.ratio.value = 12;
-  comp.attack.value = 0.001;
-  comp.release.value = 0.25;
+  comp.threshold.value = -6;
+  comp.knee.value = 24;
+  comp.ratio.value = 4;
+  comp.attack.value = 0.02;
+  comp.release.value = 0.35;
 
   const makeup = ctx.createGain();
   makeup.gain.value = 1;
@@ -87,6 +91,12 @@ export async function createAudioGraph(s: GraphSettings): Promise<AudioGraph> {
   for (let i = 0; i < curve.length; i++) curve[i] = (i / (curve.length - 1)) * 2 - 1;
   softClip.curve = curve;
   softClip.oversample = "4x";
+
+  // Final band limit after all non-linear stages: any distortion product from
+  // levelling or transport lands above the auscultation band, so removing it
+  // here guarantees nothing sharp reaches the Opus encoder.
+  const postLp = biquad("lowpass", band.high * 1.8, 0.7);
+  const postLp2 = biquad("lowpass", band.high * 1.8, 0.7);
 
   const gate = ctx.createGain();
   gate.gain.value = 1;
@@ -130,7 +140,9 @@ export async function createAudioGraph(s: GraphSettings): Promise<AudioGraph> {
   detLp2.connect(detectAnalyser);
   gate.connect(comp);
   comp.connect(softClip);
-  softClip.connect(gain);
+  softClip.connect(postLp);
+  postLp.connect(postLp2);
+  postLp2.connect(gain);
 
   gain.connect(analyser);
   gain.connect(broadcast);
@@ -138,7 +150,7 @@ export async function createAudioGraph(s: GraphSettings): Promise<AudioGraph> {
   monitor.connect(ctx.destination);
 
   return {
-    ctx, pcm, hp, hp2, lp, lp2, lp3, heartPeak, shelf, makeup, gate,
+    ctx, pcm, hp, hp2, lp, lp2, lp3, postLp, postLp2, heartPeak, shelf, makeup, gate,
     detectAnalyser, gain, monitor, analyser, broadcast,
   };
 }
@@ -158,6 +170,8 @@ export function applyMode(g: AudioGraph, mode: AuscultationMode) {
   smooth(g.lp.frequency, band.high);
   smooth(g.lp2.frequency, band.high);
   smooth(g.lp3.frequency, band.high * 1.6);
+  smooth(g.postLp.frequency, band.high * 1.8);
+  smooth(g.postLp2.frequency, band.high * 1.8);
   smooth(g.heartPeak.gain, mode === "bell" ? 8 : 0);
 }
 
