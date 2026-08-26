@@ -312,7 +312,7 @@ export function VideoVisit({
           />
         )}
         {!remoteHasVideo && !placeholderVideoUrl && (
-          <div className="aspect-4/3 w-full lg:aspect-video" />
+          <div className={`w-full ${isBedside ? "absolute inset-0 h-full" : "aspect-4/3 lg:aspect-video"}`} />
         )}
         {connecting && !remoteHasVideo && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
