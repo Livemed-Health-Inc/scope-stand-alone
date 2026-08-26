@@ -152,6 +152,22 @@ export function VideoVisit({
         }
       }
 
+      // Chrome/Edge report NotFoundError before the user has granted access,
+      // and again for a moment while a USB camera is still enumerating.
+      // Re-enumerate and try once more before declaring "no camera".
+      if (!cameraStream && !cancelled && md.enumerateDevices) {
+        try {
+          const devices = await md.enumerateDevices();
+          if (devices.some((d) => d.kind === "videoinput")) {
+            await new Promise((r) => setTimeout(r, 400));
+            if (!cancelled) cameraStream = await md.getUserMedia({ video: true, audio: false });
+          }
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+
+
       if (cancelled) {
         cameraStream?.getTracks().forEach((track) => track.stop());
         return;
@@ -197,11 +213,15 @@ export function VideoVisit({
       }
 
       const name = (lastErr as DOMException | null)?.name;
+      const embedded = typeof window !== "undefined" && window.self !== window.top;
       setSelfError(
         name === "NotAllowedError" || name === "PermissionDeniedError" || name === "SecurityError"
-          ? "Camera blocked — select the camera icon in Chrome's address bar, allow access, then retry"
-          : name === "NotFoundError"
-            ? "No camera detected on this device"
+          ? "Camera blocked — select the camera icon in the address bar, allow access, then retry"
+          : name === "NotFoundError" || name === "DevicesNotFoundError"
+            ? embedded
+              ? "No camera available in this embedded view — open the app in its own browser tab"
+              : "No camera detected — plug in or enable a webcam (check Windows camera privacy settings), then retry"
+
             : name === "NotReadableError" || name === "TrackStartError" || name === "AbortError"
               ? "Chrome could not start the camera — close other camera apps or tabs, then retry"
               : name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError"
