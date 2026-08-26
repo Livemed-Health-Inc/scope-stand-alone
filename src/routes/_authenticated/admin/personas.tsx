@@ -220,17 +220,79 @@ function PersonasPage() {
         </div>
 
         {deviceOnly ? (
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>
-              Hospitals do not get email logins. A field technician activates each bedside device with an
-              enrollment code, and that device inherits the hospital role for its registered unit.
-            </p>
-            <p>
-              Issue or review enrollment codes and devices under{" "}
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Each onboarded unit gets one bedside sign-in. Staff can use it on any browser, and a field technician
+              can still activate a permanent tablet with an enrollment code under{" "}
               <span className="font-medium text-foreground">Hospital Onboarding</span>.
             </p>
+            {sites.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No hospital units yet.</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {sites.map((s) => {
+                  const login = bedsideLogins.find((l) => l.site_id === s.id) ?? null;
+                  const cred = bedsideCreds[s.id];
+                  return (
+                    <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
+                      <div className="min-w-[180px]">
+                        <p className="text-sm font-medium">
+                          {s.hospital} · {s.unit}
+                        </p>
+                        {login ? (
+                          <p className="font-mono text-xs text-muted-foreground">{login.email}</p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">No bedside login yet</p>
+                        )}
+                        {cred ? (
+                          <p className="mt-1 text-xs">
+                            Password:{" "}
+                            <button
+                              type="button"
+                              className="font-mono underline"
+                              onClick={() => void copyText(cred.password)}
+                              title="Copy password"
+                            >
+                              {cred.password}
+                            </button>{" "}
+                            <span className="text-muted-foreground">— shown once</span>
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {login ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="gap-1.5"
+                            onClick={() => void copyText(login.email)}
+                          >
+                            <Copy className="size-3.5" /> Copy email
+                          </Button>
+                        ) : null}
+                        <Button
+                          size="sm"
+                          variant={login ? "ghost" : "default"}
+                          className="gap-1.5"
+                          disabled={bedsideBusy === s.id}
+                          onClick={() => void issueBedside(s.id)}
+                        >
+                          {bedsideBusy === s.id ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <KeyRound className="size-3.5" />
+                          )}
+                          {login ? "New password" : "Create login"}
+                        </Button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         ) : locked ? (
+
           <p className="text-sm text-muted-foreground">Only a super admin can manage this persona.</p>
         ) : (
           <div className="flex flex-wrap items-end gap-3">
