@@ -325,12 +325,17 @@ export function useAuscultationLink(opts: {
           const collision = makingOffer || pc.signalingState !== "stable";
           ignoreOffer = !polite() && collision;
           if (ignoreOffer) return;
-          await pc.setRemoteDescription(msg.sdp);
+          await pc.setRemoteDescription({ ...msg.sdp, sdp: hifiAudio(msg.sdp.sdp ?? "") });
           syncTracks();
           await pc.setLocalDescription();
-          if (pc.localDescription) send({ kind: "answer", sdp: pc.localDescription.toJSON() });
+          if (pc.localDescription) {
+            const d = pc.localDescription.toJSON();
+            send({ kind: "answer", sdp: { ...d, sdp: hifiAudio(d.sdp ?? "") } });
+          }
+          void raiseAudioBitrate(pc);
           while (pending.length) await pc.addIceCandidate(pending.shift()!).catch(() => {});
           setState((s) => (s === "live" ? s : "connecting"));
+
         } else if (msg.kind === "answer" && msg.sdp) {
           if (pc.signalingState === "have-local-offer") {
             await pc.setRemoteDescription(msg.sdp);
