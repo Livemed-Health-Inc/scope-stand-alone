@@ -335,12 +335,13 @@ export function useAuscultationLink(opts: {
           void raiseAudioBitrate(pc);
           while (pending.length) await pc.addIceCandidate(pending.shift()!).catch(() => {});
           setState((s) => (s === "live" ? s : "connecting"));
-
         } else if (msg.kind === "answer" && msg.sdp) {
           if (pc.signalingState === "have-local-offer") {
-            await pc.setRemoteDescription(msg.sdp);
+            await pc.setRemoteDescription({ ...msg.sdp, sdp: hifiAudio(msg.sdp.sdp ?? "") });
+            void raiseAudioBitrate(pc);
             while (pending.length) await pc.addIceCandidate(pending.shift()!).catch(() => {});
           }
+
         } else if (msg.kind === "ice" && msg.candidate) {
           if (pc.remoteDescription) await pc.addIceCandidate(msg.candidate).catch(() => {});
           else pending.push(msg.candidate);
