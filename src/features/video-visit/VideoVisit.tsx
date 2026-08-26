@@ -537,6 +537,43 @@ export function VideoVisit({
         >
           {camOn ? <Video className="size-6" /> : <VideoOff className="size-6 text-destructive" />}
         </button>
+        {cameras.length > 1 && (
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setCamPicker((v) => !v)}
+              aria-label="Choose camera"
+              aria-expanded={camPicker}
+              className="flex size-12 items-center justify-center rounded-full bg-navy-700"
+            >
+              <Camera className="size-6" />
+            </button>
+            {camPicker && (
+              <div className="absolute bottom-14 left-1/2 z-20 w-64 -translate-x-1/2 overflow-hidden rounded-2xl border border-border bg-card p-1 text-foreground shadow-xl">
+                <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Camera source
+                </p>
+                {[{ deviceId: "", label: "Default camera" }, ...cameras].map((c) => {
+                  const active = (cameraId ?? "") === c.deviceId;
+                  return (
+                    <button
+                      key={c.deviceId || "default"}
+                      onClick={() => {
+                        setCameraId(c.deviceId || null);
+                        setCamPicker(false);
+                      }}
+                      className={`block w-full truncate rounded-xl px-3 py-2 text-left text-xs ${
+                        active ? "bg-primary/15 font-semibold text-primary" : "hover:bg-muted"
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         <button
           onClick={onEnd}
           className="shrink-0 rounded-full bg-destructive px-5 py-3 text-sm font-semibold text-destructive-foreground sm:px-6"
