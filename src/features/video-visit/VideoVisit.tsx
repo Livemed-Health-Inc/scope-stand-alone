@@ -265,7 +265,7 @@ export function VideoVisit({
   }, [connecting]);
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-navy-900 px-3 pb-4 pt-3 text-slate-100 sm:max-w-xl sm:px-5 lg:max-w-6xl lg:px-6">
+    <main className="flex min-h-screen w-full flex-col bg-navy-900 px-3 pb-4 pt-3 text-slate-100 sm:px-5 lg:px-6">
       <header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
         {onEnd && (
           <button onClick={onEnd} aria-label="Leave visit" className="shrink-0 text-slate-400">
