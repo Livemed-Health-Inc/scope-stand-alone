@@ -52,19 +52,25 @@ export const Route = createFileRoute("/_authenticated/admin/hospitals")({
 type Site = { id: string; hospital: string; unit: string; is_active: boolean };
 type Device = { id: string; site_id: string; label: string; status: string; last_seen: string | null };
 type Code = { id: string; code: string; site_id: string; expires_at: string };
+type BedsideLogin = { user_id: string; site_id: string; email: string };
 
 function HospitalsPage() {
   const [sites, setSites] = useState<Site[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [codes, setCodes] = useState<Code[]>([]);
+  const [logins, setLogins] = useState<BedsideLogin[]>([]);
+  const [creds, setCreds] = useState<Record<string, { email: string; password: string }>>({});
   const [hospital, setHospital] = useState("");
   const [unit, setUnit] = useState("");
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState<string | null>(null);
 
+  const createLogin = useServerFn(provisionBedsideLogin);
+  const removeLogin = useServerFn(revokeBedsideLogin);
+
   async function load() {
-    const [s, d, c] = await Promise.all([
+    const [s, d, c, l] = await Promise.all([
       supabase.from("hospital_sites").select("id, hospital, unit, is_active").order("hospital").order("unit"),
       supabase.from("devices").select("id, site_id, label, status, last_seen").order("created_at", { ascending: false }),
       supabase
@@ -72,15 +78,50 @@ function HospitalsPage() {
         .select("id, code, site_id, expires_at")
         .is("used_at", null)
         .order("created_at", { ascending: false }),
+      supabase.from("bedside_logins").select("user_id, site_id, email"),
     ]);
     setSites((s.data as Site[] | null) ?? []);
     setDevices((d.data as Device[] | null) ?? []);
     setCodes((c.data as Code[] | null) ?? []);
+    setLogins((l.data as BedsideLogin[] | null) ?? []);
   }
 
   useEffect(() => {
     void load();
   }, []);
+
+  /** Issues (or re-issues) the unit's bedside sign-in and shows the credentials once. */
+  async function issueLogin(siteId: string, quiet = false) {
+    try {
+      const result = await createLogin({ data: { siteId } });
+      setCreds((c) => ({ ...c, [siteId]: { email: result.email, password: result.password } }));
+      setOpen((o) => ({ ...o, [siteId]: true }));
+      void auditLog({ action: "bedside.login_provisioned", entity: "hospital_sites", entityId: siteId });
+      await load();
+      if (!quiet) toast.success(result.reset ? "New bedside password issued" : "Bedside login created");
+      return result;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not create the bedside login");
+      return null;
+    }
+  }
+
+  async function dropLogin(login: BedsideLogin) {
+    try {
+      await removeLogin({ data: { userId: login.user_id } });
+      setCreds((c) => {
+        const next = { ...c };
+        delete next[login.site_id];
+        return next;
+      });
+      void auditLog({ action: "bedside.login_revoked", entity: "hospital_sites", entityId: login.site_id });
+      await load();
+      toast.success("Bedside login removed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not remove the bedside login");
+    }
+  }
+
 
   async function issueCode(siteId: string, quiet = false) {
     const { data, error } = await supabase.rpc("create_enrollment_code", { _site_id: siteId });
