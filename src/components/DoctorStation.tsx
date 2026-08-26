@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { PhoneIncoming, PhoneOff, Coffee, CheckCircle2, BellRing, Footprints } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { auditLog } from "@/lib/audit";
 import { useAuth } from "@/lib/auth";
 import { setDoctorPresence } from "@/lib/staff";
 import { Button } from "@/components/ui/button";
