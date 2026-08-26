@@ -90,17 +90,22 @@ export async function createAudioGraph(s: GraphSettings): Promise<AudioGraph> {
 
   // Small speakers cannot reproduce 20-80 Hz. A parallel harmonic path adds the
   // overtones of each thump so phones/laptops render a crisp "lub-dub".
+  // Kept gentle and band-limited: aggressive squaring generated high harmonics
+  // that the remote Opus encoder turned into sharp static on the doctor side.
   const harmShaper = ctx.createWaveShaper();
   const hc = new Float32Array(1024);
   for (let i = 0; i < hc.length; i++) {
     const x = (i / (hc.length - 1)) * 2 - 1;
-    hc[i] = x * x * Math.sign(x) * 0.9 + x * 0.1;
+    hc[i] = x * x * Math.sign(x) * 0.55 + x * 0.45;
   }
   harmShaper.curve = hc;
   harmShaper.oversample = "4x";
-  const harmBand = biquad("bandpass", 190, 0.8);
+  const harmBand = biquad("bandpass", 170, 0.7);
+  // Hard ceiling on the harmonic path so no fizz above the heart band escapes.
+  const harmTame = biquad("lowpass", 320, 0.7);
   const harmGain = ctx.createGain();
-  harmGain.gain.value = 0.55;
+  harmGain.gain.value = 0.3;
+
 
   const gate = ctx.createGain();
   gate.gain.value = 1;
