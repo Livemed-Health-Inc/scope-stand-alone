@@ -63,18 +63,5 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
     return <ActivationForm onRegistered={verify} />;
   }
 
-  return (
-    <>
-      {preview && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-foreground">
-          <Eye className="size-4 shrink-0" />
-          <span>
-            <strong>Admin preview</strong> — this is the live bedside station for {device.hospital} · {device.unit}. Calls
-            placed here really ring physicians.
-          </span>
-        </div>
-      )}
-      {children(device)}
-    </>
-  );
+  return <>{children(device)}</>;
 }
