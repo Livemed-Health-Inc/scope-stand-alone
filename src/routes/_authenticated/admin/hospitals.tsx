@@ -8,7 +8,9 @@ import {
   ExternalLink,
   KeyRound,
   Link as LinkIcon,
+  MonitorPlay,
   Plus,
+
   Power,
   PowerOff,
   ShieldCheck,
@@ -114,6 +116,22 @@ function HospitalsPage() {
   function activationUrl(code: string) {
     return `${window.location.origin}/nurse/activate?code=${encodeURIComponent(code)}`;
   }
+
+  async function openBedside(site: Site) {
+    const tab = window.open("", "_blank", "noopener,noreferrer");
+    const { data, error } = await supabase.rpc("admin_preview_device", { _site_id: site.id });
+    const row = (data ?? [])[0] as { device_token: string } | undefined;
+    if (error || !row) {
+      tab?.close();
+      toast.error(error?.message ?? "Could not open the bedside view");
+      return;
+    }
+    const url = `${window.location.origin}/nurse?preview=${encodeURIComponent(row.device_token)}`;
+    if (tab) tab.location.href = url;
+    else window.open(url, "_blank", "noopener,noreferrer");
+    void load();
+  }
+
 
   async function copy(code: string) {
     try {
@@ -231,6 +249,16 @@ function HospitalsPage() {
                       </span>
                     </button>
                     <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2"
+                        disabled={!s.is_active}
+                        title={s.is_active ? "Open the live bedside station for this unit" : "Activate this unit first"}
+                        onClick={() => void openBedside(s)}
+                      >
+                        <MonitorPlay className="size-4" /> Bedside view
+                      </Button>
                       <Button size="sm" variant="outline" className="gap-2" onClick={() => void issueCode(s.id)}>
                         <KeyRound className="size-4" /> Activation code
                       </Button>
@@ -240,6 +268,7 @@ function HospitalsPage() {
                         {s.is_active ? "Deactivate" : "Activate"}
                       </Button>
                     </div>
+
                   </div>
 
                   {expanded && (
