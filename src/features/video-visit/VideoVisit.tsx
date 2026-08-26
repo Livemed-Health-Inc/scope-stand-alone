@@ -72,6 +72,7 @@ export function VideoVisit({
   showScribeBanner = false,
   allowRoleSwitch = false,
   allowRemoteLocalScope = false,
+  callId,
   onEnd,
 }: VideoVisitProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -85,6 +86,33 @@ export function VideoVisit({
     setRole(roleProp);
   }, [roleProp]);
   const isBedside = role === "patient";
+
+  // ---- Consult analytics ---------------------------------------------
+  const analyticsCallId = callId ?? roomId;
+  const track = useCallback(
+    (event: Omit<CallEvent, "callId">) => {
+      void logCallEvent({ ...event, callId: analyticsCallId });
+    },
+    [analyticsCallId],
+  );
+  useEffect(() => {
+    const joinedAt = Date.now();
+    void logCallEvent({
+      kind: "visit_join",
+      callId: analyticsCallId,
+      details: { role: roleProp, hospital, unit },
+    });
+    return () => {
+      void logCallEvent({
+        kind: "visit_leave",
+        callId: analyticsCallId,
+        durationMs: Date.now() - joinedAt,
+        details: { role: roleProp },
+      });
+    };
+  }, [analyticsCallId, roleProp, hospital, unit]);
+
+
 
   const [scopeStream, setScopeStream] = useState<MediaStream | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
