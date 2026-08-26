@@ -24,6 +24,7 @@ import { Route as NurseActivateRouteImport } from './routes/nurse_.activate'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminAccessRouteImport } from './routes/_authenticated/admin/access'
 import { Route as AuthenticatedAdminAdminsRouteImport } from './routes/_authenticated/admin/admins'
+import { Route as AuthenticatedAdminComplianceRouteImport } from './routes/_authenticated/admin/compliance'
 import { Route as AuthenticatedAdminHospitalsRouteImport } from './routes/_authenticated/admin/hospitals'
 import { Route as AuthenticatedAdminPersonasRouteImport } from './routes/_authenticated/admin/personas'
 import { Route as AuthenticatedAdminPhysiciansRouteImport } from './routes/_authenticated/admin/physicians'
@@ -109,6 +110,12 @@ const AuthenticatedAdminAdminsRoute =
     path: '/admins',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminComplianceRoute =
+  AuthenticatedAdminComplianceRouteImport.update({
+    id: '/compliance',
+    path: '/compliance',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminHospitalsRoute =
   AuthenticatedAdminHospitalsRouteImport.update({
     id: '/hospitals',
@@ -169,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/nurse/activate': typeof NurseActivateRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
+  '/admin/compliance': typeof AuthenticatedAdminComplianceRoute
   '/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
   '/admin/personas': typeof AuthenticatedAdminPersonasRoute
   '/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
@@ -191,6 +199,7 @@ export interface FileRoutesByTo {
   '/nurse/activate': typeof NurseActivateRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
+  '/admin/compliance': typeof AuthenticatedAdminComplianceRoute
   '/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
   '/admin/personas': typeof AuthenticatedAdminPersonasRoute
   '/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
@@ -217,6 +226,7 @@ export interface FileRoutesById {
   '/nurse_/activate': typeof NurseActivateRoute
   '/_authenticated/admin/access': typeof AuthenticatedAdminAccessRoute
   '/_authenticated/admin/admins': typeof AuthenticatedAdminAdminsRoute
+  '/_authenticated/admin/compliance': typeof AuthenticatedAdminComplianceRoute
   '/_authenticated/admin/hospitals': typeof AuthenticatedAdminHospitalsRoute
   '/_authenticated/admin/personas': typeof AuthenticatedAdminPersonasRoute
   '/_authenticated/admin/physicians': typeof AuthenticatedAdminPhysiciansRoute
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/nurse/activate'
     | '/admin/access'
     | '/admin/admins'
+    | '/admin/compliance'
     | '/admin/hospitals'
     | '/admin/personas'
     | '/admin/physicians'
@@ -265,6 +276,7 @@ export interface FileRouteTypes {
     | '/nurse/activate'
     | '/admin/access'
     | '/admin/admins'
+    | '/admin/compliance'
     | '/admin/hospitals'
     | '/admin/personas'
     | '/admin/physicians'
@@ -290,6 +302,7 @@ export interface FileRouteTypes {
     | '/nurse_/activate'
     | '/_authenticated/admin/access'
     | '/_authenticated/admin/admins'
+    | '/_authenticated/admin/compliance'
     | '/_authenticated/admin/hospitals'
     | '/_authenticated/admin/personas'
     | '/_authenticated/admin/physicians'
@@ -418,6 +431,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/compliance': {
+      id: '/_authenticated/admin/compliance'
+      path: '/compliance'
+      fullPath: '/admin/compliance'
+      preLoaderRoute: typeof AuthenticatedAdminComplianceRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/hospitals': {
       id: '/_authenticated/admin/hospitals'
       path: '/hospitals'
@@ -480,6 +500,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminAccessRoute: typeof AuthenticatedAdminAccessRoute
   AuthenticatedAdminAdminsRoute: typeof AuthenticatedAdminAdminsRoute
+  AuthenticatedAdminComplianceRoute: typeof AuthenticatedAdminComplianceRoute
   AuthenticatedAdminHospitalsRoute: typeof AuthenticatedAdminHospitalsRoute
   AuthenticatedAdminPersonasRoute: typeof AuthenticatedAdminPersonasRoute
   AuthenticatedAdminPhysiciansRoute: typeof AuthenticatedAdminPhysiciansRoute
@@ -491,6 +512,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
   {
     AuthenticatedAdminAccessRoute: AuthenticatedAdminAccessRoute,
     AuthenticatedAdminAdminsRoute: AuthenticatedAdminAdminsRoute,
+    AuthenticatedAdminComplianceRoute: AuthenticatedAdminComplianceRoute,
     AuthenticatedAdminHospitalsRoute: AuthenticatedAdminHospitalsRoute,
     AuthenticatedAdminPersonasRoute: AuthenticatedAdminPersonasRoute,
     AuthenticatedAdminPhysiciansRoute: AuthenticatedAdminPhysiciansRoute,

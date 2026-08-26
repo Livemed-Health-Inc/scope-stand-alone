@@ -22,6 +22,7 @@ const NAV: {
     | "/admin/techs"
     | "/admin/admins"
     | "/admin/access"
+    | "/admin/compliance"
     | "/admin/personas";
   label: string;
   exact?: boolean;
@@ -32,6 +33,7 @@ const NAV: {
   { to: "/admin/personas", label: "Roles", permission: "admin.users" },
   { to: "/admin/access", label: "People & personas", permission: "admin.roles" },
   { to: "/admin/admins", label: "Admins", permission: "admin.users" },
+  { to: "/admin/compliance", label: "Compliance", permission: "admin.users" },
 ];
 
 function AdminLayout() {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PhoneCall, Loader2, Users, X, Stethoscope, ChevronRight, BellRing, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { auditLog } from "@/lib/audit";
 import { getDeviceToken, type DeviceContext } from "@/lib/device";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -203,9 +204,17 @@ export function NurseStation({ device }: { device: DeviceContext }) {
     });
 
     if (error || !data) {
+      void auditLog({ action: "consult.placed", entity: "calls", outcome: "error", withDevice: true });
       toast.error(error?.message ?? "Could not place the call.");
       return;
     }
+    void auditLog({
+      action: "consult.placed",
+      entity: "calls",
+      entityId: data as string,
+      phi: true,
+      withDevice: true,
+    });
     setActiveCall({
       id: data as string,
       doctor_id: target.id,

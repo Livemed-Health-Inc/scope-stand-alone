@@ -32,6 +32,78 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_kind: string
+          actor_user_id: string | null
+          details: Json
+          device_id: string | null
+          entity: string | null
+          entity_id: string | null
+          id: number
+          occurred_at: string
+          outcome: string
+          phi_accessed: boolean
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_kind?: string
+          actor_user_id?: string | null
+          details?: Json
+          device_id?: string | null
+          entity?: string | null
+          entity_id?: string | null
+          id?: number
+          occurred_at?: string
+          outcome?: string
+          phi_accessed?: boolean
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_kind?: string
+          actor_user_id?: string | null
+          details?: Json
+          device_id?: string | null
+          entity?: string | null
+          entity_id?: string | null
+          id?: number
+          occurred_at?: string
+          outcome?: string
+          phi_accessed?: boolean
+        }
+        Relationships: []
+      }
+      break_glass_events: {
+        Row: {
+          ended_at: string | null
+          expires_at: string
+          id: string
+          reason: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          reason: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          reason?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       calls: {
         Row: {
           answered_at: string | null
@@ -446,6 +518,35 @@ export type Database = {
           unit: string
         }[]
       }
+      audit_trail: {
+        Args: {
+          _actor?: string
+          _entity?: string
+          _limit?: number
+          _phi_only?: boolean
+          _since?: string
+        }
+        Returns: {
+          action: string
+          actor_email: string | null
+          actor_kind: string
+          actor_user_id: string | null
+          details: Json
+          device_id: string | null
+          entity: string | null
+          entity_id: string | null
+          id: number
+          occurred_at: string
+          outcome: string
+          phi_accessed: boolean
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "audit_log"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       available_physicians: {
         Args: never
         Returns: {
@@ -456,6 +557,7 @@ export type Database = {
           specialty: string
         }[]
       }
+      break_glass_active: { Args: { _user_id?: string }; Returns: boolean }
       claim_admin_role: { Args: never; Returns: boolean }
       claim_staff_role: { Args: { _role: string }; Returns: boolean }
       clear_rounding: {
@@ -509,6 +611,7 @@ export type Database = {
           status: string
         }[]
       }
+      end_break_glass: { Args: never; Returns: undefined }
       end_public_call: {
         Args: { _call_id: string; _device_token: string }
         Returns: undefined
@@ -538,6 +641,18 @@ export type Database = {
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       is_tech: { Args: { _user_id: string }; Returns: boolean }
+      log_audit_event: {
+        Args: {
+          _action: string
+          _details?: Json
+          _device_token?: string
+          _entity?: string
+          _entity_id?: string
+          _outcome?: string
+          _phi_accessed?: boolean
+        }
+        Returns: number
+      }
       mark_rounding_ready: {
         Args: { _device_token: string; _note?: string; _room: string }
         Returns: string
@@ -577,6 +692,23 @@ export type Database = {
           label: string
           unit: string
         }[]
+      }
+      start_break_glass: {
+        Args: { _reason: string }
+        Returns: {
+          ended_at: string | null
+          expires_at: string
+          id: string
+          reason: string
+          started_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "break_glass_events"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {

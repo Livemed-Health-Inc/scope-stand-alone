@@ -1,5 +1,6 @@
 // Captures the original Error out-of-band so server.ts can recover the stack
 // when h3 has already swallowed the throw into a generic 500 Response.
+import { scrubPhi, scrubPhiDeep } from "@/lib/phi";
 
 let lastCapturedError: { error: unknown; at: number } | undefined;
 const TTL_MS = 5_000;
@@ -54,10 +55,14 @@ function isErrorLike(value: unknown): value is Error {
 // recorded for consumeLastCapturedError and expanded before serialization.
 const originalConsoleError = console.error.bind(console);
 console.error = (...args: unknown[]) => {
+  // HIPAA: logs are not a permitted disclosure channel, so anything that looks
+  // like an identifier (email, phone, MRN, DOB, token) is stripped on the way out.
   const expanded = args.map((arg) => {
-    if (!isErrorLike(arg)) return arg;
-    record(arg);
-    return describeError(arg);
+    if (isErrorLike(arg)) {
+      record(arg);
+      return scrubPhi(describeError(arg));
+    }
+    return typeof arg === "string" ? scrubPhi(arg) : scrubPhiDeep(arg);
   });
   originalConsoleError(...expanded);
 };

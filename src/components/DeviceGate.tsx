@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Loader2, Lock } from "lucide-react";
 import { ActivationForm } from "@/components/ActivationForm";
+import { BrandMark } from "@/components/BrandMark";
+import { Button } from "@/components/ui/button";
+import { IdleTimeout } from "@/components/IdleTimeout";
 import { supabase } from "@/integrations/supabase/client";
+import { auditLog } from "@/lib/audit";
 import {
   clearDeviceToken,
   clearPreviewToken,
@@ -14,6 +18,7 @@ import {
 export function DeviceGate({ children }: { children: (device: DeviceContext) => React.ReactNode }) {
   const [device, setDevice] = useState<DeviceContext | null>(null);
   const [checking, setChecking] = useState(true);
+  const [locked, setLocked] = useState(false);
 
   async function verify() {
     const token = getDeviceToken();
@@ -49,6 +54,10 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
     return () => window.clearInterval(interval);
   }, []);
 
+  const lock = useCallback(() => {
+    setLocked(true);
+  }, []);
+
   if (checking) {
     return (
       <div className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
@@ -61,5 +70,35 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
     return <ActivationForm onRegistered={verify} />;
   }
 
-  return <>{children(device)}</>;
+  // Privacy screen: an unattended cart must not leave patient context visible.
+  if (locked) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-5 px-6 text-center">
+        <BrandMark size={40} />
+        <Lock className="size-6 text-muted-foreground" />
+        <div>
+          <h1 className="text-lg font-semibold">Screen locked for patient privacy</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {device.hospital} · {device.unit}
+          </p>
+        </div>
+        <Button
+          size="lg"
+          onClick={() => {
+            void auditLog({ action: "bedside.unlock", entity: "devices", entityId: device.device_id, withDevice: true });
+            setLocked(false);
+          }}
+        >
+          Resume bedside station
+        </Button>
+      </main>
+    );
+  }
+
+  return (
+    <>
+      {children(device)}
+      <IdleTimeout idleMinutes={10} warnSeconds={45} onTimeout={lock} label="bedside station" />
+    </>
+  );
 }

@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { auditLog } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/admin/hospitals")({
   head: () => ({
@@ -127,6 +128,7 @@ function HospitalsPage() {
       toast.error(error?.message ?? "Could not open the bedside view");
       return;
     }
+    void auditLog({ action: "bedside.admin_preview", entity: "hospital_sites", entityId: site.id, phi: true });
     const url = `${window.location.origin}/nurse?preview=${encodeURIComponent(row.device_token)}`;
     if (tab && !tab.closed) {
       tab.location.replace(url);
