@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Eye } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { ActivationForm } from "@/components/ActivationForm";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -14,7 +14,6 @@ import {
 export function DeviceGate({ children }: { children: (device: DeviceContext) => React.ReactNode }) {
   const [device, setDevice] = useState<DeviceContext | null>(null);
   const [checking, setChecking] = useState(true);
-  const [preview, setPreview] = useState(false);
 
   async function verify() {
     const token = getDeviceToken();
@@ -31,7 +30,6 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
     } else {
       setDevice(ctx);
     }
-    setPreview(isPreviewSession());
     setChecking(false);
   }
 
