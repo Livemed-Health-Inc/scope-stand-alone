@@ -302,7 +302,7 @@ export function VideoVisit({
           <video
             ref={videoRef}
             src={placeholderVideoUrl}
-            className={`aspect-4/3 w-full object-cover transition-opacity lg:aspect-video ${
+            className={`w-full object-cover transition-opacity ${isBedside ? "absolute inset-0 h-full" : "aspect-4/3 lg:aspect-video"} ${
               connecting ? "opacity-0" : "opacity-100"
             }`}
             playsInline
