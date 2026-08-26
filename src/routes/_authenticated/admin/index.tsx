@@ -152,10 +152,10 @@ function AnalyticsPage() {
     <>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="label-caps">Analytics</p>
+          <p className="label-caps">Analytics &amp; reports</p>
           <h1 className="text-2xl font-semibold tracking-tight">Consult activity</h1>
         </div>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           {BUCKETS.map((b) => (
             <Button
               key={b.key}
@@ -166,8 +166,18 @@ function AnalyticsPage() {
               {b.label}
             </Button>
           ))}
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-2 gap-2"
+            disabled={rows.length === 0}
+            onClick={() => downloadRows(rows, `consult-report-${bucket}`)}
+          >
+            <Download className="size-4" /> Full report (CSV)
+          </Button>
         </div>
       </div>
+
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((c) => (
