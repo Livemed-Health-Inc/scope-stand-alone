@@ -102,6 +102,7 @@ export function VideoVisit({
 
     let cancelled = false;
     let stream: MediaStream | null = null;
+    let microphoneStream: MediaStream | null = null;
     const md = navigator.mediaDevices;
 
     const attach = (s: MediaStream) => {
@@ -123,27 +124,78 @@ export function VideoVisit({
       return;
     }
 
-    // Try the picked camera first, then any camera, then camera-only (mic busy).
-    // Chrome can reject a stale persisted device ID after an OS or USB change.
-    const attempts: MediaStreamConstraints[] = [
-      ...(cameraId ? [{ video: { deviceId: { exact: cameraId } }, audio: true } as MediaStreamConstraints] : []),
-      { video: true, audio: true },
-      { video: true, audio: false },
+    // Acquire video independently from the microphone. Chrome rejects the
+    // entire combined request when an enterprise policy, another tab, or the
+    // operating system blocks only the microphone, which previously made a
+    // healthy bedside camera appear unavailable to the physician.
+    const videoAttempts: MediaTrackConstraints[] = [
+      ...(cameraId ? [{ deviceId: { exact: cameraId } } as MediaTrackConstraints] : []),
+      {
+        facingMode: { ideal: "user" },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        frameRate: { ideal: 30 },
+      },
+      {},
     ];
 
     void (async () => {
+      let cameraStream: MediaStream | null = null;
       let lastErr: unknown = null;
-      for (const constraints of attempts) {
+      for (const video of videoAttempts) {
         if (cancelled) return;
         try {
-          const s = await md.getUserMedia(constraints);
-          attach(s);
-          return;
+          cameraStream = await md.getUserMedia({ video, audio: false });
+          break;
         } catch (e) {
           lastErr = e;
         }
       }
-      if (cancelled) return;
+
+      if (cancelled) {
+        cameraStream?.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
+      if (cameraStream) {
+        // Publish and render the camera immediately; microphone acquisition
+        // must never hold up the patient video.
+        attach(cameraStream);
+        const videoTrack = cameraStream.getVideoTracks()[0];
+        if (videoTrack) {
+          videoTrack.contentHint = "motion";
+          videoTrack.onended = () => {
+            if (!cancelled) setSelfError("Camera disconnected — reconnect it, then retry");
+          };
+        }
+
+        try {
+          microphoneStream = await md.getUserMedia({
+            video: false,
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
+          });
+          if (cancelled) {
+            microphoneStream.getTracks().forEach((track) => track.stop());
+            return;
+          }
+          const microphone = microphoneStream.getAudioTracks()[0];
+          if (microphone) {
+            cameraStream.addTrack(microphone);
+            // MediaStream is mutable, so create a new instance to notify React
+            // and the WebRTC publisher that an audio track was added.
+            stream = cameraStream;
+            setSelfStream(new MediaStream(cameraStream.getTracks()));
+          }
+        } catch {
+          // Keep the video call usable when Chrome cannot open the microphone.
+        }
+        return;
+      }
+
       const name = (lastErr as DOMException | null)?.name;
       setSelfError(
         name === "NotAllowedError" || name === "PermissionDeniedError" || name === "SecurityError"
@@ -163,6 +215,7 @@ export function VideoVisit({
     return () => {
       cancelled = true;
       stream?.getTracks().forEach((t) => t.stop());
+      microphoneStream?.getTracks().forEach((t) => t.stop());
       setSelfStream(null);
     };
   }, [cameraId, preferenceReady, retryKey, setCameraId]);
