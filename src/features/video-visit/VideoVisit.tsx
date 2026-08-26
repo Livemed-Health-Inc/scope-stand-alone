@@ -675,7 +675,7 @@ export function VideoVisit({
         </div>
 
         {role === "patient" ? (
-          <StethoscopePanel onCallStream={handleCallStream} localMonitor={false} />
+          <StethoscopePanel onCallStream={handleCallStream} localMonitor={false} onEvent={track} />
         ) : allowRemoteLocalScope ? (
           <>
             <p className="mb-2 rounded-xl bg-muted px-3 py-2 text-center text-[11px] text-muted-foreground">
