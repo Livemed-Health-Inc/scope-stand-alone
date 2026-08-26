@@ -682,7 +682,7 @@ export function VideoVisit({
               Testing build: you can pair a stethoscope on this device and listen through your own
               speakers. In the field it stays at the patient&apos;s bedside.
             </p>
-            <StethoscopePanel onCallStream={handleCallStream} localMonitor />
+            <StethoscopePanel onCallStream={handleCallStream} localMonitor onEvent={track} />
           </>
         ) : null}
       </section>
