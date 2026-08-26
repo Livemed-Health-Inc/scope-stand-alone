@@ -81,6 +81,8 @@ export function VideoVisit({
   useEffect(() => {
     setRole(roleProp);
   }, [roleProp]);
+  const isBedside = role === "patient";
+
   const [scopeStream, setScopeStream] = useState<MediaStream | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const [listening, setListening] = useState(true);
@@ -265,8 +267,8 @@ export function VideoVisit({
   }, [connecting]);
 
   return (
-    <main className="flex min-h-screen w-full flex-col bg-navy-900 px-3 pb-4 pt-3 text-slate-100 sm:px-5 lg:px-6">
-      <header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+    <main className={`flex min-h-screen w-full flex-col bg-navy-900 pb-4 pt-3 text-slate-100 ${isBedside ? "" : "px-3 sm:px-5 lg:px-6"}`}>
+      <header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-3">
         {onEnd && (
           <button onClick={onEnd} aria-label="Leave visit" className="shrink-0 text-slate-400">
             <ChevronLeft className="size-6" />
@@ -285,14 +287,14 @@ export function VideoVisit({
         </div>
       </header>
 
-      <div className="mt-3 flex flex-1 flex-col gap-2 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] lg:items-start lg:gap-5">
+      <div className={`mt-3 flex flex-1 flex-col gap-2 ${isBedside ? "" : "lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:items-start lg:gap-5"}`}>
         {/* Left column on wide screens, inline flow on mobile */}
-        <div className="contents lg:col-start-1 lg:row-start-1 lg:flex lg:flex-col lg:gap-2">
+        <div className={isBedside ? "flex flex-1 flex-col gap-2 min-h-0" : "contents lg:col-start-1 lg:row-start-1 lg:flex lg:flex-col lg:gap-2"}>
 
-      <section className="relative overflow-hidden rounded-3xl bg-navy-800">
+      <section className={`relative overflow-hidden rounded-3xl bg-navy-800 ${isBedside ? "flex-1 min-h-0" : ""}`}>
         <video
           ref={remoteVideoRef}
-          className={`aspect-4/3 w-full object-cover lg:aspect-video ${remoteHasVideo ? "" : "hidden"}`}
+          className={`w-full object-cover ${isBedside ? "absolute inset-0 h-full" : "aspect-4/3 lg:aspect-video"} ${remoteHasVideo ? "" : "hidden"}`}
           playsInline
           autoPlay
         />
@@ -300,7 +302,7 @@ export function VideoVisit({
           <video
             ref={videoRef}
             src={placeholderVideoUrl}
-            className={`aspect-4/3 w-full object-cover transition-opacity lg:aspect-video ${
+            className={`w-full object-cover transition-opacity ${isBedside ? "absolute inset-0 h-full" : "aspect-4/3 lg:aspect-video"} ${
               connecting ? "opacity-0" : "opacity-100"
             }`}
             playsInline
@@ -310,7 +312,7 @@ export function VideoVisit({
           />
         )}
         {!remoteHasVideo && !placeholderVideoUrl && (
-          <div className="aspect-4/3 w-full lg:aspect-video" />
+          <div className={`w-full ${isBedside ? "absolute inset-0 h-full" : "aspect-4/3 lg:aspect-video"}`} />
         )}
         {connecting && !remoteHasVideo && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
@@ -391,7 +393,7 @@ export function VideoVisit({
         </div>
 
         {/* Right column on wide screens */}
-        <div className="contents lg:col-start-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-2">
+        <div className={isBedside ? "flex flex-col gap-2" : "contents lg:col-start-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-2"}>
       {showScribeBanner && (
         <div className="mt-2 flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2">
           <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
