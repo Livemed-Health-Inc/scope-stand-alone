@@ -132,6 +132,8 @@ function PersonasPage() {
 
   useEffect(() => {
     void load();
+    void loadBedside();
+
   }, []);
 
   const flagGroups = useMemo(() => {
