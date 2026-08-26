@@ -54,10 +54,14 @@ function isErrorLike(value: unknown): value is Error {
 // recorded for consumeLastCapturedError and expanded before serialization.
 const originalConsoleError = console.error.bind(console);
 console.error = (...args: unknown[]) => {
+  // HIPAA: logs are not a permitted disclosure channel, so anything that looks
+  // like an identifier (email, phone, MRN, DOB, token) is stripped on the way out.
   const expanded = args.map((arg) => {
-    if (!isErrorLike(arg)) return arg;
-    record(arg);
-    return describeError(arg);
+    if (isErrorLike(arg)) {
+      record(arg);
+      return scrubPhi(describeError(arg));
+    }
+    return typeof arg === "string" ? scrubPhi(arg) : scrubPhiDeep(arg);
   });
   originalConsoleError(...expanded);
 };
