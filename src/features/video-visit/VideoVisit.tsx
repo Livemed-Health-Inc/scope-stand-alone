@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, Mic, MicOff, Radio, Stethoscope, Video, VideoOff, X } from "lucide-react";
+import { Camera, ChevronLeft, Mic, MicOff, Radio, Stethoscope, Video, VideoOff, X } from "lucide-react";
+import { useCameraDevices } from "@/lib/media/useCameraDevices";
+
 import { StethoscopePanel } from "@/features/stethoscope";
 import { Waveform } from "@/features/stethoscope";
 import { useStreamAnalyser } from "@/features/stethoscope";
