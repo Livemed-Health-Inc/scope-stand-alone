@@ -89,7 +89,8 @@ export function VideoVisit({
   const [audioBlocked, setAudioBlocked] = useState(false);
   const selfVideoRef = useRef<HTMLVideoElement>(null);
   const [selfStream, setSelfStream] = useState<MediaStream | null>(null);
-  const [selfError, setSelfError] = useState(false);
+  const [selfError, setSelfError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const [camPicker, setCamPicker] = useState(false);
   const { cameras, cameraId, setCameraId } = useCameraDevices(!!selfStream);
