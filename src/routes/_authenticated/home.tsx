@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { ensureStaffRecords } from "@/lib/staff";
 import { homeForPermissions, personaLabel } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/BrandMark";
@@ -10,16 +11,30 @@ export const Route = createFileRoute("/_authenticated/home")({
 });
 
 function PersonaRouter() {
-  const { loading, personas, permissions, signOut } = useAuth();
+  const { loading, user, personas, permissions, signOut, refresh } = useAuth();
   const navigate = useNavigate();
   const destination = homeForPermissions(permissions);
+  const bootstrapped = useRef(false);
+  const [provisioning, setProvisioning] = useState(false);
 
   useEffect(() => {
     if (loading) return;
     if (destination !== "/no-access") void navigate({ to: destination, replace: true });
   }, [loading, destination]);
 
-  if (loading || destination !== "/no-access") {
+  // A freshly created account has no role row yet, so it would otherwise land
+  // on the dead-end "no workspace" panel. Provision the persona chosen at
+  // sign-up here, then re-read permissions and continue into the app.
+  useEffect(() => {
+    if (loading || !user || personas.length > 0 || bootstrapped.current) return;
+    bootstrapped.current = true;
+    setProvisioning(true);
+    void ensureStaffRecords(user)
+      .then(() => refresh())
+      .finally(() => setProvisioning(false));
+  }, [loading, user, personas.length]);
+
+  if (loading || provisioning || destination !== "/no-access") {
     return (
       <main className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
         Opening your workspace…
