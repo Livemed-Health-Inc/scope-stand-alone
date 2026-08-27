@@ -25,9 +25,12 @@ export async function ensureStaffRecords(user: User) {
 
   const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
   if (!roles || roles.length === 0) {
-    const requested = meta["staff_role"] ?? "hospital";
-    const role = ["doctor", "hospital", "patient", "nurse"].includes(requested) ? requested : "hospital";
+    // Self-service sign-up can only claim the two consumer-facing personas;
+    // every other persona is granted by a LiveMed administrator.
+    const requested = meta["staff_role"] ?? "patient";
+    const role = requested === "doctor" ? "doctor" : "patient";
     await supabase.rpc("claim_staff_role", { _role: role });
+
     if (role === "doctor") {
       await supabase
         .from("doctor_presence")
