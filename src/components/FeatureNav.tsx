@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Stethoscope,
@@ -10,14 +10,11 @@ import {
   Shield,
   Wrench,
   User,
-  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
-import { createSsoHandoff } from "@/lib/sso.functions";
 import type { PermissionKey } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ProductEmbed } from "@/components/ProductEmbed";
 
 type Feature = {
   permission: PermissionKey;
@@ -45,63 +42,6 @@ const FEATURES: Feature[] = [
 export function FeatureNav({ className }: { className?: string }) {
   const { can } = useAuth();
   const [open, setOpen] = useState<Feature | null>(null);
-  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
-
-  // Single sign-on hand-off: the digital front door has already authenticated
-  // the user, so we pass the live session through to the embedded product plus
-  // a one-time hand-off code it can exchange at /api/public/sso for the same
-  // identity, roles and permissions — no second login prompt anywhere.
-  useEffect(() => {
-    let cancelled = false;
-    if (!open?.href) {
-      setEmbedUrl(null);
-      return;
-    }
-    void (async () => {
-      // Use a freshly refreshed session so the embedded product never receives
-      // an about-to-expire token.
-      let session = (await supabase.auth.getSession()).data.session;
-      if (session && (session.expires_at ?? 0) * 1000 - Date.now() < 5 * 60_000) {
-        session = (await supabase.auth.refreshSession()).data.session ?? session;
-      }
-      if (cancelled) return;
-      const url = new URL(open.href!);
-      const s = session;
-      if (s?.access_token && s.refresh_token) {
-        url.searchParams.set("sso", "virtualis");
-        url.searchParams.set("sso_issuer", window.location.origin);
-        url.searchParams.set("sso_exchange", `${window.location.origin}/api/public/sso`);
-        url.searchParams.set("sso_identity", `${window.location.origin}/api/public/identity`);
-        // Identity claims let the receiving product auto-provision the account
-        // on first hand-off instead of prompting for a login.
-        if (s.user?.email) url.searchParams.set("sso_email", s.user.email);
-        if (s.user?.id) url.searchParams.set("sso_uid", s.user.id);
-        try {
-          const { code } = await createSsoHandoff({ data: { product: open.label } });
-          if (cancelled) return;
-          url.searchParams.set("sso_code", code);
-        } catch {
-          // Fall back to the session hand-off below if the code cannot be issued.
-        }
-        const hash = new URLSearchParams({
-          access_token: s.access_token,
-          refresh_token: s.refresh_token,
-          expires_in: String(s.expires_in ?? 3600),
-          expires_at: String(s.expires_at ?? ""),
-          token_type: s.token_type ?? "bearer",
-          type: "magiclink",
-        });
-        url.hash = hash.toString();
-      }
-      setEmbedUrl(url.toString());
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [open]);
-
-
-
 
   const seen = new Set<string>();
   const items = FEATURES.filter((f) => {
@@ -141,40 +81,10 @@ export function FeatureNav({ className }: { className?: string }) {
         })}
       </nav>
 
-      <Dialog open={!!open} onOpenChange={(v) => !v && setOpen(null)}>
-        <DialogContent className="h-[85vh] max-w-[95vw] gap-0 overflow-hidden p-0 sm:max-w-5xl">
-          <DialogHeader className="border-b border-border px-4 py-3">
-            <DialogTitle className="flex items-center gap-3 text-sm">
-              {open?.label}
-              {embedUrl ? (
-                <a
-                  href={embedUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-normal text-muted-foreground underline hover:text-foreground"
-                >
-                  Open in new tab
-                </a>
-              ) : null}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="h-full w-full bg-background">
-            {embedUrl ? (
-              <iframe
-                key={embedUrl}
-                src={embedUrl}
-                title={open?.label ?? "Feature"}
-                className="h-full w-full border-0"
-                allow="camera; microphone; clipboard-write; fullscreen"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" /> Opening {open?.label}…
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ProductEmbed
+        product={open?.href ? { label: open.label, href: open.href } : null}
+        onClose={() => setOpen(null)}
+      />
     </>
   );
 }
