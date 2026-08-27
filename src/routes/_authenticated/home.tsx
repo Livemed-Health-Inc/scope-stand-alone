@@ -101,6 +101,14 @@ function Launcher() {
       .finally(() => setProvisioning(false));
   }, [loading, user, personas.length]);
 
+  // Administrators land straight in the admin console.
+  useEffect(() => {
+    if (loading || provisioning || !user) return;
+    if (can("admin.roles")) void navigate({ to: "/admin", replace: true });
+  }, [loading, provisioning, user, permissions.length]);
+
+
+
   if (loading || provisioning) {
     return (
       <main className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
