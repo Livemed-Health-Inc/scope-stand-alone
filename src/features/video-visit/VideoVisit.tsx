@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { holdSessionActive } from "@/lib/session-activity";
 import { Camera, ChevronLeft, Mic, MicOff, Radio, Stethoscope, Video, VideoOff, X } from "lucide-react";
 import { useCameraDevices } from "@/lib/media/useCameraDevices";
 import { logCallEvent, type CallEvent } from "@/lib/analytics";
@@ -87,6 +88,9 @@ export function VideoVisit({
   useEffect(() => {
     setRole(roleProp);
   }, [roleProp]);
+  // A consult in progress counts as an active session: the privacy auto-lock
+  // must never tear down a live call while a clinician is watching/listening.
+  useEffect(() => holdSessionActive(), []);
   const isBedside = role === "patient";
 
   // ---- Consult analytics ---------------------------------------------

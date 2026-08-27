@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { auditLog } from "@/lib/audit";
+import { isSessionActive } from "@/lib/session-activity";
 
 const ACTIVITY_EVENTS = ["mousedown", "keydown", "touchstart", "pointerdown", "wheel"] as const;
 
@@ -48,7 +49,16 @@ export function IdleTimeout({
     const warnMs = warnSeconds * 1_000;
 
     const tick = window.setInterval(() => {
+      // A live consult keeps the session alive: clinicians often watch or
+      // listen without touching the screen, and locking would drop the call.
+      if (isSessionActive()) {
+        lastActivity.current = Date.now();
+        setRemaining((r) => (r === null ? r : null));
+        return;
+      }
+
       const idleFor = Date.now() - lastActivity.current;
+
 
       if (idleFor >= idleMs) {
         if (firedRef.current) return;
