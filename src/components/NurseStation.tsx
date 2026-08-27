@@ -342,7 +342,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
                 : `${roundingDocs.length} physicians are ready to round`}
             </p>
             <p className="text-sm text-muted-foreground">
-              Acknowledge and stage the cart at the bedside \u2014 the physician will be notified.
+              Acknowledge and stage the cart at the bedside — the physician will be notified.
             </p>
           </div>
           <Button size="lg" className="gap-2" onClick={() => setAckOpen(true)}>
@@ -357,7 +357,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
             <li key={s.id} className="glass-card flex items-center gap-4 border-l-4 border-l-success p-4">
               <CheckCircle2 className="size-5 shrink-0 text-success" />
               <div className="min-w-0 flex-1">
-                <p className="font-medium">Cart staged \u2014 Room {s.room}</p>
+                <p className="font-medium">Cart staged — Room {s.room}</p>
                 <p className="text-xs text-muted-foreground">Physician has been notified you&apos;re ready to round.</p>
               </div>
               <Button variant="secondary" size="sm" onClick={() => void clearStaged(s.id)}>
@@ -386,9 +386,9 @@ export function NurseStation({ device }: { device: DeviceContext }) {
             <Loader2 className="size-5 animate-spin text-primary" />
             <div>
               <p className="font-medium">
-                Ringing {doctors.find((d) => d.id === activeCall.doctor_id)?.full_name ?? "physician"}\u2026
+                Ringing {doctors.find((d) => d.id === activeCall.doctor_id)?.full_name ?? "physician"}…
               </p>
-              <p className="text-xs text-muted-foreground">Room {activeCall.patient_room} \u00b7 waiting for pickup</p>
+              <p className="text-xs text-muted-foreground">Room {activeCall.patient_room} · waiting for pickup</p>
             </div>
           </div>
           <Button variant="secondary" onClick={cancelCall} className="gap-2">
@@ -398,7 +398,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       )}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading directory\u2026</p>
+        <p className="text-sm text-muted-foreground">Loading directory…</p>
       ) : !current ? (
         <ul className="flex flex-col gap-3">
           {bySpecialty.map((sp) => {
