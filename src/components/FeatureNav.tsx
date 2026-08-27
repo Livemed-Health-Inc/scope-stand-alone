@@ -47,9 +47,9 @@ export function FeatureNav({ className }: { className?: string }) {
   const [embedUrl, setEmbedUrl] = useState<string | null>(null);
 
   // Single sign-on hand-off: the digital front door has already authenticated
-  // the user, so we pass the live session through to the embedded product in the
-  // standard Supabase URL-hash format, which its client picks up automatically
-  // (detectSessionInUrl) — no second login prompt.
+  // the user, so we pass the live session through to the embedded product plus
+  // a one-time hand-off code it can exchange at /api/public/sso for the same
+  // identity, roles and permissions — no second login prompt anywhere.
   useEffect(() => {
     let cancelled = false;
     if (!open?.href) {
@@ -68,10 +68,20 @@ export function FeatureNav({ className }: { className?: string }) {
       const s = session;
       if (s?.access_token && s.refresh_token) {
         url.searchParams.set("sso", "virtualis");
+        url.searchParams.set("sso_issuer", window.location.origin);
+        url.searchParams.set("sso_exchange", `${window.location.origin}/api/public/sso`);
+        url.searchParams.set("sso_identity", `${window.location.origin}/api/public/identity`);
         // Identity claims let the receiving product auto-provision the account
         // on first hand-off instead of prompting for a login.
         if (s.user?.email) url.searchParams.set("sso_email", s.user.email);
         if (s.user?.id) url.searchParams.set("sso_uid", s.user.id);
+        try {
+          const { code } = await createSsoHandoff({ data: { product: open.label } });
+          if (cancelled) return;
+          url.searchParams.set("sso_code", code);
+        } catch {
+          // Fall back to the session hand-off below if the code cannot be issued.
+        }
         const hash = new URLSearchParams({
           access_token: s.access_token,
           refresh_token: s.refresh_token,
@@ -88,6 +98,7 @@ export function FeatureNav({ className }: { className?: string }) {
       cancelled = true;
     };
   }, [open]);
+
 
 
 
