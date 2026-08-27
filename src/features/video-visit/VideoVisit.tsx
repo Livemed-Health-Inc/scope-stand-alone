@@ -87,6 +87,9 @@ export function VideoVisit({
   useEffect(() => {
     setRole(roleProp);
   }, [roleProp]);
+  // A consult in progress counts as an active session: the privacy auto-lock
+  // must never tear down a live call while a clinician is watching/listening.
+  useEffect(() => holdSessionActive(), []);
   const isBedside = role === "patient";
 
   // ---- Consult analytics ---------------------------------------------
