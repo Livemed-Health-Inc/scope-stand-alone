@@ -830,6 +830,12 @@ export type Database = {
           specialty: string
         }[]
       }
+      permissions_for: {
+        Args: { _user_id: string }
+        Returns: {
+          permission_key: string
+        }[]
+      }
       place_public_call: {
         Args: {
           _device_token: string
