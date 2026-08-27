@@ -144,7 +144,19 @@ export function FeatureNav({ className }: { className?: string }) {
       <Dialog open={!!open} onOpenChange={(v) => !v && setOpen(null)}>
         <DialogContent className="h-[85vh] max-w-[95vw] gap-0 overflow-hidden p-0 sm:max-w-5xl">
           <DialogHeader className="border-b border-border px-4 py-3">
-            <DialogTitle className="text-sm">{open?.label}</DialogTitle>
+            <DialogTitle className="flex items-center gap-3 text-sm">
+              {open?.label}
+              {embedUrl ? (
+                <a
+                  href={embedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-normal text-muted-foreground underline hover:text-foreground"
+                >
+                  Open in new tab
+                </a>
+              ) : null}
+            </DialogTitle>
           </DialogHeader>
           <div className="h-full w-full bg-background">
             {embedUrl ? (
