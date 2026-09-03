@@ -322,7 +322,7 @@ function AuthPage() {
                     id="password2"
                     type="password"
                     required
-                    minLength={6}
+                    minLength={12}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
