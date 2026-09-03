@@ -59,6 +59,11 @@ function DoctorAppPage() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto flex w-full flex-wrap items-center gap-4 px-4 py-3">
+          <Button variant="ghost" size="icon" aria-label="Back" asChild>
+            <Link to="/home">
+              <ArrowLeft className="size-5" />
+            </Link>
+          </Button>
           <BrandMark size={26} />
           <div className="hidden items-center gap-2 rounded-lg border border-border bg-panel/70 px-3 py-2 sm:flex">
             <Building2 className="size-4 text-muted-foreground" />
