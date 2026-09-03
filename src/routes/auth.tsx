@@ -41,6 +41,50 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"credentials" | "forgot">("credentials");
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+
+  /** Sends the user on, unless their account still owes a second factor. */
+  async function completeSignIn() {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const factor = (factors?.totp ?? []).find((f) => f.status === "verified");
+      if (factor) {
+        setMfaFactorId(factor.id);
+        return;
+      }
+    }
+    void auditLog({ action: "auth.sign_in" });
+    void navigate({ to: "/home" });
+  }
+
+  async function verifyMfa(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaFactorId) return;
+    setBusy(true);
+    const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
+    if (cErr || !challenge) {
+      setBusy(false);
+      toast.error(cErr?.message ?? "Could not verify the code");
+      return;
+    }
+    const { error } = await supabase.auth.mfa.verify({
+      factorId: mfaFactorId,
+      challengeId: challenge.id,
+      code: mfaCode.trim(),
+    });
+    setBusy(false);
+    if (error) {
+      void auditLog({ action: "auth.mfa_challenge", outcome: "denied" });
+      toast.error(error.message);
+      return;
+    }
+    void auditLog({ action: "auth.sign_in", details: { mfa: true } });
+    setMfaCode("");
+    setMfaFactorId(null);
+    void navigate({ to: "/home" });
+  }
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
@@ -53,9 +97,9 @@ function AuthPage() {
       toast.error(error.message);
       return;
     }
-    void auditLog({ action: "auth.sign_in" });
-    void navigate({ to: "/home" });
+    await completeSignIn();
   }
+
 
   async function sendReset(e: React.FormEvent) {
     e.preventDefault();
