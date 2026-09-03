@@ -203,6 +203,13 @@ function Launcher() {
             <div className="mt-4 grid gap-4 sm:grid-cols-2">{extras.map(card)}</div>
           </>
         ) : null}
+
+        <p className="mt-8 text-xs text-muted-foreground">
+          <Link to="/security" className="underline">
+            Account security &amp; two-factor authentication
+          </Link>
+        </p>
+
       </section>
 
       <ProductEmbed

@@ -41,6 +41,50 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"credentials" | "forgot">("credentials");
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+
+  /** Sends the user on, unless their account still owes a second factor. */
+  async function completeSignIn() {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const factor = (factors?.totp ?? []).find((f) => f.status === "verified");
+      if (factor) {
+        setMfaFactorId(factor.id);
+        return;
+      }
+    }
+    void auditLog({ action: "auth.sign_in" });
+    void navigate({ to: "/home" });
+  }
+
+  async function verifyMfa(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaFactorId) return;
+    setBusy(true);
+    const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
+    if (cErr || !challenge) {
+      setBusy(false);
+      toast.error(cErr?.message ?? "Could not verify the code");
+      return;
+    }
+    const { error } = await supabase.auth.mfa.verify({
+      factorId: mfaFactorId,
+      challengeId: challenge.id,
+      code: mfaCode.trim(),
+    });
+    setBusy(false);
+    if (error) {
+      void auditLog({ action: "auth.mfa_challenge", outcome: "denied" });
+      toast.error(error.message);
+      return;
+    }
+    void auditLog({ action: "auth.sign_in", details: { mfa: true } });
+    setMfaCode("");
+    setMfaFactorId(null);
+    void navigate({ to: "/home" });
+  }
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
@@ -53,9 +97,9 @@ function AuthPage() {
       toast.error(error.message);
       return;
     }
-    void auditLog({ action: "auth.sign_in" });
-    void navigate({ to: "/home" });
+    await completeSignIn();
   }
+
 
   async function sendReset(e: React.FormEvent) {
     e.preventDefault();
@@ -135,7 +179,41 @@ function AuthPage() {
             </TabsList>
 
             <TabsContent value="signin">
-              {mode === "forgot" ? (
+              {mfaFactorId ? (
+                <form onSubmit={verifyMfa} className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Enter the 6-digit code from your authenticator app to finish signing in.
+                  </p>
+                  <div>
+                    <Label htmlFor="mfa">Verification code</Label>
+                    <Input
+                      id="mfa"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      required
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy || mfaCode.trim().length < 6}>
+                    Verify and continue
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                      setMfaFactorId(null);
+                      setMfaCode("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </form>
+              ) : mode === "forgot" ? (
+
                 <form onSubmit={sendReset} className="space-y-3">
                   <p className="text-sm text-muted-foreground">
                     Enter your email and we&apos;ll send a link to set a new password.
@@ -244,7 +322,7 @@ function AuthPage() {
                     id="password2"
                     type="password"
                     required
-                    minLength={6}
+                    minLength={12}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />

@@ -82,7 +82,7 @@ function ResetPasswordPage() {
                 id="new-password"
                 type="password"
                 required
-                minLength={6}
+                minLength={12}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -93,7 +93,7 @@ function ResetPasswordPage() {
                 id="confirm-password"
                 type="password"
                 required
-                minLength={6}
+                minLength={12}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
               />
