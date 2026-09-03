@@ -179,7 +179,41 @@ function AuthPage() {
             </TabsList>
 
             <TabsContent value="signin">
-              {mode === "forgot" ? (
+              {mfaFactorId ? (
+                <form onSubmit={verifyMfa} className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Enter the 6-digit code from your authenticator app to finish signing in.
+                  </p>
+                  <div>
+                    <Label htmlFor="mfa">Verification code</Label>
+                    <Input
+                      id="mfa"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      required
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy || mfaCode.trim().length < 6}>
+                    Verify and continue
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                      setMfaFactorId(null);
+                      setMfaCode("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </form>
+              ) : mode === "forgot" ? (
+
                 <form onSubmit={sendReset} className="space-y-3">
                   <p className="text-sm text-muted-foreground">
                     Enter your email and we&apos;ll send a link to set a new password.
