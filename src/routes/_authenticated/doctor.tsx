@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { LogOut, Building2 } from "lucide-react";
+import { LogOut, Building2, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { ensureStaffRecords } from "@/lib/staff";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
