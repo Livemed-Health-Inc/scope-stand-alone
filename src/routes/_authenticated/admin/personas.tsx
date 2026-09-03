@@ -230,8 +230,7 @@ function PersonasPage() {
         <p className="label-caps">Access control</p>
         <h1 className="text-2xl font-semibold tracking-tight">Roles</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Every login belongs to one or more roles. Create logins here; tune what each role can do on the
-          People &amp; personas screen.
+          Every login belongs to one or more roles. Create logins and tune what each role can do here.
         </p>
       </div>
 
