@@ -21,7 +21,6 @@ const NAV: {
     | "/admin/physicians"
     | "/admin/techs"
     | "/admin/admins"
-    | "/admin/access"
     | "/admin/compliance"
     | "/admin/personas";
   label: string;
@@ -31,7 +30,6 @@ const NAV: {
   { to: "/admin", label: "Analytics", exact: true, permission: "analytics.view" },
   { to: "/admin/hospitals", label: "Hospital Onboarding", permission: "admin.hospitals" },
   { to: "/admin/personas", label: "Roles", permission: "admin.users" },
-  { to: "/admin/access", label: "People & personas", permission: "admin.roles" },
   { to: "/admin/admins", label: "Admins", permission: "admin.users" },
   { to: "/admin/compliance", label: "Compliance", permission: "admin.users" },
 ];
