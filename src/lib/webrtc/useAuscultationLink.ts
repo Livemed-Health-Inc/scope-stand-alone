@@ -119,11 +119,21 @@ export function useAuscultationLink(opts: {
   enabled: boolean;
   /** Everything this device publishes: camera, mic and (nurse) stethoscope audio. */
   localStream: MediaStream | null;
+  /** Dedicated processed stethoscope feed. Never mixed with call speech. */
+  localScopeStream?: MediaStream | null;
   localScope?: ScopePresence;
 }) {
-  const { roomId, role, enabled, localStream, localScope = { connected: false, capturing: false } } = opts;
+  const {
+    roomId,
+    role,
+    enabled,
+    localStream,
+    localScopeStream = null,
+    localScope = { connected: false, capturing: false },
+  } = opts;
   const [state, setState] = useState<LinkState>("idle");
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [remoteScopeStream, setRemoteScopeStream] = useState<MediaStream | null>(null);
   const [remoteScope, setRemoteScope] = useState<ScopePresence>({ connected: false, capturing: false });
   const [peerPresent, setPeerPresent] = useState(false);
 
@@ -132,8 +142,11 @@ export function useAuscultationLink(opts: {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   streamRef.current = localStream;
+  const scopeStreamRef = useRef<MediaStream | null>(null);
+  scopeStreamRef.current = localScopeStream;
   const syncRef = useRef<(() => void) | null>(null);
   const sendScopeRef = useRef<((scope: ScopePresence) => void) | null>(null);
+  const subscribedRef = useRef(false);
   const localScopeRef = useRef(localScope);
   localScopeRef.current = localScope;
 
@@ -141,6 +154,7 @@ export function useAuscultationLink(opts: {
     pcRef.current?.close();
     pcRef.current = null;
     setRemoteStream(null);
+    setRemoteScopeStream(null);
     setRemoteScope({ connected: false, capturing: false });
   }, []);
 
@@ -160,6 +174,7 @@ export function useAuscultationLink(opts: {
     const polite = () => (peerId ? me > peerId : false);
     const pending: RTCIceCandidateInit[] = [];
     setState("waiting");
+    subscribedRef.current = false;
 
     const channel = supabase.channel(`ausc:${roomId}`, {
       config: { broadcast: { self: false } },
@@ -175,6 +190,23 @@ export function useAuscultationLink(opts: {
     sendScopeRef.current = (scope) => send({ kind: "scope-status", scope });
 
     const inbound = new MediaStream();
+    const inboundScope = new MediaStream();
+    let inboundTrackKey = "";
+    let inboundScopeTrackKey = "";
+
+    const publishInbound = (stream: MediaStream, scopeOnly: boolean) => {
+      const tracks = stream.getTracks();
+      const key = tracks.map((track) => track.id).sort().join(",");
+      if (scopeOnly) {
+        if (key === inboundScopeTrackKey) return;
+        inboundScopeTrackKey = key;
+        setRemoteScopeStream(tracks.length ? new MediaStream(tracks) : null);
+        return;
+      }
+      if (key === inboundTrackKey) return;
+      inboundTrackKey = key;
+      setRemoteStream(tracks.length ? new MediaStream(tracks) : null);
+    };
 
     // If the media path never comes up (blocked UDP, NAT with no direct route)
     // we re-gather candidates and re-offer instead of sitting on "connecting".
@@ -212,16 +244,21 @@ export function useAuscultationLink(opts: {
     const ensurePc = () => {
       if (pcRef.current) return pcRef.current;
       const pc = new RTCPeerConnection(ICE);
+      const callAudio = pc.addTransceiver("audio", { direction: "sendrecv" });
+      const callVideo = pc.addTransceiver("video", { direction: "sendrecv" });
+      const scopeAudio = pc.addTransceiver("audio", { direction: "sendrecv" });
       pc.onicecandidate = (e) => {
         if (e.candidate) send({ kind: "ice", candidate: e.candidate.toJSON() });
       };
       pc.ontrack = (e) => {
-        inbound.addTrack(e.track);
+        const scopeOnly = e.transceiver === scopeAudio;
+        const target = scopeOnly ? inboundScope : inbound;
+        target.addTrack(e.track);
         e.track.onended = () => {
-          inbound.removeTrack(e.track);
-          setRemoteStream(inbound.getTracks().length ? new MediaStream(inbound.getTracks()) : null);
+          target.removeTrack(e.track);
+          publishInbound(target, scopeOnly);
         };
-        setRemoteStream(new MediaStream(inbound.getTracks()));
+        publishInbound(target, scopeOnly);
       };
       pc.oniceconnectionstatechange = () => {
         if (pc.iceConnectionState === "failed") retryIce();
@@ -244,9 +281,6 @@ export function useAuscultationLink(opts: {
       };
 
       pc.onnegotiationneeded = () => void negotiate();
-      // Always be ready to receive one audio + one video track.
-      pc.addTransceiver("audio", { direction: "sendrecv" });
-      pc.addTransceiver("video", { direction: "sendrecv" });
       pcRef.current = pc;
       syncTracks();
       return pc;
@@ -277,36 +311,19 @@ export function useAuscultationLink(opts: {
       const pc = pcRef.current;
       if (!pc) return;
       const stream = streamRef.current;
-      const audioWanted: MediaStreamTrack[] = stream?.getAudioTracks() ?? [];
-      const videoWanted: MediaStreamTrack[] = stream?.getVideoTracks() ?? [];
-      const attached = new Set(
-        pc.getSenders().map((s) => s.track).filter(Boolean) as MediaStreamTrack[],
-      );
-      const pendingAudio = audioWanted.filter((t) => !attached.has(t));
-      const pendingVideo = videoWanted.filter((t) => !attached.has(t));
-      const pendingFor = (kind: string) => (kind === "audio" ? pendingAudio : pendingVideo);
-      const wantedFor = (kind: string) => (kind === "audio" ? audioWanted : videoWanted);
-      pc.getTransceivers().forEach((tr) => {
-        const kind = tr.sender.track?.kind ?? tr.receiver.track?.kind;
-        if (!kind || tr.currentDirection === "stopped") return;
-        const current = tr.sender.track;
-        if (current && wantedFor(kind).includes(current)) return;
-        const next = pendingFor(kind).shift() ?? null;
-        if (next === current) return;
-        void tr.sender.replaceTrack(next).catch(() => {});
-        if (next) attached.add(next);
+      const transceivers = pc.getTransceivers();
+      const callAudio = transceivers[0];
+      const callVideo = transceivers[1];
+      const scopeAudio = transceivers[2];
+      const replacements: Array<[RTCRtpTransceiver | undefined, MediaStreamTrack | null]> = [
+        [callAudio, stream?.getAudioTracks()[0] ?? null],
+        [callVideo, stream?.getVideoTracks()[0] ?? null],
+        [scopeAudio, scopeStreamRef.current?.getAudioTracks()[0] ?? null],
+      ];
+      replacements.forEach(([transceiver, track]) => {
+        if (!transceiver || transceiver.sender.track === track) return;
+        void transceiver.sender.replaceTrack(track).catch(() => {});
       });
-      if (stream) {
-        [...pendingAudio, ...pendingVideo].forEach((t) => {
-          if (attached.has(t)) return;
-          try {
-            pc.addTrack(t, stream);
-            attached.add(t);
-          } catch {
-            /* already attached */
-          }
-        });
-      }
     }
     syncRef.current = syncTracks;
 
@@ -375,8 +392,10 @@ export function useAuscultationLink(opts: {
     let announce: number | undefined;
     void channel.subscribe((status) => {
       if (status !== "SUBSCRIBED") return;
+      subscribedRef.current = true;
       ensurePc();
       send({ kind: "hello" });
+      send({ kind: "scope-status", scope: localScopeRef.current });
       announce = window.setInterval(() => {
         if (!peerId) send({ kind: "hello" });
       }, 2500);
@@ -389,6 +408,7 @@ export function useAuscultationLink(opts: {
       send({ kind: "bye" });
       syncRef.current = null;
       sendScopeRef.current = null;
+      subscribedRef.current = false;
       void supabase.removeChannel(channel);
       teardown();
       setPeerPresent(false);
@@ -405,15 +425,22 @@ export function useAuscultationLink(opts: {
         .sort()
         .join(",")
     : "";
+  const scopeTrackKey = localScopeStream
+    ? localScopeStream
+        .getAudioTracks()
+        .map((track) => track.id)
+        .sort()
+        .join(",")
+    : "";
   useEffect(() => {
     if (!enabled) return;
     syncRef.current?.();
-  }, [enabled, trackKey]);
+  }, [enabled, trackKey, scopeTrackKey]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !subscribedRef.current) return;
     sendScopeRef.current?.(localScope);
   }, [enabled, localScope.connected, localScope.capturing]);
 
-  return { state, remoteStream, peerPresent, remoteScope };
+  return { state, remoteStream, remoteScopeStream, peerPresent, remoteScope };
 }
