@@ -468,25 +468,19 @@ export function NurseStation({ device }: { device: DeviceContext }) {
                     {status.label}
                   </div>
                 </div>
-                {isMock ? (
-                  <Badge variant="outline" className="shrink-0 text-muted-foreground">
-                    Demo
-                  </Badge>
-                ) : (
-                  <Button
-                    onClick={() => {
-                      if (d.in_consult) {
-                        toast.warning(`Dr. ${d.full_name} is in a consult \u2014 please hold.`);
-                        return;
-                      }
-                      setTarget(d);
-                    }}
-                    disabled={!d.is_online || !!activeCall}
-                    className="gap-2"
-                  >
-                    <PhoneCall className="size-4" /> Call
-                  </Button>
-                )}
+                <Button
+                  onClick={() => {
+                    if (d.in_consult) {
+                      toast.warning(`Dr. ${d.full_name} is in a consult — please hold.`);
+                      return;
+                    }
+                    setTarget(d);
+                  }}
+                  disabled={!d.is_online || !!activeCall}
+                  className="gap-2"
+                >
+                  <PhoneCall className="size-4" /> Call
+                </Button>
               </li>
             );
           })}
