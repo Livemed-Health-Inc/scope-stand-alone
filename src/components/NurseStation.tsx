@@ -452,8 +452,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-lg font-semibold">
-                    {isMock ? "" : "Dr. "}
-                    {d.full_name}
+                    {/^dr\.?\s/i.test(d.full_name) ? d.full_name : `Dr. ${d.full_name}`}
                   </p>
                   <p className="truncate text-sm text-muted-foreground">{d.specialty ?? current.name}</p>
                   <div
