@@ -448,7 +448,7 @@ export function VideoVisit({
       <section className={`relative overflow-hidden rounded-3xl bg-navy-800 ${isBedside ? "flex-1 min-h-0" : ""}`}>
         <video
           ref={remoteVideoRef}
-          className={`w-full object-cover ${isBedside ? "absolute inset-0 h-full" : "aspect-4/3 lg:aspect-video"} ${remoteHasVideo ? "" : "hidden"}`}
+          className={`w-full -scale-x-100 object-cover ${isBedside ? "absolute inset-0 h-full" : "aspect-4/3 lg:aspect-video"} ${remoteHasVideo ? "" : "hidden"}`}
           playsInline
           autoPlay
         />
@@ -520,7 +520,7 @@ export function VideoVisit({
           <div className="relative aspect-3/4 w-full">
             <video
               ref={selfVideoRef}
-              className={`size-full object-cover ${camOn && selfStream ? "" : "opacity-0"}`}
+              className={`size-full -scale-x-100 object-cover ${camOn && selfStream ? "" : "opacity-0"}`}
               playsInline
               muted
               autoPlay
