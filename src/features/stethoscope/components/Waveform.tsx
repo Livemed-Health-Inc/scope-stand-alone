@@ -85,12 +85,12 @@ export function Waveform({ analyser, active }: { analyser: AnalyserNode | null; 
 
       const colW = w / COLUMNS;
       const start = COLUMNS - history.length;
-      ctx.save();
+    ctx.save();
       ctx.strokeStyle = trace;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1;
       ctx.lineJoin = "round";
       ctx.shadowColor = glow;
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 3;
       ctx.beginPath();
       for (let i = 0; i < history.length; i++) {
         const [lo, hi] = history[i] as [number, number];
