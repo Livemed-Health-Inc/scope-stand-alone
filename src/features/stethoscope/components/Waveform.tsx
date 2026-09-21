@@ -11,14 +11,20 @@ export function Waveform({ analyser, active }: { analyser: AnalyserNode | null; 
     if (!ctx) return;
 
     let raf = 0;
-    /** Scrolling min/max envelope so short heart sounds stay visible. */
+    /** Scrolling min/max envelope keeps short S1/S2 sounds visible. */
     const history: Array<[number, number]> = [];
-    const COLUMNS = 320;
+    const COLUMNS = 360;
     const data = analyser ? new Uint8Array(analyser.fftSize) : null;
 
     const css = getComputedStyle(document.documentElement);
-    const trace = `oklch(${css.getPropertyValue("--trace").trim()})`;
-    const grid = `oklch(${css.getPropertyValue("--grid").trim()})`;
+    const color = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
+    const background = color("--monitor-background", "#06110d");
+    const trace = color("--monitor-trace", "#43f58b");
+    const glow = color("--monitor-glow", "rgba(67, 245, 139, 0.28)");
+    const minorGrid = color("--monitor-grid-minor", "rgba(67, 245, 139, 0.08)");
+    const majorGrid = color("--monitor-grid-major", "rgba(67, 245, 139, 0.18)");
+    const baseline = color("--monitor-baseline", "rgba(67, 245, 139, 0.3)");
+    let displayGain = 1;
 
     const render = () => {
       raf = requestAnimationFrame(render);
@@ -30,17 +36,34 @@ export function Waveform({ analyser, active }: { analyser: AnalyserNode | null; 
         canvas.height = h * dpr;
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = background;
+      ctx.fillRect(0, 0, w, h);
 
-      ctx.strokeStyle = grid;
-      ctx.lineWidth = 1;
-      for (let i = 1; i < 4; i++) {
-        const y = (h / 4) * i;
+      // Clinical monitor grid: faint minor squares with stronger major divisions.
+      const minor = 12;
+      for (let x = minor; x < w; x += minor) {
+        ctx.strokeStyle = x % (minor * 5) === 0 ? majorGrid : minorGrid;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = minor; y < h; y += minor) {
+        ctx.strokeStyle = y % (minor * 5) === 0 ? majorGrid : minorGrid;
+        ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(w, y);
         ctx.stroke();
       }
+
+      const mid = h / 2;
+      ctx.strokeStyle = baseline;
+      ctx.beginPath();
+      ctx.moveTo(0, mid);
+      ctx.lineTo(w, mid);
+      ctx.stroke();
 
       if (analyser && data && active) {
         analyser.getByteTimeDomainData(data as unknown as Uint8Array<ArrayBuffer>);
@@ -51,27 +74,50 @@ export function Waveform({ analyser, active }: { analyser: AnalyserNode | null; 
           if (v < lo) lo = v;
           if (v > hi) hi = v;
         }
-        history.push([lo, hi]);
+        const peak = Math.max(Math.abs(lo), Math.abs(hi));
+        const targetGain = Math.min(12, Math.max(1, 0.62 / Math.max(peak, 0.006)));
+        displayGain += (targetGain - displayGain) * 0.08;
+        history.push([lo * displayGain, hi * displayGain]);
       } else {
         history.push([0, 0]);
       }
       while (history.length > COLUMNS) history.shift();
 
       const colW = w / COLUMNS;
-      ctx.fillStyle = trace;
-      const mid = h / 2;
       const start = COLUMNS - history.length;
+      ctx.save();
+      ctx.strokeStyle = trace;
+      ctx.lineWidth = 1.5;
+      ctx.lineJoin = "round";
+      ctx.shadowColor = glow;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
       for (let i = 0; i < history.length; i++) {
         const [lo, hi] = history[i] as [number, number];
-        const yTop = mid - hi * mid * 0.92;
-        const yBot = mid - lo * mid * 0.92;
-        ctx.fillRect((start + i) * colW, yTop, Math.max(1, colW), Math.max(2, yBot - yTop));
+        const x = (start + i) * colW;
+        const yTop = mid - Math.max(-1, Math.min(1, hi)) * mid * 0.78;
+        const yBottom = mid - Math.max(-1, Math.min(1, lo)) * mid * 0.78;
+        ctx.moveTo(x, yTop);
+        ctx.lineTo(x, yBottom);
       }
+      ctx.stroke();
+      ctx.restore();
     };
 
     render();
     return () => cancelAnimationFrame(raf);
   }, [analyser, active]);
 
-  return <canvas ref={canvasRef} className="h-full w-full" aria-label="Live auscultation waveform" />;
+  return (
+    <div className="relative h-full min-h-28 overflow-hidden rounded-md border border-success/30 bg-navy-900">
+      <canvas ref={canvasRef} className="absolute inset-0 size-full" aria-label="Live auscultation waveform" />
+      <div className="pointer-events-none absolute left-2 top-1.5 flex items-center gap-1.5 font-mono text-[10px] font-semibold text-success">
+        <span className={`size-1.5 rounded-full ${active && analyser ? "animate-pulse bg-success" : "bg-muted-foreground"}`} />
+        {active && analyser ? "LIVE AUSCULTATION" : "AWAITING SIGNAL"}
+      </div>
+      <div className="pointer-events-none absolute bottom-1.5 right-2 font-mono text-[9px] text-success/70">
+        25 mm/s · AUTO GAIN
+      </div>
+    </div>
+  );
 }

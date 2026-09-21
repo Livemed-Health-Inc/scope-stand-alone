@@ -27,10 +27,21 @@ export function useStreamAnalyser(stream: MediaStream | null): AnalyserNode | nu
     sink.gain.value = 0;
     node.connect(sink);
     sink.connect(ctx.destination);
-    void ctx.resume().catch(() => {});
+    const resume = () => void ctx.resume().catch(() => {});
+    resume();
+    window.addEventListener("pointerdown", resume, { passive: true });
+    window.addEventListener("keydown", resume);
+    for (const track of stream.getAudioTracks()) {
+      track.addEventListener("unmute", resume);
+    }
     setAnalyser(node);
     return () => {
       setAnalyser(null);
+      window.removeEventListener("pointerdown", resume);
+      window.removeEventListener("keydown", resume);
+      for (const track of stream.getAudioTracks()) {
+        track.removeEventListener("unmute", resume);
+      }
       src.disconnect();
       node.disconnect();
       sink.disconnect();

@@ -332,8 +332,19 @@ export function VideoVisit({
     // Tell the encoder to preserve low frequencies instead of speech-optimising.
     if (track) track.contentHint = "music";
     setMixedAudio(track);
-    void ctx.resume().catch(() => {});
+    const resumeAudio = () => void ctx.resume().catch(() => {});
+    resumeAudio();
+    window.addEventListener("pointerdown", resumeAudio, { passive: true });
+    window.addEventListener("keydown", resumeAudio);
+    sources.forEach((stream) => {
+      stream.getAudioTracks().forEach((audioTrack) => audioTrack.addEventListener("unmute", resumeAudio));
+    });
     return () => {
+      window.removeEventListener("pointerdown", resumeAudio);
+      window.removeEventListener("keydown", resumeAudio);
+      sources.forEach((stream) => {
+        stream.getAudioTracks().forEach((audioTrack) => audioTrack.removeEventListener("unmute", resumeAudio));
+      });
       nodes.forEach((n) => n.disconnect());
       dest.disconnect();
       void ctx.close().catch(() => {});
@@ -673,7 +684,7 @@ export function VideoVisit({
             </span>
             <span className="text-muted-foreground">{waveStream ? "Live" : "No signal"}</span>
           </div>
-          <div className="h-24">
+          <div className="h-36">
             <Waveform analyser={waveAnalyser} active={!!waveStream} />
           </div>
         </div>
