@@ -69,15 +69,6 @@ const SPECIALTIES = [
   { name: "Hospitalist", keywords: ["hospitalist", "internal", "medicine"] },
 ] as const;
 
-const MOCK_DOCTORS: Record<string, string[]> = {
-  Cardiology: ["Amara Osei", "Daniel Reyes"],
-  Pulmonology: ["Priya Raman", "Grant Whitfield"],
-  Neurology: ["Lena Kowalski", "Marcus Bell"],
-  "Infectious Disease": ["Yusuf Karim", "Elise Tran"],
-  Nephrology: ["Hannah Choi", "Victor Alvarez"],
-  "Critical Care": ["Simone Adeyemi", "Peter Lindqvist"],
-  Hospitalist: ["Nina Duarte", "Owen Blackwell"],
-};
 
 const SPECIALTY_ICONS: Record<string, ElementType<{ className?: string }>> = {
   Cardiology: HeartPulse,
@@ -195,10 +186,12 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       if (!next) return;
       setActiveCall((prev) => {
         if (!prev || prev.status === next.status) return prev;
-        if (next.status === "declined") toast.error("Call declined \u2014 try another physician.");
+        if (next.status === "declined") toast.error("Call declined — try another physician.");
         if (next.status === "accepted") toast.success("Physician connected.");
         if (next.status === "ended") return null;
-        return next;
+        // Keep the facility details from the placing device — the scoped
+        // status endpoint only returns call state, not hospital/unit.
+        return { ...prev, ...next, hospital: prev.hospital, unit: prev.unit };
       });
     }, 2000);
     return () => window.clearInterval(poll);
@@ -289,18 +282,15 @@ export function NurseStation({ device }: { device: DeviceContext }) {
     );
   }
 
-  const bySpecialty = SPECIALTIES.map((sp) => {
-    const real = doctors.filter((d) => specialtyFor(d.specialty) === sp.name);
-    const mocks: Doctor[] = (MOCK_DOCTORS[sp.name] ?? []).map((n, i) => ({
-      id: `mock:${sp.name}:${i}`,
-      full_name: n,
-      specialty: sp.name,
-      is_online: i === 0,
-      in_consult: false,
-      ready_to_round: false,
-    }));
-    return { name: sp.name, doctors: [...real, ...mocks] };
-  });
+  const bySpecialty = SPECIALTIES.map((sp) => ({
+    name: sp.name,
+    doctors: doctors
+      .filter((d) => specialtyFor(d.specialty) === sp.name)
+      .sort((a, b) => {
+        const rank = (x: Doctor) => (x.is_online && !x.in_consult ? 0 : x.is_online ? 1 : 2);
+        return rank(a) - rank(b) || a.full_name.localeCompare(b.full_name);
+      }),
+  }));
 
   const current = bySpecialty.find((s) => s.name === selectedSpecialty);
 
@@ -445,7 +435,6 @@ export function NurseStation({ device }: { device: DeviceContext }) {
         <ul className="flex flex-col gap-3">
           {current.doctors.map((d) => {
             const status = statusFor(d);
-            const isMock = d.id.startsWith("mock:");
             const initials = d.full_name
               .split(" ")
               .map((n) => n[0])
@@ -465,8 +454,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-lg font-semibold">
-                    {isMock ? "" : "Dr. "}
-                    {d.full_name}
+                    {/^dr\.?\s/i.test(d.full_name) ? d.full_name : `Dr. ${d.full_name}`}
                   </p>
                   <p className="truncate text-sm text-muted-foreground">{d.specialty ?? current.name}</p>
                   <div
@@ -482,25 +470,19 @@ export function NurseStation({ device }: { device: DeviceContext }) {
                     {status.label}
                   </div>
                 </div>
-                {isMock ? (
-                  <Badge variant="outline" className="shrink-0 text-muted-foreground">
-                    Demo
-                  </Badge>
-                ) : (
-                  <Button
-                    onClick={() => {
-                      if (d.in_consult) {
-                        toast.warning(`Dr. ${d.full_name} is in a consult \u2014 please hold.`);
-                        return;
-                      }
-                      setTarget(d);
-                    }}
-                    disabled={!d.is_online || !!activeCall}
-                    className="gap-2"
-                  >
-                    <PhoneCall className="size-4" /> Call
-                  </Button>
-                )}
+                <Button
+                  onClick={() => {
+                    if (d.in_consult) {
+                      toast.warning(`Dr. ${d.full_name} is in a consult — please hold.`);
+                      return;
+                    }
+                    setTarget(d);
+                  }}
+                  disabled={!d.is_online || !!activeCall}
+                  className="gap-2"
+                >
+                  <PhoneCall className="size-4" /> Call
+                </Button>
               </li>
             );
           })}
