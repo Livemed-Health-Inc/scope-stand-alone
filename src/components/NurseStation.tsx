@@ -186,10 +186,12 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       if (!next) return;
       setActiveCall((prev) => {
         if (!prev || prev.status === next.status) return prev;
-        if (next.status === "declined") toast.error("Call declined \u2014 try another physician.");
+        if (next.status === "declined") toast.error("Call declined — try another physician.");
         if (next.status === "accepted") toast.success("Physician connected.");
         if (next.status === "ended") return null;
-        return next;
+        // Keep the facility details from the placing device — the scoped
+        // status endpoint only returns call state, not hospital/unit.
+        return { ...prev, ...next, hospital: prev.hospital, unit: prev.unit };
       });
     }, 2000);
     return () => window.clearInterval(poll);
