@@ -305,78 +305,31 @@ export function VideoVisit({
 
   const handleCallStream = useCallback((s: MediaStream | null) => setScopeStream(s), []);
 
-  // Everything this device publishes: camera, mic and (nurse) heart sounds.
+  // Call camera and microphone stay on their own media path. Stethoscope audio
+  // is sent separately so speech can never drive the auscultation waveform.
   const [publishStream, setPublishStream] = useState<MediaStream | null>(null);
-  // A media element only ever plays the FIRST audio track of a MediaStream, so
-  // the mic and the stethoscope are mixed into one track before sending.
-  const [mixedAudio, setMixedAudio] = useState<MediaStreamTrack | null>(null);
   useEffect(() => {
-    const sources = [
-      selfStream && selfStream.getAudioTracks().length ? selfStream : null,
-      scopeStream?.getAudioTracks().length ? scopeStream : null,
-    ].filter(Boolean) as MediaStream[];
-    if (!sources.length) {
-      setMixedAudio(null);
-      return;
-    }
-    const Ctor =
-      window.AudioContext ??
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx: AudioContext = new Ctor();
-    const dest = ctx.createMediaStreamDestination();
-    const nodes = sources.map((s) => {
-      const n = ctx.createMediaStreamSource(s);
-      n.connect(dest);
-      return n;
-    });
-    const track = dest.stream.getAudioTracks()[0] ?? null;
-    // Tell the encoder to preserve low frequencies instead of speech-optimising.
-    if (track) track.contentHint = "music";
-    setMixedAudio(track);
-    const resumeAudio = () => void ctx.resume().catch(() => {});
-    resumeAudio();
-    window.addEventListener("pointerdown", resumeAudio, { passive: true });
-    window.addEventListener("keydown", resumeAudio);
-    sources.forEach((stream) => {
-      stream.getAudioTracks().forEach((audioTrack) => audioTrack.addEventListener("unmute", resumeAudio));
-    });
-    return () => {
-      window.removeEventListener("pointerdown", resumeAudio);
-      window.removeEventListener("keydown", resumeAudio);
-      sources.forEach((stream) => {
-        stream.getAudioTracks().forEach((audioTrack) => audioTrack.removeEventListener("unmute", resumeAudio));
-      });
-      nodes.forEach((n) => n.disconnect());
-      dest.disconnect();
-      void ctx.close().catch(() => {});
-    };
-  }, [selfStream, scopeStream, role]);
-
-  useEffect(() => {
-    const tracks = [
-      ...(selfStream?.getVideoTracks() ?? []),
-      ...(mixedAudio ? [mixedAudio] : []),
-    ];
+    const tracks = selfStream?.getTracks() ?? [];
     setPublishStream(tracks.length ? new MediaStream(tracks) : null);
-  }, [selfStream, mixedAudio]);
+  }, [selfStream]);
 
   const link = useAuscultationLink({
     roomId,
     role,
     enabled: true,
     localStream: publishStream,
+    localScopeStream: scopeStream,
     localScope: localScopeStatus,
   });
 
   const remoteHasVideo = !!link.remoteStream?.getVideoTracks().length;
 
-  // Waveform of what this device hears: the live stethoscope feed on the nurse
-  // side, the incoming call audio on the doctor side (falling back to a locally
-  // paired scope so the trace still shows during single-device testing).
+  // The monitor is deliberately fed only by a stethoscope track. Call speech
+  // remains in remoteStream for playback and can never enter this analyser.
   const waveStream = localScopeStatus.capturing
     ? scopeStream
     : link.remoteScope.capturing
-      ? link.remoteStream
+      ? link.remoteScopeStream
       : null;
   const waveAnalyser = useStreamAnalyser(waveStream);
   const sharedScopeConnected = localScopeStatus.connected || link.remoteScope.connected;

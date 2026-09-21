@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Builds an AnalyserNode for any MediaStream (local stethoscope feed or a
@@ -6,9 +6,13 @@ import { useEffect, useState } from "react";
  */
 export function useStreamAnalyser(stream: MediaStream | null): AnalyserNode | null {
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
+  const streamRef = useRef(stream);
+  streamRef.current = stream;
+  const audioTrackId = stream?.getAudioTracks()[0]?.id ?? null;
 
   useEffect(() => {
-    if (!stream || stream.getAudioTracks().length === 0) {
+    const currentStream = streamRef.current;
+    if (!currentStream || !audioTrackId) {
       setAnalyser(null);
       return;
     }
@@ -17,7 +21,7 @@ export function useStreamAnalyser(stream: MediaStream | null): AnalyserNode | nu
       (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!Ctor) return;
     const ctx = new Ctor();
-    const src = ctx.createMediaStreamSource(stream);
+    const src = ctx.createMediaStreamSource(currentStream);
     const node = ctx.createAnalyser();
     node.fftSize = 2048;
     node.smoothingTimeConstant = 0.7;
@@ -31,7 +35,7 @@ export function useStreamAnalyser(stream: MediaStream | null): AnalyserNode | nu
     resume();
     window.addEventListener("pointerdown", resume, { passive: true });
     window.addEventListener("keydown", resume);
-    for (const track of stream.getAudioTracks()) {
+    for (const track of currentStream.getAudioTracks()) {
       track.addEventListener("unmute", resume);
     }
     setAnalyser(node);
@@ -39,7 +43,7 @@ export function useStreamAnalyser(stream: MediaStream | null): AnalyserNode | nu
       setAnalyser(null);
       window.removeEventListener("pointerdown", resume);
       window.removeEventListener("keydown", resume);
-      for (const track of stream.getAudioTracks()) {
+      for (const track of currentStream.getAudioTracks()) {
         track.removeEventListener("unmute", resume);
       }
       src.disconnect();
@@ -47,7 +51,7 @@ export function useStreamAnalyser(stream: MediaStream | null): AnalyserNode | nu
       sink.disconnect();
       void ctx.close().catch(() => {});
     };
-  }, [stream]);
+  }, [audioTrackId]);
 
   return analyser;
 }
