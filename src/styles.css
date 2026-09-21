@@ -96,6 +96,12 @@
   --glass-shadow: 0 8px 32px -12px oklch(0.17 0.024 268 / 0.18);
   --glow-success: oklch(0.686 0.167 154.9 / 0.45);
   --glow-warning: oklch(0.747 0.17 62.1 / 0.45);
+  --monitor-background: oklch(0.145 0.026 160);
+  --monitor-trace: oklch(0.82 0.2 153);
+  --monitor-glow: oklch(0.82 0.2 153 / 0.3);
+  --monitor-grid-minor: oklch(0.82 0.2 153 / 0.08);
+  --monitor-grid-major: oklch(0.82 0.2 153 / 0.18);
+  --monitor-baseline: oklch(0.82 0.2 153 / 0.3);
   --border: oklch(0.896 0.013 262.4);
   --input: oklch(0.896 0.013 262.4);
   --ring: oklch(0.553 0.246 265.9);

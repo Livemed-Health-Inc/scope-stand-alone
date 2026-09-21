@@ -673,7 +673,7 @@ export function VideoVisit({
             </span>
             <span className="text-muted-foreground">{waveStream ? "Live" : "No signal"}</span>
           </div>
-          <div className="h-24">
+          <div className="h-36">
             <Waveform analyser={waveAnalyser} active={!!waveStream} />
           </div>
         </div>

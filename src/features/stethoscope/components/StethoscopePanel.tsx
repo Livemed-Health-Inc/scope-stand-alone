@@ -353,7 +353,7 @@ export function StethoscopePanel({
           </div>
         </div>
 
-        <div className="mt-2">
+        <div className="mt-2 h-40">
           <Waveform analyser={s.analyser} active={s.capturing} />
         </div>
 
