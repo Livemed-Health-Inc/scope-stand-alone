@@ -520,7 +520,7 @@ export function VideoVisit({
           <div className="relative aspect-3/4 w-full">
             <video
               ref={selfVideoRef}
-              className={`size-full object-cover -scale-x-100 ${camOn && selfStream ? "" : "opacity-0"}`}
+              className={`size-full object-cover ${camOn && selfStream ? "" : "opacity-0"}`}
               playsInline
               muted
               autoPlay
