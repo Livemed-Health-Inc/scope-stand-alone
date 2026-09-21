@@ -84,6 +84,7 @@ export function VideoVisit({
   const [camOn, setCamOn] = useState(true);
   const [scribe, setScribe] = useState(true);
   const [scope, setScope] = useState(false);
+  const [localScopeStatus, setLocalScopeStatus] = useState({ connected: false, capturing: false });
   const [role, setRole] = useState<LinkRole>(roleProp);
   useEffect(() => {
     setRole(roleProp);
@@ -287,7 +288,7 @@ export function VideoVisit({
   // Camera / mic toggles just enable or disable the published tracks.
   // While the nurse is auscultating, only the stethoscope feed goes out:
   // the room microphone is muted so no other noise reaches the doctor.
-  const auscultating = role === "patient" && !!scopeStream?.getAudioTracks().length;
+  const auscultating = !!scopeStream?.getAudioTracks().length;
   useEffect(() => {
     selfStream?.getVideoTracks().forEach((t) => (t.enabled = camOn));
   }, [selfStream, camOn]);
@@ -312,7 +313,7 @@ export function VideoVisit({
   useEffect(() => {
     const sources = [
       selfStream && selfStream.getAudioTracks().length ? selfStream : null,
-      role === "patient" && scopeStream?.getAudioTracks().length ? scopeStream : null,
+      scopeStream?.getAudioTracks().length ? scopeStream : null,
     ].filter(Boolean) as MediaStream[];
     if (!sources.length) {
       setMixedAudio(null);
@@ -364,6 +365,7 @@ export function VideoVisit({
     role,
     enabled: true,
     localStream: publishStream,
+    localScope: localScopeStatus,
   });
 
   const remoteHasVideo = !!link.remoteStream?.getVideoTracks().length;
@@ -371,8 +373,14 @@ export function VideoVisit({
   // Waveform of what this device hears: the live stethoscope feed on the nurse
   // side, the incoming call audio on the doctor side (falling back to a locally
   // paired scope so the trace still shows during single-device testing).
-  const waveStream = role === "patient" ? scopeStream : (link.remoteStream ?? scopeStream);
+  const waveStream = localScopeStatus.capturing
+    ? scopeStream
+    : link.remoteScope.capturing
+      ? link.remoteStream
+      : null;
   const waveAnalyser = useStreamAnalyser(waveStream);
+  const sharedScopeConnected = localScopeStatus.connected || link.remoteScope.connected;
+  const sharedScopeLive = localScopeStatus.capturing || link.remoteScope.capturing;
 
   // Patient side rings the remote side until they join the room.
   useOutgoingRing(
@@ -651,17 +659,15 @@ export function VideoVisit({
             className={`size-4 ${link.state === "live" ? "text-success" : "text-muted-foreground"}`}
           />
           <p className="flex-1 text-xs">
-            {role === "patient"
-              ? link.state === "live"
-                ? "Streaming heart sounds to the doctor · room mic muted"
+            {sharedScopeLive
+              ? localScopeStatus.capturing
+                ? "Stethoscope connected here · streaming live to both sides"
+                : "Remote stethoscope connected · receiving live auscultation"
+              : sharedScopeConnected
+                ? "Stethoscope connected · ready for live auscultation"
                 : link.peerPresent
-                  ? "Doctor joined — starting stream…"
-                  : "Waiting for the doctor to join…"
-              : link.state === "live"
-                ? "Receiving live heart sounds from the patient"
-                : link.peerPresent
-                  ? "Patient side joined — connecting…"
-                  : "Waiting for the patient-side device…"}
+                  ? "Call connected · waiting for a stethoscope"
+                  : "Waiting for the other side to join…"}
           </p>
           {role === "remote" && (
             <button
@@ -682,7 +688,9 @@ export function VideoVisit({
                 ? "Outgoing auscultation waveform"
                 : "Incoming auscultation waveform"}
             </span>
-            <span className="text-muted-foreground">{waveStream ? "Live" : "No signal"}</span>
+            <span className={sharedScopeLive ? "font-semibold text-success" : "text-muted-foreground"}>
+              {sharedScopeLive ? "Connected · Live" : sharedScopeConnected ? "Connected · Ready" : "Not connected"}
+            </span>
           </div>
           <div className="h-36">
             <Waveform analyser={waveAnalyser} active={!!waveStream} />
@@ -690,14 +698,24 @@ export function VideoVisit({
         </div>
 
         {role === "patient" ? (
-          <StethoscopePanel onCallStream={handleCallStream} localMonitor={false} onEvent={track} />
+          <StethoscopePanel
+            onCallStream={handleCallStream}
+            localMonitor={false}
+            onEvent={track}
+            onStatusChange={setLocalScopeStatus}
+          />
         ) : allowRemoteLocalScope ? (
           <>
             <p className="mb-2 rounded-xl bg-muted px-3 py-2 text-center text-[11px] text-muted-foreground">
               Testing build: you can pair a stethoscope on this device and listen through your own
               speakers. In the field it stays at the patient&apos;s bedside.
             </p>
-            <StethoscopePanel onCallStream={handleCallStream} localMonitor onEvent={track} />
+            <StethoscopePanel
+              onCallStream={handleCallStream}
+              localMonitor
+              onEvent={track}
+              onStatusChange={setLocalScopeStatus}
+            />
           </>
         ) : null}
       </section>

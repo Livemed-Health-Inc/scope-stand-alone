@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type LinkRole = "patient" | "remote";
 export type LinkState = "idle" | "waiting" | "connecting" | "live" | "error";
+export type ScopePresence = { connected: boolean; capturing: boolean };
 
 const ICE: RTCConfiguration = {
   iceServers: [
@@ -34,9 +35,10 @@ const ICE: RTCConfiguration = {
 interface Signal {
   id: string;
   role: LinkRole;
-  kind: "hello" | "hi" | "offer" | "answer" | "ice" | "bye";
+  kind: "hello" | "hi" | "offer" | "answer" | "ice" | "bye" | "scope-status";
   sdp?: RTCSessionDescriptionInit;
   candidate?: RTCIceCandidateInit;
+  scope?: ScopePresence;
 }
 
 const newId = () =>
@@ -117,10 +119,12 @@ export function useAuscultationLink(opts: {
   enabled: boolean;
   /** Everything this device publishes: camera, mic and (nurse) stethoscope audio. */
   localStream: MediaStream | null;
+  localScope?: ScopePresence;
 }) {
-  const { roomId, role, enabled, localStream } = opts;
+  const { roomId, role, enabled, localStream, localScope = { connected: false, capturing: false } } = opts;
   const [state, setState] = useState<LinkState>("idle");
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [remoteScope, setRemoteScope] = useState<ScopePresence>({ connected: false, capturing: false });
   const [peerPresent, setPeerPresent] = useState(false);
 
   const idRef = useRef<string>("");
@@ -129,11 +133,15 @@ export function useAuscultationLink(opts: {
   const streamRef = useRef<MediaStream | null>(null);
   streamRef.current = localStream;
   const syncRef = useRef<(() => void) | null>(null);
+  const sendScopeRef = useRef<((scope: ScopePresence) => void) | null>(null);
+  const localScopeRef = useRef(localScope);
+  localScopeRef.current = localScope;
 
   const teardown = useCallback(() => {
     pcRef.current?.close();
     pcRef.current = null;
     setRemoteStream(null);
+    setRemoteScope({ connected: false, capturing: false });
   }, []);
 
   useEffect(() => {
@@ -164,6 +172,7 @@ export function useAuscultationLink(opts: {
         payload: { ...payload, id: me, role },
       });
     };
+    sendScopeRef.current = (scope) => send({ kind: "scope-status", scope });
 
     const inbound = new MediaStream();
 
@@ -316,7 +325,13 @@ export function useAuscultationLink(opts: {
           const isNew = meetPeer(msg.id);
           ensurePc();
           if (msg.kind === "hello") send({ kind: "hi" });
+          send({ kind: "scope-status", scope: localScopeRef.current });
           if (isNew) await negotiate();
+          return;
+        }
+        if (msg.kind === "scope-status" && msg.scope) {
+          meetPeer(msg.id);
+          setRemoteScope(msg.scope);
           return;
         }
         meetPeer(msg.id);
@@ -373,6 +388,7 @@ export function useAuscultationLink(opts: {
       if (announce) window.clearInterval(announce);
       send({ kind: "bye" });
       syncRef.current = null;
+      sendScopeRef.current = null;
       void supabase.removeChannel(channel);
       teardown();
       setPeerPresent(false);
@@ -394,5 +410,10 @@ export function useAuscultationLink(opts: {
     syncRef.current?.();
   }, [enabled, trackKey]);
 
-  return { state, remoteStream, peerPresent };
+  useEffect(() => {
+    if (!enabled) return;
+    sendScopeRef.current?.(localScope);
+  }, [enabled, localScope.connected, localScope.capturing]);
+
+  return { state, remoteStream, peerPresent, remoteScope };
 }

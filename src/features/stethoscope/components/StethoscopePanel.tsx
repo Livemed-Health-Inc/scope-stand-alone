@@ -41,6 +41,7 @@ export function StethoscopePanel({
   localMonitor = true,
   brandIconUrl,
   onEvent,
+  onStatusChange,
 }: {
   className?: string;
   /** Receives the processed heart-sound stream for remote streaming. */
@@ -51,6 +52,8 @@ export function StethoscopePanel({
   brandIconUrl?: string;
   /** Usage telemetry: auscultation sessions, site changes and recordings. */
   onEvent?: (event: StethoscopeUsageEvent) => void;
+  /** Reports hardware connection and live capture state to the other call participant. */
+  onStatusChange?: (status: { connected: boolean; capturing: boolean }) => void;
 }) {
 
 
@@ -69,6 +72,9 @@ export function StethoscopePanel({
   useEffect(() => {
     connectedRef.current = connected;
   }, [connected]);
+  useEffect(() => {
+    onStatusChange?.({ connected, capturing });
+  }, [connected, capturing, onStatusChange]);
   // Only publish the feed while auscultation is actually running, so the call
   // can restore the room microphone as soon as listening stops.
   useEffect(() => {
