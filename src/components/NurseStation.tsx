@@ -69,15 +69,6 @@ const SPECIALTIES = [
   { name: "Hospitalist", keywords: ["hospitalist", "internal", "medicine"] },
 ] as const;
 
-const MOCK_DOCTORS: Record<string, string[]> = {
-  Cardiology: ["Amara Osei", "Daniel Reyes"],
-  Pulmonology: ["Priya Raman", "Grant Whitfield"],
-  Neurology: ["Lena Kowalski", "Marcus Bell"],
-  "Infectious Disease": ["Yusuf Karim", "Elise Tran"],
-  Nephrology: ["Hannah Choi", "Victor Alvarez"],
-  "Critical Care": ["Simone Adeyemi", "Peter Lindqvist"],
-  Hospitalist: ["Nina Duarte", "Owen Blackwell"],
-};
 
 const SPECIALTY_ICONS: Record<string, ElementType<{ className?: string }>> = {
   Cardiology: HeartPulse,
