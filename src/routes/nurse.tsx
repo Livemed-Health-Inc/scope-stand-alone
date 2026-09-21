@@ -3,7 +3,6 @@ import { Building2 } from "lucide-react";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { NurseStation } from "@/components/NurseStation";
 import { DeviceGate } from "@/components/DeviceGate";
-import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/BrandMark";
 
 export const Route = createFileRoute("/nurse")({
@@ -41,9 +40,6 @@ function NursePage() {
           </div>
           <div className="ml-auto flex items-center gap-3">
             <ConnectionStatus />
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/auth">Doctor app</Link>
-            </Button>
           </div>
         </div>
       </header>

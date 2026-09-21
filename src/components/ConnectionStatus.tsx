@@ -76,7 +76,7 @@ export function ConnectionStatus() {
           {info.type === "cellular" ? "Cellular" : "Wi-Fi"}
         </p>
         <p className="text-xs font-medium text-foreground">
-          {info.online ? `Connected · ${info.label}` : "Offline"}
+          {info.online ? "Connected" : "Offline"}
         </p>
       </div>
     </div>
