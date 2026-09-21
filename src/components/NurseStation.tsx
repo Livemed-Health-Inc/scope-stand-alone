@@ -433,7 +433,6 @@ export function NurseStation({ device }: { device: DeviceContext }) {
         <ul className="flex flex-col gap-3">
           {current.doctors.map((d) => {
             const status = statusFor(d);
-            const isMock = d.id.startsWith("mock:");
             const initials = d.full_name
               .split(" ")
               .map((n) => n[0])
