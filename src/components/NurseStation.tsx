@@ -280,18 +280,15 @@ export function NurseStation({ device }: { device: DeviceContext }) {
     );
   }
 
-  const bySpecialty = SPECIALTIES.map((sp) => {
-    const real = doctors.filter((d) => specialtyFor(d.specialty) === sp.name);
-    const mocks: Doctor[] = (MOCK_DOCTORS[sp.name] ?? []).map((n, i) => ({
-      id: `mock:${sp.name}:${i}`,
-      full_name: n,
-      specialty: sp.name,
-      is_online: i === 0,
-      in_consult: false,
-      ready_to_round: false,
-    }));
-    return { name: sp.name, doctors: [...real, ...mocks] };
-  });
+  const bySpecialty = SPECIALTIES.map((sp) => ({
+    name: sp.name,
+    doctors: doctors
+      .filter((d) => specialtyFor(d.specialty) === sp.name)
+      .sort((a, b) => {
+        const rank = (x: Doctor) => (x.is_online && !x.in_consult ? 0 : x.is_online ? 1 : 2);
+        return rank(a) - rank(b) || a.full_name.localeCompare(b.full_name);
+      }),
+  }));
 
   const current = bySpecialty.find((s) => s.name === selectedSpecialty);
 
