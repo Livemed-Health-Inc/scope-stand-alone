@@ -60,7 +60,7 @@ export function startDemoHeart(Ctor?: CtxCtor, bpm = DEMO_BPM): DemoHeartHandle 
   const ctx = new C();
   const pcm = renderHeartCycle(ctx.sampleRate, bpm);
   const buffer = ctx.createBuffer(1, pcm.length, ctx.sampleRate);
-  buffer.copyToChannel(pcm, 0);
+  buffer.getChannelData(0).set(pcm);
   const src = ctx.createBufferSource();
   src.buffer = buffer;
   src.loop = true;

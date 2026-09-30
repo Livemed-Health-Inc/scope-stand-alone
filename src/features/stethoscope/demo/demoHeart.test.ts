@@ -35,7 +35,7 @@ function fakeCtx() {
   const ctx = {
     sampleRate: 8000,
     destination: { id: "dest" },
-    createBuffer: vi.fn(() => ({ copyToChannel: vi.fn() })),
+    createBuffer: vi.fn(() => ({ getChannelData: () => new Float32Array(8000) })),
     createBufferSource: vi.fn(() => src),
     createAnalyser: vi.fn(() => analyser),
     createGain: vi.fn(() => gain),
