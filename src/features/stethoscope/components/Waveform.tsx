@@ -113,7 +113,7 @@ export function Waveform({ analyser, active, label }: { analyser: AnalyserNode |
       <canvas ref={canvasRef} className="absolute inset-0 size-full" aria-label="Live auscultation waveform" />
       <div className="pointer-events-none absolute left-2 top-1.5 flex items-center gap-1.5 font-mono text-[10px] font-semibold text-success">
         <span className={`size-1.5 rounded-full ${active && analyser ? "animate-pulse bg-success" : "bg-muted-foreground"}`} />
-        {active && analyser ? "LIVE AUSCULTATION" : "AWAITING SIGNAL"}
+        {label ?? (active && analyser ? "LIVE AUSCULTATION" : "AWAITING SIGNAL")}
       </div>
       <div className="pointer-events-none absolute bottom-1.5 right-2 font-mono text-[9px] text-success/70">
         25 mm/s · AUTO GAIN
