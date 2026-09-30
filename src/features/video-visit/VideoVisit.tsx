@@ -8,6 +8,7 @@ import { logCallEvent, type CallEvent } from "@/lib/analytics";
 import { StethoscopePanel } from "@/features/stethoscope";
 import { Waveform } from "@/features/stethoscope";
 import { useStreamAnalyser } from "@/features/stethoscope";
+import { useDemoHeart } from "@/features/stethoscope/demo/useDemoHeart";
 import { useAuscultationLink, type LinkRole } from "@/lib/webrtc/useAuscultationLink";
 import { useOutgoingRing } from "@/lib/webrtc/callRing";
 
@@ -332,6 +333,9 @@ export function VideoVisit({
       ? link.remoteScopeStream
       : null;
   const waveAnalyser = useStreamAnalyser(waveStream);
+  // Preview-only synthetic audio: local playback + waveform only, never sent
+  // over the link and never changes stethoscope status. Stops on collapse/unmount.
+  const demo = useDemoHeart(scope);
   const sharedScopeConnected = localScopeStatus.connected || link.remoteScope.connected;
   const sharedScopeLive = localScopeStatus.capturing || link.remoteScope.capturing;
 
@@ -645,9 +649,32 @@ export function VideoVisit({
               {sharedScopeLive ? "Connected · Live" : sharedScopeConnected ? "Connected · Ready" : "Not connected"}
             </span>
           </div>
+          {demo.playing && (
+            <p
+              role="status"
+              className="mb-1 rounded-md bg-warning/20 px-2 py-1 text-center text-[11px] font-bold tracking-wide text-warning-foreground"
+            >
+              SYNTHETIC DEMO AUDIO — NOT A LIVE STETHOSCOPE
+            </p>
+          )}
           <div className="h-36">
-            <Waveform analyser={waveAnalyser} active={!!waveStream} />
+            <Waveform
+              analyser={demo.analyser ?? waveAnalyser}
+              active={demo.playing || !!waveStream}
+            />
           </div>
+          {demo.available && (
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <span className="text-[10px] text-muted-foreground">Preview only · not in published app</span>
+              <button
+                type="button"
+                onClick={demo.playing ? demo.stop : demo.start}
+                className="rounded-full bg-muted px-3 py-1 text-xs font-semibold"
+              >
+                {demo.playing ? "Stop demo" : "Play demo heart sounds"}
+              </button>
+            </div>
+          )}
         </div>
 
         {role === "patient" ? (
