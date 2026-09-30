@@ -36,7 +36,7 @@ export function renderHeartCycle(sampleRate: number, bpm = DEMO_BPM): Float32Arr
       const t = i / sampleRate;
       const env = Math.sin((Math.PI * i) / n) ** 2;
       const f = freq * (1 - 0.35 * (i / n)); // slight downward glide
-      out[start + i] += amp * env * Math.sin(2 * Math.PI * f * t);
+      out[start + i] = (out[start + i] ?? 0) + amp * env * Math.sin(2 * Math.PI * f * t);
     }
   };
   thump(0.0, 0.11, 55, 0.9); // S1 "lub"
