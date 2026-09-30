@@ -661,6 +661,7 @@ export function VideoVisit({
             <Waveform
               analyser={demo.analyser ?? waveAnalyser}
               active={demo.playing || !!waveStream}
+              label={demo.playing ? "SYNTHETIC DEMO" : undefined}
             />
           </div>
           {demo.available && (
