@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 /** Live oscilloscope trace of the auscultation signal. */
-export function Waveform({ analyser, active, label }: { analyser: AnalyserNode | null; active: boolean; label?: string }) {
+export function Waveform({ analyser, active, label }: { analyser: AnalyserNode | null; active: boolean; label?: string | undefined }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
