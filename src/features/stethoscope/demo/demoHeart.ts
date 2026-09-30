@@ -26,9 +26,9 @@ export function isDemoAudioHost(hostname: string): boolean {
 }
 
 /** One cardiac cycle of a synthetic lub-dub (S1 + S2), mono PCM in [-1, 1]. */
-export function renderHeartCycle(sampleRate: number, bpm = DEMO_BPM): Float32Array {
+export function renderHeartCycle(sampleRate: number, bpm = DEMO_BPM): Float32Array<ArrayBuffer> {
   const length = Math.round((60 / bpm) * sampleRate);
-  const out = new Float32Array(length);
+  const out = new Float32Array(new ArrayBuffer(length * 4));
   const thump = (startSec: number, durSec: number, freq: number, amp: number) => {
     const start = Math.round(startSec * sampleRate);
     const n = Math.round(durSec * sampleRate);
