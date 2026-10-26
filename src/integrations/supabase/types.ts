@@ -185,6 +185,7 @@ export type Database = {
       }
       calls: {
         Row: {
+          acuity: string | null
           answered_at: string | null
           created_at: string
           device_id: string | null
@@ -194,13 +195,17 @@ export type Database = {
           id: string
           initiated_by: string
           mode: string
+          mrn: string | null
           nurse_id: string | null
+          patient_name: string | null
           patient_room: string | null
           reason: string | null
+          specialties: string[] | null
           status: string
           unit: string | null
         }
         Insert: {
+          acuity?: string | null
           answered_at?: string | null
           created_at?: string
           device_id?: string | null
@@ -210,13 +215,17 @@ export type Database = {
           id?: string
           initiated_by?: string
           mode?: string
+          mrn?: string | null
           nurse_id?: string | null
+          patient_name?: string | null
           patient_room?: string | null
           reason?: string | null
+          specialties?: string[] | null
           status?: string
           unit?: string | null
         }
         Update: {
+          acuity?: string | null
           answered_at?: string | null
           created_at?: string
           device_id?: string | null
@@ -226,9 +235,12 @@ export type Database = {
           id?: string
           initiated_by?: string
           mode?: string
+          mrn?: string | null
           nurse_id?: string | null
+          patient_name?: string | null
           patient_room?: string | null
           reason?: string | null
+          specialties?: string[] | null
           status?: string
           unit?: string | null
         }
@@ -876,10 +888,14 @@ export type Database = {
       }
       place_public_call: {
         Args: {
+          _acuity?: string
           _device_token: string
           _doctor_id: string
+          _mrn?: string
+          _patient_name?: string
           _patient_room: string
           _reason?: string
+          _specialties?: string[]
         }
         Returns: string
       }

@@ -8,6 +8,13 @@
       "when": 1793027767015,
       "tag": "0000_doctor_initiated_calls",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793032182268,
+      "tag": "0001_consult_details_on_calls",
+      "breakpoints": true
     }
   ]
 }
