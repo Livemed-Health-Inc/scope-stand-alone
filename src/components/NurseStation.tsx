@@ -30,6 +30,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { VideoVisit } from "@/features/video-visit";
 import { IncomingDoctorCall } from "@/components/IncomingDoctorCall";
+import { NewConsult, AcuityBadge, type ConsultDraft, type KnownPatient } from "@/components/NewConsult";
+import { ClipboardPlus } from "lucide-react";
 import { startAlerting, stopAlerting, primeAudio } from "@/lib/ringtone";
 
 type Doctor = {
@@ -59,6 +61,7 @@ type Call = {
   hospital: string | null;
   unit: string | null;
   doctor_name?: string;
+  consult?: ConsultDraft;
 };
 
 const SPECIALTIES = [
@@ -105,6 +108,9 @@ export function NurseStation({ device }: { device: DeviceContext }) {
   const [staged, setStaged] = useState<Staged[]>([]);
   const [ackOpen, setAckOpen] = useState(false);
   const [roundRoom, setRoundRoom] = useState("412-B");
+  const [composing, setComposing] = useState(false);
+  const [consult, setConsult] = useState<ConsultDraft | null>(null);
+  const [knownPatients, setKnownPatients] = useState<KnownPatient[]>([]);
 
   async function loadStaged() {
     const token = getDeviceToken();
@@ -214,6 +220,45 @@ export function NurseStation({ device }: { device: DeviceContext }) {
     return () => stopAlerting();
   }, [alerting]);
 
+  async function placeConsultCall(d: Doctor) {
+    if (!consult) return;
+    const token = getDeviceToken();
+    if (!token) {
+      toast.error("This device is no longer registered.");
+      return;
+    }
+    const { data, error } = await supabase.rpc("place_public_call", {
+      _device_token: token,
+      _doctor_id: d.id,
+      _patient_room: consult.room,
+      _reason: consult.reason,
+      _patient_name: consult.patient,
+      ...(consult.mrn ? { _mrn: consult.mrn } : {}),
+      _acuity: consult.acuity,
+      _specialties: consult.specialties,
+    });
+    if (error || !data) {
+      void auditLog({ action: "consult.placed", entity: "calls", outcome: "error", withDevice: true });
+      toast.error(error?.message ?? "Could not place the call.");
+      return;
+    }
+    void auditLog({ action: "consult.placed", entity: "calls", entityId: data as string, phi: true, withDevice: true, details: { acuity: consult.acuity, specialties: consult.specialties } });
+    setKnownPatients((list) => [
+      { name: consult.patient, mrn: consult.mrn, room: consult.room },
+      ...list.filter((p) => p.name !== consult.patient),
+    ]);
+    setActiveCall({
+      id: data as string,
+      doctor_id: d.id,
+      status: "ringing",
+      patient_room: consult.room || null,
+      reason: consult.reason,
+      hospital: device.hospital,
+      unit: device.unit,
+      consult,
+    });
+  }
+
   async function placeCall() {
     if (!target) return;
     if (target.in_consult) {
@@ -262,6 +307,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
     const token = getDeviceToken();
     if (token) await supabase.rpc("end_public_call", { _device_token: token, _call_id: activeCall.id });
     setActiveCall(null);
+    setConsult(null);
   }
 
   if (activeCall?.status === "accepted") {
@@ -278,7 +324,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
         room={activeCall.patient_room ? `Room ${activeCall.patient_room}` : ""}
         hospital={activeCall.hospital ?? "Virtualis General Hospital"}
         unit={activeCall.unit ?? "ICU - 4 West"}
-        title={activeCall.reason ?? "Virtual consult"}
+        title={activeCall.consult ? `${activeCall.consult.patient} · ${activeCall.consult.reason}` : activeCall.reason ?? "Virtual consult"}
         callerName="Bedside nurse"
         onEnd={cancelCall}
       />
@@ -295,7 +341,34 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       }),
   }));
 
-  const current = bySpecialty.find((s) => s.name === selectedSpecialty);
+  const current = consult
+    ? {
+        name: consult.specialties.join(" · "),
+        doctors: bySpecialty
+          .filter((s) => consult.specialties.includes(s.name))
+          .flatMap((s) => s.doctors)
+          .sort((a, b) => {
+            const rank = (x: Doctor) => (x.is_online && !x.in_consult ? 0 : x.is_online ? 1 : 2);
+            return rank(a) - rank(b) || a.full_name.localeCompare(b.full_name);
+          }),
+      }
+    : bySpecialty.find((s) => s.name === selectedSpecialty);
+
+  if (composing) {
+    return (
+      <NewConsult
+        hospital={device.hospital}
+        unit={device.unit}
+        knownPatients={knownPatients}
+        onBack={() => setComposing(false)}
+        onSend={(c) => {
+          setConsult(c);
+          setComposing(false);
+          setSelectedSpecialty(null);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="space-y-5 animate-in fade-in duration-500">
@@ -376,12 +449,35 @@ export function NurseStation({ device }: { device: DeviceContext }) {
         </ul>
       )}
 
+      {consult ? (
+        <div className="glass-card border-l-4 border-l-primary p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="label-caps">Consult ready to send</p>
+            <AcuityBadge level={consult.acuity} />
+            <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setConsult(null)}>
+              <X className="size-4" /> Discard
+            </Button>
+          </div>
+          <p className="mt-1 text-lg font-semibold">
+            {consult.patient}
+            {consult.room ? ` · Room ${consult.room}` : ""}
+            {consult.mrn ? ` · MRN ${consult.mrn}` : ""}
+          </p>
+          <p className="text-sm text-muted-foreground">{consult.reason}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Tap Call on a physician below — the consult details go with the call.</p>
+        </div>
+      ) : (
+        <Button size="lg" className="h-16 w-full gap-3 text-lg" onClick={() => setComposing(true)} disabled={!!activeCall}>
+          <ClipboardPlus className="size-6" /> New consult
+        </Button>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
-          <p className="label-caps">{current ? "Available for consult" : "Consult directory"}</p>
+          <p className="label-caps">{consult ? "On-call for this consult" : current ? "Available for consult" : "Consult directory"}</p>
           <h1 className="text-2xl font-semibold tracking-tight">{current ? current.name : "Specialties"}</h1>
         </div>
-        {current ? (
+        {current && !consult ? (
           <Button variant="secondary" size="sm" onClick={() => setSelectedSpecialty(null)}>
             All specialties
           </Button>
@@ -494,7 +590,8 @@ export function NurseStation({ device }: { device: DeviceContext }) {
                       toast.warning(`Dr. ${d.full_name} is in a consult — please hold.`);
                       return;
                     }
-                    setTarget(d);
+                    if (consult) void placeConsultCall(d);
+                    else setTarget(d);
                   }}
                   disabled={!d.is_online || !!activeCall}
                   className="gap-2"
