@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { VideoVisit } from "@/features/video-visit";
+import { IncomingDoctorCall } from "@/components/IncomingDoctorCall";
 import { startAlerting, stopAlerting, primeAudio } from "@/lib/ringtone";
 
 type Doctor = {
@@ -57,6 +58,7 @@ type Call = {
   reason: string | null;
   hospital: string | null;
   unit: string | null;
+  doctor_name?: string;
 };
 
 const SPECIALTIES = [
@@ -264,7 +266,8 @@ export function NurseStation({ device }: { device: DeviceContext }) {
 
   if (activeCall?.status === "accepted") {
     const doc = doctors.find((d) => d.id === activeCall.doctor_id);
-    const docName = doc ? (/^dr\.?\s/i.test(doc.full_name) ? doc.full_name : `Dr. ${doc.full_name}`) : "Physician";
+    const rawName = doc?.full_name ?? activeCall.doctor_name;
+    const docName = rawName ? (/^dr\.?\s/i.test(rawName) ? rawName : `Dr. ${rawName}`) : "Physician";
     return (
       <VideoVisit
         roomId={activeCall.id}
@@ -296,6 +299,21 @@ export function NurseStation({ device }: { device: DeviceContext }) {
 
   return (
     <div className="space-y-5 animate-in fade-in duration-500">
+      <IncomingDoctorCall
+        paused={!!activeCall}
+        onAccepted={(c) =>
+          setActiveCall({
+            id: c.id,
+            doctor_id: c.doctor_id,
+            doctor_name: c.doctor_name,
+            status: "accepted",
+            patient_room: null,
+            reason: c.mode === "drop_in" ? "Physician drop-in" : "Physician call",
+            hospital: device.hospital,
+            unit: device.unit,
+          })
+        }
+      />
       <div className="glass-card -mx-4 rounded-none border-x-0 border-l-4 border-l-primary px-4 py-5 sm:-mx-0 sm:rounded-xl sm:border-x sm:border-l-primary">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>

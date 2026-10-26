@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { VideoVisit } from "@/features/video-visit";
+import { MyStations } from "@/components/MyStations";
 import { startRinging, stopRinging, startAlerting, stopAlerting, primeAudio } from "@/lib/ringtone";
 
 type Call = {
@@ -39,16 +40,26 @@ export function DoctorStation() {
   const [acks, setAcks] = useState<Ack[]>([]);
   const [incoming, setIncoming] = useState<Call[]>([]);
   const [active, setActive] = useState<Call | null>(null);
+  const [outgoing, setOutgoing] = useState<Call | null>(null);
   const [nurseNames, setNurseNames] = useState<Record<string, string>>({});
   const loadCalls = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
       .from("calls")
-      .select("id, nurse_id, status, patient_room, reason, hospital, unit, created_at")
+      .select("id, nurse_id, status, patient_room, reason, hospital, unit, created_at, initiated_by")
       .eq("doctor_id", user.id)
       .in("status", ["ringing", "accepted"])
       .order("created_at", { ascending: true });
-    const calls = (data ?? []) as Call[];
+    const all = (data ?? []) as (Call & { initiated_by: string })[];
+    const mine = all.filter((c) => c.status === "ringing" && c.initiated_by === "doctor");
+    for (const c of mine) {
+      if (Date.now() - new Date(c.created_at).getTime() > 45000) {
+        await supabase.from("calls").update({ status: "missed", ended_at: new Date().toISOString() }).eq("id", c.id);
+        toast.info("No answer at the bedside station");
+      }
+    }
+    setOutgoing(mine.find((c) => Date.now() - new Date(c.created_at).getTime() <= 45000) ?? null);
+    const calls = all.filter((c) => c.initiated_by !== "doctor" || c.status === "accepted");
     setIncoming(calls.filter((c) => c.status === "ringing"));
     setActive(calls.find((c) => c.status === "accepted") ?? null);
 
@@ -212,7 +223,7 @@ export function DoctorStation() {
         callId={active.id}
 
         role="remote"
-        patient={(active.nurse_id && nurseNames[active.nurse_id]) || "Bedside nurse"}
+        patient={(active.nurse_id && nurseNames[active.nurse_id]) || "Bedside station"}
         room={active.patient_room ? `Room ${active.patient_room}` : ""}
         hospital={active.hospital ?? "Virtualis General Hospital"}
         unit={active.unit ?? "ICU - 4 West"}
@@ -263,6 +274,37 @@ export function DoctorStation() {
           </Badge>
         </div>
       </div>
+
+      {outgoing && (
+        <div className="panel-surface flex flex-wrap items-center gap-4 p-4 ring-1 ring-primary/40">
+          <div className="flex size-12 items-center justify-center rounded-full bg-primary/15 text-primary ring-pulse">
+            <PhoneIncoming className="size-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">Calling bedside station…</p>
+            <p className="text-xs text-muted-foreground">
+              {outgoing.hospital} · {outgoing.unit}
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              await supabase.from("calls").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", outgoing.id);
+              setOutgoing(null);
+            }}
+          >
+            <PhoneOff className="size-4" /> Cancel
+          </Button>
+        </div>
+      )}
+
+      <MyStations
+        disabled={!!outgoing}
+        onPlaced={(c) => {
+          void auditLog({ action: `consult.${c.mode === "drop_in" ? "drop_in" : "call"}_bedside`, entity: "calls", entityId: c.id, phi: true });
+          void loadCalls();
+        }}
+      />
 
       <div className="panel-surface flex flex-wrap items-center gap-4 p-4">
         <div
