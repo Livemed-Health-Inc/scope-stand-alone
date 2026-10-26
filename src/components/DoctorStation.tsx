@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { VideoVisit } from "@/features/video-visit";
+import { MyStations } from "@/components/MyStations";
 import { startRinging, stopRinging, startAlerting, stopAlerting, primeAudio } from "@/lib/ringtone";
 
 type Call = {
@@ -273,6 +274,37 @@ export function DoctorStation() {
           </Badge>
         </div>
       </div>
+
+      {outgoing && (
+        <div className="panel-surface flex flex-wrap items-center gap-4 p-4 ring-1 ring-primary/40">
+          <div className="flex size-12 items-center justify-center rounded-full bg-primary/15 text-primary ring-pulse">
+            <PhoneIncoming className="size-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">Calling bedside station…</p>
+            <p className="text-xs text-muted-foreground">
+              {outgoing.hospital} · {outgoing.unit}
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              await supabase.from("calls").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", outgoing.id);
+              setOutgoing(null);
+            }}
+          >
+            <PhoneOff className="size-4" /> Cancel
+          </Button>
+        </div>
+      )}
+
+      <MyStations
+        disabled={!!outgoing}
+        onPlaced={(c) => {
+          void auditLog({ action: `consult.${c.mode === "drop_in" ? "drop_in" : "call"}_bedside`, entity: "calls", entityId: c.id, phi: true });
+          void loadCalls();
+        }}
+      />
 
       <div className="panel-surface flex flex-wrap items-center gap-4 p-4">
         <div
