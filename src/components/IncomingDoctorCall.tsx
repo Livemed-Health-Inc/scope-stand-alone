@@ -5,7 +5,7 @@ import { getDeviceToken } from "@/lib/device";
 import { Button } from "@/components/ui/button";
 import { startRinging, stopRinging } from "@/lib/ringtone";
 
-export const DROP_IN_SECONDS = 10;
+import { dropInRemaining } from "@/components/dropIn";
 
 export type DoctorInitiatedCall = {
   id: string;
@@ -15,10 +15,6 @@ export type DoctorInitiatedCall = {
   mode: string;
 };
 
-/** Seconds left before a drop-in connects automatically. */
-export function dropInRemaining(startedAtMs: number, nowMs: number, total = DROP_IN_SECONDS) {
-  return Math.max(0, total - Math.floor((nowMs - startedAtMs) / 1000));
-}
 
 export function IncomingDoctorCall({
   paused,

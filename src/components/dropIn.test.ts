@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dropInRemaining, DROP_IN_SECONDS } from "./IncomingDoctorCall";
+import { dropInRemaining, DROP_IN_SECONDS } from "./dropIn";
 
 describe("drop-in countdown", () => {
   it("auto-connects after 10 seconds", () => {
