@@ -26,9 +26,9 @@ export function BedsideConsults({
   onCallDirectly,
 }: {
   refreshKey: number;
-  disabled?: boolean;
-  verifyNurse?: () => Promise<NurseSession | null>;
-  onSignOutNurse?: () => void;
+  disabled?: boolean | undefined;
+  verifyNurse?: (() => Promise<NurseSession | null>) | undefined;
+  onSignOutNurse?: (() => void) | undefined;
   onStartVisit: (c: BedsideConsult, callId: string, doctorId: string) => void;
   onCallDirectly: (c: BedsideConsult) => void;
 }) {
@@ -94,9 +94,9 @@ function ConsultCard({
   onCallDirectly,
 }: {
   c: BedsideConsult;
-  disabled?: boolean;
-  verifyNurse?: () => Promise<NurseSession | null>;
-  onSignOutNurse?: () => void;
+  disabled?: boolean | undefined;
+  verifyNurse?: (() => Promise<NurseSession | null>) | undefined;
+  onSignOutNurse?: (() => void) | undefined;
   reload: () => Promise<void>;
   onStartVisit: (c: BedsideConsult, callId: string, doctorId: string) => void;
   onCallDirectly: (c: BedsideConsult) => void;
