@@ -230,8 +230,21 @@ export function NurseStation({
     return () => stopAlerting();
   }, [alerting]);
 
+  // Nurse who submitted the current consult. Removed from the bedside view on
+  // submit; their session is kept only to attach their name to the call.
+  const [consultNurse, setConsultNurse] = useState<NurseSession | null>(null);
+  const shownNurse = consultNurse ? null : nurse;
+
+  function releaseConsultNurse() {
+    if (consultNurse) {
+      setConsultNurse(null);
+      onSignOutNurse?.();
+    }
+  }
+
   async function placeConsultCall(d: Doctor) {
     if (!consult) return;
+    const by = consultNurse ?? nurse;
     const token = getDeviceToken();
     if (!token) {
       toast.error("This device is no longer registered.");
@@ -246,7 +259,7 @@ export function NurseStation({
       ...(consult.mrn ? { _mrn: consult.mrn } : {}),
       _acuity: consult.acuity,
       _specialties: consult.specialties,
-      ...(nurse ? { _nurse_session: nurse.session } : {}),
+      ...(by ? { _nurse_session: by.session } : {}),
     });
     if (error || !data) {
       void auditLog({ action: "consult.placed", entity: "calls", outcome: "error", withDevice: true });
@@ -267,7 +280,9 @@ export function NurseStation({
       hospital: device.hospital,
       unit: device.unit,
       consult,
+      nurseName: by?.fullName ?? null,
     });
+    releaseConsultNurse();
   }
 
   async function placeCall() {
@@ -320,6 +335,7 @@ export function NurseStation({
     if (token) await supabase.rpc("end_public_call", { _device_token: token, _call_id: activeCall.id });
     setActiveCall(null);
     setConsult(null);
+    releaseConsultNurse();
   }
 
   if (activeCall?.status === "accepted") {
@@ -337,7 +353,7 @@ export function NurseStation({
         hospital={activeCall.hospital ?? "Virtualis General Hospital"}
         unit={activeCall.unit ?? "ICU - 4 West"}
         title={activeCall.consult ? `${activeCall.consult.patient} · ${activeCall.consult.reason}` : activeCall.reason ?? "Virtual consult"}
-        callerName={nurse ? `RN ${nurse.fullName}` : "Bedside nurse"}
+        callerName={activeCall.nurseName ? `RN ${activeCall.nurseName}` : nurse ? `RN ${nurse.fullName}` : "Bedside nurse"}
         onEnd={cancelCall}
       />
     );
@@ -376,6 +392,7 @@ export function NurseStation({
         onBack={() => setComposing(false)}
         onSend={(c) => {
           setConsult(c);
+          if (nurse) setConsultNurse(nurse);
           setComposing(false);
           setSelectedSpecialty(null);
         }}
@@ -479,7 +496,7 @@ export function NurseStation({
           <div className="flex flex-wrap items-center gap-2">
             <p className="label-caps">Consult ready to send</p>
             <AcuityBadge level={consult.acuity} />
-            <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setConsult(null)}>
+            <Button variant="ghost" size="sm" className="ml-auto" onClick={() => { setConsult(null); releaseConsultNurse(); }}>
               <X className="size-4" /> Discard
             </Button>
           </div>
