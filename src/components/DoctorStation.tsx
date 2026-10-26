@@ -1,3 +1,4 @@
+import { AcuityBadge } from "@/components/NewConsult";
 import { useCallback, useEffect, useState } from "react";
 import { PhoneIncoming, PhoneOff, Coffee, CheckCircle2, BellRing, Footprints } from "lucide-react";
 import { toast } from "sonner";
@@ -21,6 +22,10 @@ type Call = {
   hospital: string | null;
   unit: string | null;
   created_at: string;
+  patient_name?: string | null;
+  mrn?: string | null;
+  acuity?: string | null;
+  specialties?: string[] | null;
 };
 
 type Ack = {
@@ -46,7 +51,7 @@ export function DoctorStation() {
     if (!user) return;
     const { data } = await supabase
       .from("calls")
-      .select("id, nurse_id, status, patient_room, reason, hospital, unit, created_at, initiated_by")
+      .select("id, nurse_id, status, patient_room, reason, hospital, unit, created_at, initiated_by, patient_name, mrn, acuity, specialties")
       .eq("doctor_id", user.id)
       .in("status", ["ringing", "accepted"])
       .order("created_at", { ascending: true });
@@ -227,7 +232,7 @@ export function DoctorStation() {
         room={active.patient_room ? `Room ${active.patient_room}` : ""}
         hospital={active.hospital ?? "Virtualis General Hospital"}
         unit={active.unit ?? "ICU - 4 West"}
-        title={active.reason ?? "Virtual consult"}
+        title={active.patient_name ? `${active.patient_name} · ${active.reason ?? "Consult"}` : active.reason ?? "Virtual consult"}
         callerName={profile?.full_name ? `Dr. ${profile.full_name}` : "Physician"}
         allowRemoteLocalScope
         onEnd={end}
@@ -399,6 +404,18 @@ export function DoctorStation() {
                 <p className="text-xs text-muted-foreground">
                   {call.unit ?? "ICU - 4 West"} · Room {call.patient_room ?? "412-B"}
                 </p>
+                {(call.patient_name || call.acuity) && (
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm font-medium">
+                    {call.acuity && ["critical", "urgent", "routine"].includes(call.acuity) && (
+                      <AcuityBadge level={call.acuity as "critical" | "urgent" | "routine"} />
+                    )}
+                    {call.patient_name && <span>{call.patient_name}</span>}
+                    {call.mrn && <span className="text-xs text-muted-foreground">MRN {call.mrn}</span>}
+                    {call.specialties?.length ? (
+                      <span className="text-xs text-muted-foreground">{call.specialties.join(" · ")}</span>
+                    ) : null}
+                  </div>
+                )}
                 {call.reason && <p className="mt-1 text-sm text-foreground/90">{call.reason}</p>}
               </div>
               <div className="flex gap-2">
