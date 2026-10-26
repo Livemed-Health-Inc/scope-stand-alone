@@ -55,7 +55,6 @@ export function DeviceGate({ children }: { children: (device: DeviceContext, nur
         setNurse(null);
       }
     }
-    setNurseChecked(true);
   }
 
   const signOutNurse = useCallback(() => {
