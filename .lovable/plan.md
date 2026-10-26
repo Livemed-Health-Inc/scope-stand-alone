@@ -1,25 +1,26 @@
-# Send bedside consults into Virtualis Chat
+# Send bedside consults into Virtualis Chat, then call when the doctor is ready
 
-When a nurse sends a consult and calls a doctor, the same consult also lands in that doctor's Virtualis Chat inbox, the same way Virtualis consults arrive today.
+The consult goes to the doctor in Virtualis Chat first, the same way Virtualis consults arrive today. The video call only happens after the doctor tells the nurse he is available.
 
-## How Virtualis receives consults today
-A consult in Virtualis is a conversation with the patient, MRN, acuity and reason attached. The assigned doctor is added as the "consultant", so it shows up in their inbox with the acuity badge and an unread count.
-
-## What the doctor will see
-- A new conversation in their Virtualis inbox, titled like "Tele-Cardiology · Bedside consult".
-- The patient, MRN, room, acuity and reason, shown as on any Virtualis consult.
-- A first message: "Bedside consult from RN Tomika Hassan, Minnesota University Hospital · Emergency Department. Video call requested."
-- It goes only to the doctor the nurse tapped **Call** on. If that doctor declines or misses the call, the conversation stays in their inbox.
+## The flow
+1. The nurse fills in New Consult and taps **Send consult**.
+2. The consult is sent to the on-call doctor for each chosen specialty in Virtualis Chat. It shows up as a normal Virtualis consult in their inbox, with the patient, MRN, room, acuity, reason and "From RN Tomika Hassan, Minnesota University Hospital · Emergency Department".
+3. The bedside shows a waiting card: "Consult sent to Dr. Ryan (Cardiology) · Waiting for the doctor". There are no Call buttons yet.
+4. In Virtualis Chat, the consult has two buttons: **Available to see patient** and **Can't take this**.
+5. When the doctor taps **Available**, the bedside card turns green with a chime: "Dr. Ryan is available to see the patient". A **Start video visit** button appears, and it rings the doctor the same way calls ring today.
+6. If the doctor taps **Can't take this**, or nobody answers within the acuity time (5 min for Critical, 30 min for Urgent, 4 hr for Routine), the nurse sees that and can resend to another doctor.
 
 ## How the doctor is matched
-The doctor is matched by email address: their login here must use the same email as their Virtualis account. If no Virtualis account matches, the call still rings here. The nurse sees "Not delivered to Virtualis Chat" and nothing else changes.
+The doctor is matched by email: their login here must use the same email as their Virtualis account. If no matching Virtualis account is found, the nurse sees "Not delivered to Virtualis Chat · Call directly", and the current Call button is offered as a backup.
 
 ## Two parts
-1. **This app (I build it):** when a call carries a consult, the consult is sent securely to Virtualis using the shared key you already set up. It is re-sent if delivery fails, and every attempt is recorded in the activity log.
-2. **Virtualis (you paste instructions there):** a secure receiver that checks the key, finds the doctor by email, creates the consult conversation and adds the doctor as consultant. I'll write the exact instructions as a file, like last time.
+1. **This app (I build it):** sending the consult, the waiting and available cards on the bedside, and a secure receiver for the doctor's reply.
+2. **Virtualis (you paste instructions there):** receiving the consult into the inbox, the Available / Can't take this buttons, and sending the reply back. I'll write the exact instructions as a file, like last time.
 
 ## Technical details
-- Virtualis side: `POST /api/public/bedside-consult` with header `x-virtualis-key` (`VIRTUALIS_ONCALL_KEY`, reused) and body `{ external_id (call id), physician_email, facility_name, unit, patient, mrn, room, acuity, reason, specialties[], nurse_name }`. Idempotent on `external_id`. It maps the facility by name (unmapped facilities use a "Virtualis Consult bedside" facility), creates `threads` + `thread_members(relationship='consultant')` + a system `messages` row + `consult_assignments`, all with the admin client after key verification. It returns `{ delivered, thread_id }` or `{ delivered:false, reason:'no_account' }`.
-- This side: a new server fn `deliverConsultToVirtualis(callId)` in `src/lib/virtualis-consult.functions.ts`, called after `place_public_call` returns. It verifies the device token, loads the call with the admin client, and POSTs with a 3-try backoff. A new nullable `calls.virtualis_thread_id` column plus a `call_events` row for each attempt.
-- PHI is sent only server-to-server over HTTPS and never returned to the browser. Audit entries use `phi_accessed = true`.
-- Tests: payload building (no fields missing, acuity mapping) and idempotent retry.
+- New table `bedside_consults` (id, device_id, site_id, nurse_name, patient_name, mrn, room, acuity, reason, specialties, physician_id, physician_email, status `sent|available|declined|expired|undelivered|called`, virtualis_thread_id, responded_at, call_id, timestamps). No client grants: the device reads its rows through a `device_consults(_device_token)` RPC, polled about every 3 seconds (the bedside is not signed in, so it can't use live updates).
+- Server fn `submitBedsideConsult` in `src/lib/virtualis-consult.functions.ts`: verifies the device token and nurse session, picks the on-call physician per specialty (available first), saves the row and POSTs to Virtualis `POST /api/public/bedside-consult` with header `x-virtualis-key` (reuses `VIRTUALIS_ONCALL_KEY`). It retries 3 times, is idempotent on the consult id, and records an audit entry with `phi_accessed = true`.
+- Server route `src/routes/api/public/consult-response.ts`: Virtualis POSTs `{ consult_id, physician_email, response: available|declined }` with the same key. The handler checks the key in constant time and checks that the email matches the assigned physician, then updates the status.
+- "Start video visit" calls the existing `place_public_call` with the consult fields plus a `_consult_id` that links the two. It is only allowed when the status is `available`.
+- Virtualis side: creates `threads`, adds the doctor in `thread_members` as `consultant` and in `consult_assignments`, adds a system message, and shows the two response buttons on threads with source `bedside`. It POSTs the reply to `https://virtualisconsult.com/api/public/consult-response`.
+- Tests: picking a physician per specialty, the status changes (Start only after `available`), the acuity expiry times, and rejection of a bad key or wrong physician.
