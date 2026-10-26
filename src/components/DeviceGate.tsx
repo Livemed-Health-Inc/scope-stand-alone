@@ -123,6 +123,10 @@ export function DeviceGate({ children }: { children: (device: DeviceContext, nur
   const lock = useCallback(() => {
     setLocked(true);
     signOutNurse();
+    setVerifyRequest((r) => {
+      r?.resolve(null);
+      return null;
+    });
   }, [signOutNurse]);
 
   if (checking) {
