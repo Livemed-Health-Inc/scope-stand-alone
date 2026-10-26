@@ -77,6 +77,154 @@ export type Database = {
         }
         Relationships: []
       }
+      bedside_consult_messages: {
+        Row: {
+          body: string
+          consult_id: string
+          created_at: string
+          delivered: boolean
+          id: string
+          sender: string
+          sender_name: string
+          virtualis_message_id: string | null
+        }
+        Insert: {
+          body: string
+          consult_id: string
+          created_at?: string
+          delivered?: boolean
+          id?: string
+          sender: string
+          sender_name: string
+          virtualis_message_id?: string | null
+        }
+        Update: {
+          body?: string
+          consult_id?: string
+          created_at?: string
+          delivered?: boolean
+          id?: string
+          sender?: string
+          sender_name?: string
+          virtualis_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bedside_consult_messages_consult_id_fkey"
+            columns: ["consult_id"]
+            isOneToOne: false
+            referencedRelation: "bedside_consults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bedside_consults: {
+        Row: {
+          acuity: string
+          call_id: string | null
+          created_at: string
+          delivery_error: string | null
+          device_id: string
+          expires_at: string
+          id: string
+          mrn: string | null
+          nurse_id: string | null
+          nurse_name: string | null
+          patient_name: string
+          physician_email: string | null
+          physician_id: string | null
+          physician_name: string | null
+          reason: string
+          responded_at: string | null
+          room: string | null
+          site_id: string
+          specialties: string[]
+          specialty: string
+          status: string
+          updated_at: string
+          virtualis_thread_id: string | null
+        }
+        Insert: {
+          acuity: string
+          call_id?: string | null
+          created_at?: string
+          delivery_error?: string | null
+          device_id: string
+          expires_at: string
+          id?: string
+          mrn?: string | null
+          nurse_id?: string | null
+          nurse_name?: string | null
+          patient_name: string
+          physician_email?: string | null
+          physician_id?: string | null
+          physician_name?: string | null
+          reason: string
+          responded_at?: string | null
+          room?: string | null
+          site_id: string
+          specialties?: string[]
+          specialty: string
+          status?: string
+          updated_at?: string
+          virtualis_thread_id?: string | null
+        }
+        Update: {
+          acuity?: string
+          call_id?: string | null
+          created_at?: string
+          delivery_error?: string | null
+          device_id?: string
+          expires_at?: string
+          id?: string
+          mrn?: string | null
+          nurse_id?: string | null
+          nurse_name?: string | null
+          patient_name?: string
+          physician_email?: string | null
+          physician_id?: string | null
+          physician_name?: string | null
+          reason?: string
+          responded_at?: string | null
+          room?: string | null
+          site_id?: string
+          specialties?: string[]
+          specialty?: string
+          status?: string
+          updated_at?: string
+          virtualis_thread_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bedside_consults_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "calls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bedside_consults_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bedside_consults_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "unit_nurses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bedside_consults_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "hospital_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bedside_logins: {
         Row: {
           created_at: string
