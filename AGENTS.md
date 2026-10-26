@@ -9,3 +9,4 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 - Bedside nurse identity (unit_nurses, OTP/TOTP secrets, nurse_sessions) is verified only in src/lib/nurse-otp.functions.ts with the admin client; secret tables have no client grants — keeps codes and authenticator secrets off the browser.
+- Bedside consults reach Virtualis Chat only via server-to-server calls (src/lib/virtualis-chat.server.ts, /api/public/consult-*) signed with VIRTUALIS_ONCALL_KEY; bedside_consults tables have no client grants and are read through device-token server fns — keeps PHI off the browser except the owning tablet.
