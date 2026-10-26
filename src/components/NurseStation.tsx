@@ -22,7 +22,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { auditLog } from "@/lib/audit";
-import { getDeviceToken, type DeviceContext } from "@/lib/device";
+import { getDeviceToken, type DeviceContext, type NurseSession } from "@/lib/device";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -97,7 +97,15 @@ function statusFor(d: Doctor) {
   return { label: "Offline", color: "muted" as const, icon: UserX };
 }
 
-export function NurseStation({ device }: { device: DeviceContext }) {
+export function NurseStation({
+  device,
+  nurse = null,
+  onSignOutNurse,
+}: {
+  device: DeviceContext;
+  nurse?: NurseSession | null;
+  onSignOutNurse?: () => void;
+}) {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
@@ -236,6 +244,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       ...(consult.mrn ? { _mrn: consult.mrn } : {}),
       _acuity: consult.acuity,
       _specialties: consult.specialties,
+      ...(nurse ? { _nurse_session: nurse.session } : {}),
     });
     if (error || !data) {
       void auditLog({ action: "consult.placed", entity: "calls", outcome: "error", withDevice: true });
@@ -275,6 +284,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
       _doctor_id: target.id,
       _patient_room: room,
       ...(reason ? { _reason: reason } : {}),
+      ...(nurse ? { _nurse_session: nurse.session } : {}),
     });
 
     if (error || !data) {
@@ -325,7 +335,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
         hospital={activeCall.hospital ?? "Virtualis General Hospital"}
         unit={activeCall.unit ?? "ICU - 4 West"}
         title={activeCall.consult ? `${activeCall.consult.patient} · ${activeCall.consult.reason}` : activeCall.reason ?? "Virtual consult"}
-        callerName="Bedside nurse"
+        callerName={nurse ? `RN ${nurse.fullName}` : "Bedside nurse"}
         onEnd={cancelCall}
       />
     );
@@ -360,6 +370,7 @@ export function NurseStation({ device }: { device: DeviceContext }) {
         hospital={device.hospital}
         unit={device.unit}
         knownPatients={knownPatients}
+        nurseName={nurse?.fullName}
         onBack={() => setComposing(false)}
         onSend={(c) => {
           setConsult(c);
@@ -392,6 +403,18 @@ export function NurseStation({ device }: { device: DeviceContext }) {
           <div>
             <p className="label-caps">{device.hospital}</p>
             <h2 className="text-xl font-semibold tracking-tight">{device.unit}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {nurse ? (
+                <>
+                  RN {nurse.fullName} ·{" "}
+                  <button type="button" className="font-medium text-primary underline-offset-2 hover:underline" onClick={onSignOutNurse}>
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                "Admin preview"
+              )}
+            </p>
           </div>
           <Badge variant="outline" className="w-fit gap-2 border-success/30 bg-success/10 text-success">
             <span className="relative flex size-2">

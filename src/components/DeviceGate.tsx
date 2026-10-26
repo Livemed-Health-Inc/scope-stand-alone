@@ -12,13 +12,49 @@ import {
   getDeviceToken,
   isPreviewSession,
   setPreviewToken,
+  getNurseSession,
+  clearNurseSession,
   type DeviceContext,
+  type NurseSession,
 } from "@/lib/device";
+import { NurseVerify } from "@/components/NurseVerify";
 
-export function DeviceGate({ children }: { children: (device: DeviceContext) => React.ReactNode }) {
+const ADMIN_PREVIEW_FLAG = "virtualis.device.adminpreview";
+const isAdminPreview = () =>
+  typeof window !== "undefined" && window.sessionStorage.getItem(ADMIN_PREVIEW_FLAG) === "1";
+
+export function DeviceGate({ children }: { children: (device: DeviceContext, nurse: NurseSession | null, signOutNurse: () => void) => React.ReactNode }) {
   const [device, setDevice] = useState<DeviceContext | null>(null);
   const [checking, setChecking] = useState(true);
   const [locked, setLocked] = useState(false);
+  const [nurse, setNurse] = useState<NurseSession | null>(null);
+  const [nurseChecked, setNurseChecked] = useState(false);
+
+  async function checkNurse(token: string) {
+    const s = getNurseSession();
+    if (!s) {
+      setNurse(null);
+    } else {
+      const { data } = await supabase.rpc("nurse_from_session", { _device_token: token, _session: s.session });
+      if ((data ?? []).length) setNurse(s);
+      else {
+        clearNurseSession();
+        setNurse(null);
+      }
+    }
+    setNurseChecked(true);
+  }
+
+  const signOutNurse = useCallback(() => {
+    const s = getNurseSession();
+    const token = getDeviceToken();
+    if (s && token) {
+      void supabase.rpc("end_nurse_session", { _device_token: token, _session: s.session });
+      void auditLog({ action: "nurse.signed_out", entity: "unit_nurses", entityId: s.nurseId, withDevice: true });
+    }
+    clearNurseSession();
+    setNurse(null);
+  }, []);
 
   async function verify() {
     let token = getDeviceToken();
@@ -49,6 +85,7 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
       setDevice(null);
     } else {
       setDevice(ctx);
+      await checkNurse(token);
     }
     setChecking(false);
   }
@@ -61,6 +98,7 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
       const token = url.searchParams.get("preview");
       if (token) {
         setPreviewToken(token);
+        window.sessionStorage.setItem(ADMIN_PREVIEW_FLAG, "1");
         url.searchParams.delete("preview");
         window.history.replaceState({}, "", url.pathname + url.search + url.hash);
       }
@@ -72,7 +110,8 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
 
   const lock = useCallback(() => {
     setLocked(true);
-  }, []);
+    signOutNurse();
+  }, [signOutNurse]);
 
   if (checking) {
     return (
@@ -84,6 +123,18 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
 
   if (!device) {
     return <ActivationForm onRegistered={verify} />;
+  }
+
+  const adminPreview = isAdminPreview();
+  if (!adminPreview && !locked && !nurse) {
+    if (!nurseChecked) {
+      return (
+        <div className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" /> Checking nurse sign-in…
+        </div>
+      );
+    }
+    return <NurseVerify device={device} onVerified={setNurse} />;
   }
 
   // Privacy screen: an unattended cart must not leave patient context visible.
@@ -113,7 +164,7 @@ export function DeviceGate({ children }: { children: (device: DeviceContext) => 
 
   return (
     <>
-      {children(device)}
+      {children(device, nurse, signOutNurse)}
       <IdleTimeout idleMinutes={10} warnSeconds={45} onTimeout={lock} label="bedside station" />
     </>
   );

@@ -45,7 +45,7 @@ function NursePage() {
       </header>
 
       <main className="w-full px-4 py-6">
-        <DeviceGate>{(device) => <NurseStation device={device} />}</DeviceGate>
+        <DeviceGate>{(device, nurse, signOutNurse) => <NurseStation device={device} nurse={nurse} onSignOutNurse={signOutNurse} />}</DeviceGate>
       </main>
     </div>
   );
