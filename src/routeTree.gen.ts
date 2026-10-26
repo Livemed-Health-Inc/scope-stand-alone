@@ -32,6 +32,8 @@ import { Route as AuthenticatedAdminTechsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedTechIndexRouteImport } from './routes/_authenticated/tech/index'
 import { Route as AuthenticatedTechActivateRouteImport } from './routes/_authenticated/tech/activate'
 import { Route as AuthenticatedTechFacilitiesRouteImport } from './routes/_authenticated/tech/facilities'
+import { Route as ApiPublicConsultMessageRouteImport } from './routes/api/public/consult-message'
+import { Route as ApiPublicConsultResponseRouteImport } from './routes/api/public/consult-response'
 import { Route as ApiPublicIdentityRouteImport } from './routes/api/public/identity'
 import { Route as ApiPublicOnCallRouteImport } from './routes/api/public/on-call'
 import { Route as ApiPublicSsoRouteImport } from './routes/api/public/sso'
@@ -157,6 +159,17 @@ const AuthenticatedTechFacilitiesRoute =
     path: '/facilities',
     getParentRoute: () => AuthenticatedTechRouteRoute,
   } as any)
+const ApiPublicConsultMessageRoute = ApiPublicConsultMessageRouteImport.update({
+  id: '/api/public/consult-message',
+  path: '/api/public/consult-message',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicConsultResponseRoute =
+  ApiPublicConsultResponseRouteImport.update({
+    id: '/api/public/consult-response',
+    path: '/api/public/consult-response',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicIdentityRoute = ApiPublicIdentityRouteImport.update({
   id: '/api/public/identity',
   path: '/api/public/identity',
@@ -194,6 +207,8 @@ export interface FileRoutesByFullPath {
   '/admin/techs': typeof AuthenticatedAdminTechsRoute
   '/tech/activate': typeof AuthenticatedTechActivateRoute
   '/tech/facilities': typeof AuthenticatedTechFacilitiesRoute
+  '/api/public/consult-message': typeof ApiPublicConsultMessageRoute
+  '/api/public/consult-response': typeof ApiPublicConsultResponseRoute
   '/api/public/identity': typeof ApiPublicIdentityRoute
   '/api/public/on-call': typeof ApiPublicOnCallRoute
   '/api/public/sso': typeof ApiPublicSsoRoute
@@ -219,6 +234,8 @@ export interface FileRoutesByTo {
   '/admin/techs': typeof AuthenticatedAdminTechsRoute
   '/tech/activate': typeof AuthenticatedTechActivateRoute
   '/tech/facilities': typeof AuthenticatedTechFacilitiesRoute
+  '/api/public/consult-message': typeof ApiPublicConsultMessageRoute
+  '/api/public/consult-response': typeof ApiPublicConsultResponseRoute
   '/api/public/identity': typeof ApiPublicIdentityRoute
   '/api/public/on-call': typeof ApiPublicOnCallRoute
   '/api/public/sso': typeof ApiPublicSsoRoute
@@ -248,6 +265,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/techs': typeof AuthenticatedAdminTechsRoute
   '/_authenticated/tech/activate': typeof AuthenticatedTechActivateRoute
   '/_authenticated/tech/facilities': typeof AuthenticatedTechFacilitiesRoute
+  '/api/public/consult-message': typeof ApiPublicConsultMessageRoute
+  '/api/public/consult-response': typeof ApiPublicConsultResponseRoute
   '/api/public/identity': typeof ApiPublicIdentityRoute
   '/api/public/on-call': typeof ApiPublicOnCallRoute
   '/api/public/sso': typeof ApiPublicSsoRoute
@@ -277,6 +296,8 @@ export interface FileRouteTypes {
     | '/admin/techs'
     | '/tech/activate'
     | '/tech/facilities'
+    | '/api/public/consult-message'
+    | '/api/public/consult-response'
     | '/api/public/identity'
     | '/api/public/on-call'
     | '/api/public/sso'
@@ -302,6 +323,8 @@ export interface FileRouteTypes {
     | '/admin/techs'
     | '/tech/activate'
     | '/tech/facilities'
+    | '/api/public/consult-message'
+    | '/api/public/consult-response'
     | '/api/public/identity'
     | '/api/public/on-call'
     | '/api/public/sso'
@@ -330,6 +353,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/techs'
     | '/_authenticated/tech/activate'
     | '/_authenticated/tech/facilities'
+    | '/api/public/consult-message'
+    | '/api/public/consult-response'
     | '/api/public/identity'
     | '/api/public/on-call'
     | '/api/public/sso'
@@ -344,6 +369,8 @@ export interface RootRouteChildren {
   NurseRoute: typeof NurseRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   NurseActivateRoute: typeof NurseActivateRoute
+  ApiPublicConsultMessageRoute: typeof ApiPublicConsultMessageRoute
+  ApiPublicConsultResponseRoute: typeof ApiPublicConsultResponseRoute
   ApiPublicIdentityRoute: typeof ApiPublicIdentityRoute
   ApiPublicOnCallRoute: typeof ApiPublicOnCallRoute
   ApiPublicSsoRoute: typeof ApiPublicSsoRoute
@@ -512,6 +539,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTechFacilitiesRouteImport
       parentRoute: typeof AuthenticatedTechRouteRoute
     }
+    '/api/public/consult-message': {
+      id: '/api/public/consult-message'
+      path: '/api/public/consult-message'
+      fullPath: '/api/public/consult-message'
+      preLoaderRoute: typeof ApiPublicConsultMessageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/consult-response': {
+      id: '/api/public/consult-response'
+      path: '/api/public/consult-response'
+      fullPath: '/api/public/consult-response'
+      preLoaderRoute: typeof ApiPublicConsultResponseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/identity': {
       id: '/api/public/identity'
       path: '/api/public/identity'
@@ -610,6 +651,8 @@ const rootRouteChildren: RootRouteChildren = {
   NurseRoute: NurseRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   NurseActivateRoute: NurseActivateRoute,
+  ApiPublicConsultMessageRoute: ApiPublicConsultMessageRoute,
+  ApiPublicConsultResponseRoute: ApiPublicConsultResponseRoute,
   ApiPublicIdentityRoute: ApiPublicIdentityRoute,
   ApiPublicOnCallRoute: ApiPublicOnCallRoute,
   ApiPublicSsoRoute: ApiPublicSsoRoute,
