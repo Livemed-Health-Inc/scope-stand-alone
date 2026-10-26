@@ -192,6 +192,8 @@ export type Database = {
           ended_at: string | null
           hospital: string | null
           id: string
+          initiated_by: string
+          mode: string
           nurse_id: string | null
           patient_room: string | null
           reason: string | null
@@ -206,6 +208,8 @@ export type Database = {
           ended_at?: string | null
           hospital?: string | null
           id?: string
+          initiated_by?: string
+          mode?: string
           nurse_id?: string | null
           patient_room?: string | null
           reason?: string | null
@@ -220,6 +224,8 @@ export type Database = {
           ended_at?: string | null
           hospital?: string | null
           id?: string
+          initiated_by?: string
+          mode?: string
           nurse_id?: string | null
           patient_room?: string | null
           reason?: string | null
@@ -627,6 +633,10 @@ export type Database = {
           unit: string
         }[]
       }
+      answer_public_call: {
+        Args: { _accept: boolean; _call_id: string; _device_token: string }
+        Returns: undefined
+      }
       audit_trail: {
         Args: {
           _actor?: string
@@ -745,6 +755,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      device_incoming_call: {
+        Args: { _device_token: string }
+        Returns: {
+          created_at: string
+          doctor_id: string
+          doctor_name: string
+          id: string
+          mode: string
+          specialty: string
+        }[]
+      }
       device_rounding: {
         Args: { _device_token: string }
         Returns: {
@@ -754,6 +775,10 @@ export type Database = {
           room: string
           status: string
         }[]
+      }
+      doctor_call_device: {
+        Args: { _device_id: string; _mode?: string }
+        Returns: string
       }
       end_break_glass: { Args: never; Returns: undefined }
       end_public_call: {
@@ -811,6 +836,19 @@ export type Database = {
       mark_rounding_ready: {
         Args: { _device_token: string; _note?: string; _room: string }
         Returns: string
+      }
+      my_bedside_stations: {
+        Args: never
+        Returns: {
+          busy: boolean
+          device_id: string
+          hospital: string
+          label: string
+          last_seen: string
+          online: boolean
+          site_id: string
+          unit: string
+        }[]
       }
       my_permissions: {
         Args: never
