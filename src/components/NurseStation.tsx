@@ -424,9 +424,9 @@ export function NurseStation({
             <p className="label-caps">{device.hospital}</p>
             <h2 className="text-xl font-semibold tracking-tight">{device.unit}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {nurse ? (
+              {shownNurse ? (
                 <>
-                  RN {nurse.fullName} ·{" "}
+                  RN {shownNurse.fullName} ·{" "}
                   <button type="button" className="font-medium text-primary underline-offset-2 hover:underline" onClick={onSignOutNurse}>
                     Sign out
                   </button>
