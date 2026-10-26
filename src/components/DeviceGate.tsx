@@ -23,12 +23,25 @@ const ADMIN_PREVIEW_FLAG = "virtualis.device.adminpreview";
 const isAdminPreview = () =>
   typeof window !== "undefined" && window.sessionStorage.getItem(ADMIN_PREVIEW_FLAG) === "1";
 
-export function DeviceGate({ children }: { children: (device: DeviceContext, nurse: NurseSession | null, signOutNurse: () => void) => React.ReactNode }) {
+export type VerifyNurse = () => Promise<NurseSession | null>;
+
+export function DeviceGate({ children }: { children: (device: DeviceContext, nurse: NurseSession | null, signOutNurse: () => void, verifyNurse: VerifyNurse) => React.ReactNode }) {
   const [device, setDevice] = useState<DeviceContext | null>(null);
   const [checking, setChecking] = useState(true);
   const [locked, setLocked] = useState(false);
   const [nurse, setNurse] = useState<NurseSession | null>(null);
-  const [nurseChecked, setNurseChecked] = useState(false);
+  // On-demand nurse verification (consult creation flow): the station renders
+  // without identity; asking "Who's at the bedside?" happens only when a
+  // consult is composed.
+  const [verifyRequest, setVerifyRequest] = useState<{ resolve: (s: NurseSession | null) => void } | null>(null);
+
+  const verifyNurse: VerifyNurse = useCallback(
+    () =>
+      new Promise<NurseSession | null>((resolve) => {
+        setVerifyRequest({ resolve });
+      }),
+    [],
+  );
 
   async function checkNurse(token: string) {
     const s = getNurseSession();
@@ -42,7 +55,6 @@ export function DeviceGate({ children }: { children: (device: DeviceContext, nur
         setNurse(null);
       }
     }
-    setNurseChecked(true);
   }
 
   const signOutNurse = useCallback(() => {
@@ -111,6 +123,10 @@ export function DeviceGate({ children }: { children: (device: DeviceContext, nur
   const lock = useCallback(() => {
     setLocked(true);
     signOutNurse();
+    setVerifyRequest((r) => {
+      r?.resolve(null);
+      return null;
+    });
   }, [signOutNurse]);
 
   if (checking) {
@@ -123,18 +139,6 @@ export function DeviceGate({ children }: { children: (device: DeviceContext, nur
 
   if (!device) {
     return <ActivationForm onRegistered={verify} />;
-  }
-
-  const adminPreview = isAdminPreview();
-  if (!adminPreview && !locked && !nurse) {
-    if (!nurseChecked) {
-      return (
-        <div className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> Checking nurse sign-in…
-        </div>
-      );
-    }
-    return <NurseVerify device={device} onVerified={setNurse} />;
   }
 
   // Privacy screen: an unattended cart must not leave patient context visible.
@@ -162,9 +166,29 @@ export function DeviceGate({ children }: { children: (device: DeviceContext, nur
     );
   }
 
+  // Nurse identity is asked only inside the consult creation flow.
+  if (verifyRequest) {
+    return (
+      <NurseVerify
+        device={device}
+        onVerified={(s) => {
+          setNurse(s);
+          const r = verifyRequest;
+          setVerifyRequest(null);
+          r.resolve(s);
+        }}
+        onCancel={() => {
+          const r = verifyRequest;
+          setVerifyRequest(null);
+          r.resolve(null);
+        }}
+      />
+    );
+  }
+
   return (
     <>
-      {children(device, nurse, signOutNurse)}
+      {children(device, nurse, signOutNurse, verifyNurse)}
       <IdleTimeout idleMinutes={10} warnSeconds={45} onTimeout={lock} label="bedside station" />
     </>
   );

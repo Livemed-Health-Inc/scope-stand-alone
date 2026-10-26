@@ -101,10 +101,12 @@ export function NurseStation({
   device,
   nurse = null,
   onSignOutNurse,
+  verifyNurse,
 }: {
   device: DeviceContext;
   nurse?: NurseSession | null;
   onSignOutNurse?: () => void;
+  verifyNurse?: () => Promise<NurseSession | null>;
 }) {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -412,7 +414,7 @@ export function NurseStation({
                   </button>
                 </>
               ) : (
-                "Admin preview"
+                "Nurse sign-in is asked when a consult is sent"
               )}
             </p>
           </div>
@@ -490,7 +492,19 @@ export function NurseStation({
           <p className="mt-1 text-xs text-muted-foreground">Tap Call on a physician below — the consult details go with the call.</p>
         </div>
       ) : (
-        <Button size="lg" className="h-16 w-full gap-3 text-lg" onClick={() => setComposing(true)} disabled={!!activeCall}>
+        <Button
+          size="lg"
+          className="h-16 w-full gap-3 text-lg"
+          onClick={async () => {
+            // Identity is confirmed only when a consult is being created.
+            if (!nurse && verifyNurse) {
+              const s = await verifyNurse();
+              if (!s) return;
+            }
+            setComposing(true);
+          }}
+          disabled={!!activeCall}
+        >
           <ClipboardPlus className="size-6" /> New consult
         </Button>
       )}
