@@ -39,16 +39,26 @@ export function DoctorStation() {
   const [acks, setAcks] = useState<Ack[]>([]);
   const [incoming, setIncoming] = useState<Call[]>([]);
   const [active, setActive] = useState<Call | null>(null);
+  const [outgoing, setOutgoing] = useState<Call | null>(null);
   const [nurseNames, setNurseNames] = useState<Record<string, string>>({});
   const loadCalls = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
       .from("calls")
-      .select("id, nurse_id, status, patient_room, reason, hospital, unit, created_at")
+      .select("id, nurse_id, status, patient_room, reason, hospital, unit, created_at, initiated_by")
       .eq("doctor_id", user.id)
       .in("status", ["ringing", "accepted"])
       .order("created_at", { ascending: true });
-    const calls = (data ?? []) as Call[];
+    const all = (data ?? []) as (Call & { initiated_by: string })[];
+    const mine = all.filter((c) => c.status === "ringing" && c.initiated_by === "doctor");
+    for (const c of mine) {
+      if (Date.now() - new Date(c.created_at).getTime() > 45000) {
+        await supabase.from("calls").update({ status: "missed", ended_at: new Date().toISOString() }).eq("id", c.id);
+        toast.info("No answer at the bedside station");
+      }
+    }
+    setOutgoing(mine.find((c) => Date.now() - new Date(c.created_at).getTime() <= 45000) ?? null);
+    const calls = all.filter((c) => c.initiated_by !== "doctor" || c.status === "accepted");
     setIncoming(calls.filter((c) => c.status === "ringing"));
     setActive(calls.find((c) => c.status === "accepted") ?? null);
 
@@ -212,7 +222,7 @@ export function DoctorStation() {
         callId={active.id}
 
         role="remote"
-        patient={(active.nurse_id && nurseNames[active.nurse_id]) || "Bedside nurse"}
+        patient={(active.nurse_id && nurseNames[active.nurse_id]) || "Bedside station"}
         room={active.patient_room ? `Room ${active.patient_room}` : ""}
         hospital={active.hospital ?? "Virtualis General Hospital"}
         unit={active.unit ?? "ICU - 4 West"}
