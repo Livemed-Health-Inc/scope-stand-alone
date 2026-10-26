@@ -15,6 +15,13 @@
       "when": 1793032182268,
       "tag": "0001_consult_details_on_calls",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793032819677,
+      "tag": "0002_unit_nurses_verification",
+      "breakpoints": true
     }
   ]
 }
