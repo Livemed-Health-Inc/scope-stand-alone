@@ -23,12 +23,25 @@ const ADMIN_PREVIEW_FLAG = "virtualis.device.adminpreview";
 const isAdminPreview = () =>
   typeof window !== "undefined" && window.sessionStorage.getItem(ADMIN_PREVIEW_FLAG) === "1";
 
-export function DeviceGate({ children }: { children: (device: DeviceContext, nurse: NurseSession | null, signOutNurse: () => void) => React.ReactNode }) {
+export type VerifyNurse = () => Promise<NurseSession | null>;
+
+export function DeviceGate({ children }: { children: (device: DeviceContext, nurse: NurseSession | null, signOutNurse: () => void, verifyNurse: VerifyNurse) => React.ReactNode }) {
   const [device, setDevice] = useState<DeviceContext | null>(null);
   const [checking, setChecking] = useState(true);
   const [locked, setLocked] = useState(false);
   const [nurse, setNurse] = useState<NurseSession | null>(null);
-  const [nurseChecked, setNurseChecked] = useState(false);
+  // On-demand nurse verification (consult creation flow): the station renders
+  // without identity; asking "Who's at the bedside?" happens only when a
+  // consult is composed.
+  const [verifyRequest, setVerifyRequest] = useState<{ resolve: (s: NurseSession | null) => void } | null>(null);
+
+  const verifyNurse: VerifyNurse = useCallback(
+    () =>
+      new Promise<NurseSession | null>((resolve) => {
+        setVerifyRequest({ resolve });
+      }),
+    [],
+  );
 
   async function checkNurse(token: string) {
     const s = getNurseSession();
