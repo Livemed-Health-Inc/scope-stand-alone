@@ -141,18 +141,6 @@ export function DeviceGate({ children }: { children: (device: DeviceContext, nur
     return <ActivationForm onRegistered={verify} />;
   }
 
-  const adminPreview = isAdminPreview();
-  if (!adminPreview && !locked && !nurse) {
-    if (!nurseChecked) {
-      return (
-        <div className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> Checking nurse sign-in…
-        </div>
-      );
-    }
-    return <NurseVerify device={device} onVerified={setNurse} />;
-  }
-
   // Privacy screen: an unattended cart must not leave patient context visible.
   if (locked) {
     return (
