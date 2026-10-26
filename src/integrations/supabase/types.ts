@@ -197,6 +197,8 @@ export type Database = {
           mode: string
           mrn: string | null
           nurse_id: string | null
+          nurse_name: string | null
+          nurse_staff_id: string | null
           patient_name: string | null
           patient_room: string | null
           reason: string | null
@@ -217,6 +219,8 @@ export type Database = {
           mode?: string
           mrn?: string | null
           nurse_id?: string | null
+          nurse_name?: string | null
+          nurse_staff_id?: string | null
           patient_name?: string | null
           patient_room?: string | null
           reason?: string | null
@@ -237,6 +241,8 @@ export type Database = {
           mode?: string
           mrn?: string | null
           nurse_id?: string | null
+          nurse_name?: string | null
+          nurse_staff_id?: string | null
           patient_name?: string | null
           patient_room?: string | null
           reason?: string | null
@@ -422,6 +428,131 @@ export type Database = {
           unit?: string
         }
         Relationships: []
+      }
+      nurse_otps: {
+        Row: {
+          attempts: number
+          code_hash: string | null
+          device_id: string
+          expires_at: string
+          id: string
+          nurse_id: string
+          sent_at: string
+          used_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          code_hash?: string | null
+          device_id: string
+          expires_at: string
+          id?: string
+          nurse_id: string
+          sent_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string | null
+          device_id?: string
+          expires_at?: string
+          id?: string
+          nurse_id?: string
+          sent_at?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurse_otps_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurse_otps_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "unit_nurses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nurse_sessions: {
+        Row: {
+          created_at: string
+          device_id: string
+          ended_at: string | null
+          expires_at: string
+          id: string
+          nurse_id: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          ended_at?: string | null
+          expires_at: string
+          id?: string
+          nurse_id: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          nurse_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurse_sessions_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurse_sessions_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "unit_nurses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nurse_totp: {
+        Row: {
+          created_at: string
+          last_step: number | null
+          nurse_id: string
+          pending: boolean
+          secret: string
+        }
+        Insert: {
+          created_at?: string
+          last_step?: number | null
+          nurse_id: string
+          pending?: boolean
+          secret: string
+        }
+        Update: {
+          created_at?: string
+          last_step?: number | null
+          nurse_id?: string
+          pending?: boolean
+          secret?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurse_totp_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: true
+            referencedRelation: "unit_nurses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permissions: {
         Row: {
@@ -611,6 +742,47 @@ export type Database = {
         }
         Relationships: []
       }
+      unit_nurses: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          is_active: boolean
+          phone_e164: string | null
+          site_id: string
+          totp_confirmed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          phone_e164?: string | null
+          site_id: string
+          totp_confirmed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          phone_e164?: string | null
+          site_id?: string
+          totp_confirmed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_nurses_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "hospital_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -778,6 +950,16 @@ export type Database = {
           specialty: string
         }[]
       }
+      device_nurses: {
+        Args: { _device_token: string }
+        Returns: {
+          full_name: string
+          has_sms: boolean
+          has_totp: boolean
+          id: string
+          phone_last4: string
+        }[]
+      }
       device_rounding: {
         Args: { _device_token: string }
         Returns: {
@@ -793,6 +975,10 @@ export type Database = {
         Returns: string
       }
       end_break_glass: { Args: never; Returns: undefined }
+      end_nurse_session: {
+        Args: { _device_token: string; _session: string }
+        Returns: undefined
+      }
       end_public_call: {
         Args: { _call_id: string; _device_token: string }
         Returns: undefined
@@ -868,6 +1054,14 @@ export type Database = {
           permission_key: string
         }[]
       }
+      nurse_from_session: {
+        Args: { _device_token: string; _session: string }
+        Returns: {
+          expires_at: string
+          full_name: string
+          nurse_id: string
+        }[]
+      }
       on_call_directory: {
         Args: { _device_token: string }
         Returns: {
@@ -892,6 +1086,7 @@ export type Database = {
           _device_token: string
           _doctor_id: string
           _mrn?: string
+          _nurse_session?: string
           _patient_name?: string
           _patient_room: string
           _reason?: string

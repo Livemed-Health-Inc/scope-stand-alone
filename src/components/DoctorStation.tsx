@@ -26,6 +26,7 @@ type Call = {
   mrn?: string | null;
   acuity?: string | null;
   specialties?: string[] | null;
+  nurse_name?: string | null;
 };
 
 type Ack = {
@@ -51,7 +52,7 @@ export function DoctorStation() {
     if (!user) return;
     const { data } = await supabase
       .from("calls")
-      .select("id, nurse_id, status, patient_room, reason, hospital, unit, created_at, initiated_by, patient_name, mrn, acuity, specialties")
+      .select("id, nurse_id, status, patient_room, reason, hospital, unit, created_at, initiated_by, patient_name, mrn, acuity, specialties, nurse_name")
       .eq("doctor_id", user.id)
       .in("status", ["ringing", "accepted"])
       .order("created_at", { ascending: true });
@@ -397,7 +398,7 @@ export function DoctorStation() {
                 <PhoneIncoming className="size-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-medium">{(call.nurse_id && nurseNames[call.nurse_id]) || "Bedside nurse"}</p>
+                <p className="font-medium">{call.nurse_name ? `From RN ${call.nurse_name}` : (call.nurse_id && nurseNames[call.nurse_id]) || "Bedside nurse"}</p>
                 <p className="text-xs font-medium text-foreground/80">
                   {call.hospital ?? "Virtualis General Hospital"}
                 </p>

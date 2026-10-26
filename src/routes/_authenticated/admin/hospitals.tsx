@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { auditLog } from "@/lib/audit";
+import { UnitNurses } from "@/components/admin/UnitNurses";
 import { provisionBedsideLogin, revokeBedsideLogin } from "@/lib/bedside-logins.functions";
 
 
@@ -335,6 +336,7 @@ function HospitalsPage() {
 
                   {expanded && (
                     <div className="mt-3 ml-6 space-y-4 border-l border-border pl-4">
+                      <UnitNurses siteId={s.id} />
                       <div>
                         <p className="label-caps">Bedside view login</p>
                         {siteLogin ? (

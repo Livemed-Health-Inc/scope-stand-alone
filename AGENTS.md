@@ -8,3 +8,4 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+- Bedside nurse identity (unit_nurses, OTP/TOTP secrets, nurse_sessions) is verified only in src/lib/nurse-otp.functions.ts with the admin client; secret tables have no client grants — keeps codes and authenticator secrets off the browser.

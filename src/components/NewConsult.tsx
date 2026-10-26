@@ -51,9 +51,11 @@ export function NewConsult({
   hospital,
   unit,
   knownPatients,
+  nurseName,
   onBack,
   onSend,
 }: {
+  nurseName?: string | null;
   hospital: string;
   unit: string;
   knownPatients: KnownPatient[];
@@ -93,6 +95,7 @@ export function NewConsult({
         <p className="label-caps">Sending facility</p>
         <p className="mt-1 text-lg font-semibold">{hospital}</p>
         <p className="text-sm text-muted-foreground">{unit} · this bedside tablet</p>
+        {nurseName && <p className="mt-1 text-sm font-medium">From RN {nurseName}</p>}
       </section>
 
       <section className="glass-card space-y-3 p-4">
