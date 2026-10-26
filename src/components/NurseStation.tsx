@@ -32,6 +32,9 @@ import { VideoVisit } from "@/features/video-visit";
 import { IncomingDoctorCall } from "@/components/IncomingDoctorCall";
 import { NewConsult, AcuityBadge, type ConsultDraft, type KnownPatient } from "@/components/NewConsult";
 import { ClipboardPlus } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { BedsideConsults } from "@/components/BedsideConsults";
+import { submitBedsideConsult } from "@/lib/virtualis-consult.functions";
 import { startAlerting, stopAlerting, primeAudio } from "@/lib/ringtone";
 
 type Doctor = {
@@ -122,6 +125,8 @@ export function NurseStation({
   const [composing, setComposing] = useState(false);
   const [consult, setConsult] = useState<ConsultDraft | null>(null);
   const [knownPatients, setKnownPatients] = useState<KnownPatient[]>([]);
+  const [consultsKey, setConsultsKey] = useState(0);
+  const submitConsult = useServerFn(submitBedsideConsult);
 
   async function loadStaged() {
     const token = getDeviceToken();
@@ -391,11 +396,25 @@ export function NurseStation({
         knownPatients={knownPatients}
         nurseName={nurse?.fullName ?? null}
         onBack={() => setComposing(false)}
-        onSend={(c) => {
-          setConsult(c);
-          if (nurse) setConsultNurse(nurse);
-          setComposing(false);
-          setSelectedSpecialty(null);
+        onSend={async (c) => {
+          const token = getDeviceToken();
+          const by = nurse ?? (verifyNurse ? await verifyNurse() : null);
+          if (!token || !by) return;
+          try {
+            const r = await submitConsult({ data: { deviceToken: token, nurseSession: by.session, draft: c } });
+            void auditLog({ action: "consult.submitted", entity: "bedside_consults", phi: true, withDevice: true, details: { acuity: c.acuity, specialties: c.specialties } });
+            setKnownPatients((list) => [{ name: c.patient, mrn: c.mrn, room: c.room }, ...list.filter((p) => p.name !== c.patient)]);
+            const sent = r.results.filter((x) => x.status === "sent").length;
+            if (sent) toast.success(`Consult sent to Virtualis Chat (${sent} ${sent === 1 ? "physician" : "physicians"})`);
+            else toast.warning("Consult saved, but it couldn't be delivered to Virtualis Chat.");
+            setComposing(false);
+            setSelectedSpecialty(null);
+            setConsultsKey((k) => k + 1);
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : "Could not send the consult.");
+          } finally {
+            onSignOutNurse?.();
+          }
         }}
       />
     );
@@ -491,6 +510,31 @@ export function NurseStation({
           ))}
         </ul>
       )}
+
+      <BedsideConsults
+        refreshKey={consultsKey}
+        disabled={!!activeCall}
+        verifyNurse={verifyNurse}
+        onSignOutNurse={onSignOutNurse}
+        onStartVisit={(c, callId, doctorId) => {
+          const draft: ConsultDraft = { patient: c.patient_name, room: c.room ?? "", mrn: c.mrn ?? "", reason: c.reason, acuity: c.acuity, specialties: c.specialties };
+          setActiveCall({
+            id: callId,
+            doctor_id: doctorId,
+            status: "ringing",
+            patient_room: c.room,
+            reason: c.reason,
+            hospital: device.hospital,
+            unit: device.unit,
+            consult: draft,
+            nurseName: c.nurse_name,
+          });
+        }}
+        onCallDirectly={(c) => {
+          setConsult({ patient: c.patient_name, room: c.room ?? "", mrn: c.mrn ?? "", reason: c.reason, acuity: c.acuity, specialties: [c.specialty] });
+          setSelectedSpecialty(null);
+        }}
+      />
 
       {consult ? (
         <div className="glass-card border-l-4 border-l-primary p-4">
