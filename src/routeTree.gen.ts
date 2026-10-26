@@ -33,6 +33,7 @@ import { Route as AuthenticatedTechIndexRouteImport } from './routes/_authentica
 import { Route as AuthenticatedTechActivateRouteImport } from './routes/_authenticated/tech/activate'
 import { Route as AuthenticatedTechFacilitiesRouteImport } from './routes/_authenticated/tech/facilities'
 import { Route as ApiPublicIdentityRouteImport } from './routes/api/public/identity'
+import { Route as ApiPublicOnCallRouteImport } from './routes/api/public/on-call'
 import { Route as ApiPublicSsoRouteImport } from './routes/api/public/sso'
 
 const IndexRoute = IndexRouteImport.update({
@@ -161,6 +162,11 @@ const ApiPublicIdentityRoute = ApiPublicIdentityRouteImport.update({
   path: '/api/public/identity',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicOnCallRoute = ApiPublicOnCallRouteImport.update({
+  id: '/api/public/on-call',
+  path: '/api/public/on-call',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSsoRoute = ApiPublicSsoRouteImport.update({
   id: '/api/public/sso',
   path: '/api/public/sso',
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/tech/activate': typeof AuthenticatedTechActivateRoute
   '/tech/facilities': typeof AuthenticatedTechFacilitiesRoute
   '/api/public/identity': typeof ApiPublicIdentityRoute
+  '/api/public/on-call': typeof ApiPublicOnCallRoute
   '/api/public/sso': typeof ApiPublicSsoRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/tech/': typeof AuthenticatedTechIndexRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/tech/activate': typeof AuthenticatedTechActivateRoute
   '/tech/facilities': typeof AuthenticatedTechFacilitiesRoute
   '/api/public/identity': typeof ApiPublicIdentityRoute
+  '/api/public/on-call': typeof ApiPublicOnCallRoute
   '/api/public/sso': typeof ApiPublicSsoRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/tech': typeof AuthenticatedTechIndexRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/_authenticated/tech/activate': typeof AuthenticatedTechActivateRoute
   '/_authenticated/tech/facilities': typeof AuthenticatedTechFacilitiesRoute
   '/api/public/identity': typeof ApiPublicIdentityRoute
+  '/api/public/on-call': typeof ApiPublicOnCallRoute
   '/api/public/sso': typeof ApiPublicSsoRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/tech/': typeof AuthenticatedTechIndexRoute
@@ -269,6 +278,7 @@ export interface FileRouteTypes {
     | '/tech/activate'
     | '/tech/facilities'
     | '/api/public/identity'
+    | '/api/public/on-call'
     | '/api/public/sso'
     | '/admin/'
     | '/tech/'
@@ -293,6 +303,7 @@ export interface FileRouteTypes {
     | '/tech/activate'
     | '/tech/facilities'
     | '/api/public/identity'
+    | '/api/public/on-call'
     | '/api/public/sso'
     | '/admin'
     | '/tech'
@@ -320,6 +331,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tech/activate'
     | '/_authenticated/tech/facilities'
     | '/api/public/identity'
+    | '/api/public/on-call'
     | '/api/public/sso'
     | '/_authenticated/admin/'
     | '/_authenticated/tech/'
@@ -333,6 +345,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   NurseActivateRoute: typeof NurseActivateRoute
   ApiPublicIdentityRoute: typeof ApiPublicIdentityRoute
+  ApiPublicOnCallRoute: typeof ApiPublicOnCallRoute
   ApiPublicSsoRoute: typeof ApiPublicSsoRoute
 }
 
@@ -506,6 +519,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicIdentityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/on-call': {
+      id: '/api/public/on-call'
+      path: '/api/public/on-call'
+      fullPath: '/api/public/on-call'
+      preLoaderRoute: typeof ApiPublicOnCallRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sso': {
       id: '/api/public/sso'
       path: '/api/public/sso'
@@ -591,6 +611,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   NurseActivateRoute: NurseActivateRoute,
   ApiPublicIdentityRoute: ApiPublicIdentityRoute,
+  ApiPublicOnCallRoute: ApiPublicOnCallRoute,
   ApiPublicSsoRoute: ApiPublicSsoRoute,
 }
 export const routeTree = rootRouteImport
