@@ -370,7 +370,7 @@ export function NurseStation({
         hospital={device.hospital}
         unit={device.unit}
         knownPatients={knownPatients}
-        nurseName={nurse?.fullName}
+        nurseName={nurse?.fullName ?? null}
         onBack={() => setComposing(false)}
         onSend={(c) => {
           setConsult(c);

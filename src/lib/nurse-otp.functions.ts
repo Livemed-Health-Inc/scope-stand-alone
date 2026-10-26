@@ -41,7 +41,7 @@ async function audit(db: Admin, action: string, deviceId: string, nurseId: strin
     entity: "unit_nurses",
     entity_id: nurseId,
     outcome,
-    details,
+    details: details as never,
   });
 }
 
