@@ -47,14 +47,23 @@ export function UnitNurses({ siteId }: { siteId: string }) {
   }, [siteId]);
 
   async function save() {
-    if (!name.trim()) return toast.error("Enter the nurse's name.");
+    if (!name.trim()) {
+      toast.error("Enter the nurse's name.");
+      return;
+    }
     const phone_e164 = normalizePhone(phone);
-    if (phone_e164 && !/^\+\d{10,15}$/.test(phone_e164)) return toast.error("Enter a valid mobile number.");
+    if (phone_e164 && !/^\+\d{10,15}$/.test(phone_e164)) {
+      toast.error("Enter a valid mobile number.");
+      return;
+    }
     const row = { full_name: name.trim(), phone_e164 };
     const { error } = editing
       ? await supabase.from("unit_nurses").update(row).eq("id", editing)
       : await supabase.from("unit_nurses").insert({ ...row, site_id: siteId });
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setName("");
     setPhone("");
     setEditing(null);
@@ -81,7 +90,10 @@ export function UnitNurses({ siteId }: { siteId: string }) {
   async function finishTotp() {
     if (!setup) return;
     const r = await confirm({ data: { nurseId: setup.nurse.id, code } });
-    if (!r.ok) return toast.error(r.error ?? "Code didn't match.");
+    if (!r.ok) {
+      toast.error(r.error ?? "Code didn't match.");
+      return;
+    }
     toast.success(`Authenticator set up for ${setup.nurse.full_name}`);
     setSetup(null);
     void load();
