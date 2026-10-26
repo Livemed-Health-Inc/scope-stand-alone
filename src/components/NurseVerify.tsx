@@ -203,7 +203,7 @@ export function NurseVerify({ device, onVerified, onCancel }: { device: DeviceCo
                   />
                 </div>
                 <Button type="submit" size="lg" className="w-full" disabled={busy || code.length !== 6}>
-                  {busy ? <Loader2 className="size-4 animate-spin" /> : "Verify and open station"}
+                  {busy ? <Loader2 className="size-4 animate-spin" /> : "Verify and continue"}
                 </Button>
               </form>
             )}
