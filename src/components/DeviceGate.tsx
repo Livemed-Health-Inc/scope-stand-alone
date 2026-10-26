@@ -166,9 +166,29 @@ export function DeviceGate({ children }: { children: (device: DeviceContext, nur
     );
   }
 
+  // Nurse identity is asked only inside the consult creation flow.
+  if (verifyRequest) {
+    return (
+      <NurseVerify
+        device={device}
+        onVerified={(s) => {
+          setNurse(s);
+          const r = verifyRequest;
+          setVerifyRequest(null);
+          r.resolve(s);
+        }}
+        onCancel={() => {
+          const r = verifyRequest;
+          setVerifyRequest(null);
+          r.resolve(null);
+        }}
+      />
+    );
+  }
+
   return (
     <>
-      {children(device, nurse, signOutNurse)}
+      {children(device, nurse, signOutNurse, verifyNurse)}
       <IdleTimeout idleMinutes={10} warnSeconds={45} onTimeout={lock} label="bedside station" />
     </>
   );
