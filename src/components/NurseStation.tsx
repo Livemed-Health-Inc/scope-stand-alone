@@ -62,6 +62,7 @@ type Call = {
   unit: string | null;
   doctor_name?: string;
   consult?: ConsultDraft;
+  nurseName?: string | null;
 };
 
 const SPECIALTIES = [
