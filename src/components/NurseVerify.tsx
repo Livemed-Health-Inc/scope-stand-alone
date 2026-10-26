@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { KeyRound, Loader2, MessageSquareText, UserRound } from "lucide-react";
+import { ArrowLeft, KeyRound, Loader2, MessageSquareText, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { sendNurseCode, verifyNurseCode } from "@/lib/nurse-otp.functions";
 
 type UnitNurse = { id: string; full_name: string; phone_last4: string | null; has_sms: boolean; has_totp: boolean };
 
-export function NurseVerify({ device, onVerified }: { device: DeviceContext; onVerified: (s: NurseSession) => void }) {
+export function NurseVerify({ device, onVerified, onCancel }: { device: DeviceContext; onVerified: (s: NurseSession) => void; onCancel?: () => void }) {
   const [nurses, setNurses] = useState<UnitNurse[] | null>(null);
   const [nurseId, setNurseId] = useState("");
   const [method, setMethod] = useState<"sms" | "totp" | null>(null);
@@ -88,6 +88,13 @@ export function NurseVerify({ device, onVerified }: { device: DeviceContext; onV
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-5 py-10">
+      {onCancel && (
+        <div>
+          <Button variant="ghost" size="sm" className="gap-2 -ml-2" onClick={onCancel}>
+            <ArrowLeft className="size-4" /> Back
+          </Button>
+        </div>
+      )}
       <div className="flex flex-col items-center gap-3 text-center">
         <BrandMark size={36} />
         <div>
