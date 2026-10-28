@@ -17,7 +17,6 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedDoctorRouteImport } from './routes/_authenticated/doctor'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
-import { Route as AuthenticatedOneRouteImport } from './routes/_authenticated/one'
 import { Route as AuthenticatedPatientRouteImport } from './routes/_authenticated/patient'
 import { Route as AuthenticatedSecurityRouteImport } from './routes/_authenticated/security'
 import { Route as AuthenticatedStationRouteImport } from './routes/_authenticated/station'
@@ -76,11 +75,6 @@ const AuthenticatedDoctorRoute = AuthenticatedDoctorRouteImport.update({
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   id: '/home',
   path: '/home',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedOneRoute = AuthenticatedOneRouteImport.update({
-  id: '/one',
-  path: '/one',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPatientRoute = AuthenticatedPatientRouteImport.update({
@@ -201,7 +195,6 @@ export interface FileRoutesByFullPath {
   '/tech': typeof AuthenticatedTechRouteRouteWithChildren
   '/doctor': typeof AuthenticatedDoctorRoute
   '/home': typeof AuthenticatedHomeRoute
-  '/one': typeof AuthenticatedOneRoute
   '/patient': typeof AuthenticatedPatientRoute
   '/security': typeof AuthenticatedSecurityRoute
   '/station': typeof AuthenticatedStationRoute
@@ -229,7 +222,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/doctor': typeof AuthenticatedDoctorRoute
   '/home': typeof AuthenticatedHomeRoute
-  '/one': typeof AuthenticatedOneRoute
   '/patient': typeof AuthenticatedPatientRoute
   '/security': typeof AuthenticatedSecurityRoute
   '/station': typeof AuthenticatedStationRoute
@@ -261,7 +253,6 @@ export interface FileRoutesById {
   '/_authenticated/tech': typeof AuthenticatedTechRouteRouteWithChildren
   '/_authenticated/doctor': typeof AuthenticatedDoctorRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
-  '/_authenticated/one': typeof AuthenticatedOneRoute
   '/_authenticated/patient': typeof AuthenticatedPatientRoute
   '/_authenticated/security': typeof AuthenticatedSecurityRoute
   '/_authenticated/station': typeof AuthenticatedStationRoute
@@ -293,7 +284,6 @@ export interface FileRouteTypes {
     | '/tech'
     | '/doctor'
     | '/home'
-    | '/one'
     | '/patient'
     | '/security'
     | '/station'
@@ -321,7 +311,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/doctor'
     | '/home'
-    | '/one'
     | '/patient'
     | '/security'
     | '/station'
@@ -352,7 +341,6 @@ export interface FileRouteTypes {
     | '/_authenticated/tech'
     | '/_authenticated/doctor'
     | '/_authenticated/home'
-    | '/_authenticated/one'
     | '/_authenticated/patient'
     | '/_authenticated/security'
     | '/_authenticated/station'
@@ -444,13 +432,6 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof AuthenticatedHomeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/one': {
-      id: '/_authenticated/one'
-      path: '/one'
-      fullPath: '/one'
-      preLoaderRoute: typeof AuthenticatedOneRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/patient': {
@@ -645,7 +626,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTechRouteRoute: typeof AuthenticatedTechRouteRouteWithChildren
   AuthenticatedDoctorRoute: typeof AuthenticatedDoctorRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
-  AuthenticatedOneRoute: typeof AuthenticatedOneRoute
   AuthenticatedPatientRoute: typeof AuthenticatedPatientRoute
   AuthenticatedSecurityRoute: typeof AuthenticatedSecurityRoute
   AuthenticatedStationRoute: typeof AuthenticatedStationRoute
@@ -656,7 +636,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTechRouteRoute: AuthenticatedTechRouteRouteWithChildren,
   AuthenticatedDoctorRoute: AuthenticatedDoctorRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
-  AuthenticatedOneRoute: AuthenticatedOneRoute,
   AuthenticatedPatientRoute: AuthenticatedPatientRoute,
   AuthenticatedSecurityRoute: AuthenticatedSecurityRoute,
   AuthenticatedStationRoute: AuthenticatedStationRoute,
