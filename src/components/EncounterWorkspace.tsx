@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
-import { workspaceContext, type WorkspaceCall } from "@/lib/workspace-context";
+import { workspaceContext, WORKSPACE_CONNECTIONS, type WorkspaceCall } from "@/lib/workspace-context";
 
 const PANELS = [
   { id: "consult", label: "Consult & video", icon: Stethoscope },
@@ -16,7 +16,7 @@ const PANELS = [
 
 function Unavailable({ title, children }: { title: string; children: ReactNode }) {
   return <div className="py-6">
-    <div className="flex items-center gap-2"><Unplug className="size-5 text-muted-foreground" /><h2 className="text-lg font-semibold">{title}</h2><Badge variant="secondary">Not connected</Badge></div>
+    <div className="flex flex-wrap items-center gap-2"><Unplug className="size-5 text-muted-foreground" /><h2 className="text-lg font-semibold">{title}</h2><Badge variant="secondary">Not connected</Badge></div>
     <div className="mt-3 max-w-2xl space-y-4 text-sm text-muted-foreground">{children}</div>
   </div>;
 }
@@ -50,8 +50,8 @@ export function EncounterWorkspace({ call, station }: { call: WorkspaceCall | nu
         <TabsContent value="consult"><p className="pb-4 text-xs text-muted-foreground">{context ? "Canonical patient history and documentation are not linked to this call." : "Patient details appear when a bedside consult is accepted."}</p></TabsContent>
         <TabsContent value="history"><Unavailable title="Patient history"><p>One’s patient and encounter connection is not configured here. Prior visits, medications, allergies, and results are unavailable.</p>{context && <p>Current referral: {context.reason}</p>}</Unavailable></TabsContent>
         <TabsContent value="chat"><Unavailable title="Virtualis Chat thread"><p>{can("platform.chat") ? "The existing bedside-to-Chat delivery workflow is unchanged. This workspace does not yet have an authorized encounter-thread connection." : "Your account does not have Virtualis Chat access."}</p><p>No messages are loaded or sent from this panel.</p>{can("platform.chat") && <Button variant="outline" asChild><a href="https://virtualischat.com" target="_blank" rel="noopener noreferrer"><ExternalLink />Open standalone Chat</a></Button>}</Unavailable></TabsContent>
-        <TabsContent value="note"><Unavailable title="Virtualis Note"><p>{can("platform.note") ? "Encounter-bound notes and ambient capture are not connected." : "Your account does not have Virtualis Note access."}</p><div className="flex flex-wrap items-center gap-3"><Button variant="secondary" disabled><MicOff />Capture unavailable</Button><span>Not recording</span></div><p>Capture requires participant consent, media permissions, both participants’ call audio, and an approved encounter connection. No audio is recorded or sent to Note.</p>{can("platform.note") && <Button variant="outline" asChild><a href="https://virtualisnote.ai" target="_blank" rel="noopener noreferrer"><ExternalLink />Open standalone Note</a></Button>}</Unavailable></TabsContent>
-        <TabsContent value="billing"><Unavailable title="Coding & RVU review"><p>No ICD-10, billing-code, or RVU recommendations are available for this call. A connected, reviewed clinical note is required.</p><p>Notes remain unsigned. No claims or billing approvals are submitted here.</p><Button variant="secondary" disabled><ReceiptText />Recommendations unavailable</Button></Unavailable></TabsContent>
+        <TabsContent value="note"><Unavailable title="Virtualis Note"><p>{can("platform.note") ? "Encounter-bound notes and ambient capture are not connected." : "Your account does not have Virtualis Note access."}</p><div className="flex flex-wrap items-center gap-3"><Button variant="secondary" disabled={!WORKSPACE_CONNECTIONS.ambientCapture}><MicOff />Capture unavailable</Button><span>Not recording</span></div><p>Capture requires participant consent, media permissions, both participants’ call audio, and an approved encounter connection. No audio is recorded or sent to Note.</p>{can("platform.note") && <Button variant="outline" asChild><a href="https://virtualisnote.ai" target="_blank" rel="noopener noreferrer"><ExternalLink />Open standalone Note</a></Button>}</Unavailable></TabsContent>
+        <TabsContent value="billing"><Unavailable title="Coding & RVU review"><p>No ICD-10, billing-code, or RVU recommendations are available for this call. A connected, reviewed clinical note is required.</p><p>No note is signed and no claims or billing approvals are submitted here.</p><Button variant="secondary" disabled={!WORKSPACE_CONNECTIONS.billing}><ReceiptText />Recommendations unavailable</Button></Unavailable></TabsContent>
       </div>
     </Tabs>
   </section>;
