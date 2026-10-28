@@ -29,7 +29,7 @@ describe("native call lifecycle", () => {
     await act(async () => { tree = create(<EncounterWorkspace call={call} station={<NativeCall />} />); });
     const original = tree?.root.findByProps({ "data-call": "native" });
     for (const tab of ["history", "chat", "note", "billing", "consult"]) {
-      await act(async () => tree?.root.findByProps({ "data-tab": tab }).props.onClick());
+      await act(async () => tree?.root.findByProps({ "data-tab": tab }).props["onClick"]());
       expect(tree?.root.findByProps({ "data-call": "native" })).toBe(original);
       expect(mounted).toHaveBeenCalledTimes(1);
       expect(released).not.toHaveBeenCalled();
@@ -43,9 +43,9 @@ describe("native call lifecycle", () => {
     vi.stubGlobal("navigator", { mediaDevices: { getUserMedia: acquire } });
     try {
       await act(async () => { tree = create(<EncounterWorkspace call={call} station={<div />} />); });
-      await act(async () => tree?.root.findByProps({ "data-tab": "note" }).props.onClick());
+      await act(async () => tree?.root.findByProps({ "data-tab": "note" }).props["onClick"]());
       expect(acquire).not.toHaveBeenCalled();
-      const buttons = tree?.root.findAllByType("button").filter(b => b.props.disabled);
+      const buttons = tree?.root.findAllByType("button").filter(b => b.props["disabled"]);
       expect(buttons?.length).toBe(1);
     } finally { vi.unstubAllGlobals(); }
   });
