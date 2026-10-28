@@ -52,6 +52,8 @@ export interface VideoVisitProps {
   callId?: string;
   /** Called when the user taps the back arrow or "End visit". */
   onEnd?: () => void;
+  /** Compact native call within a workspace; does not change media ownership. */
+  embedded?: boolean;
 }
 
 
@@ -78,6 +80,7 @@ export function VideoVisit({
   allowRemoteLocalScope = false,
   callId,
   onEnd,
+  embedded = false,
 }: VideoVisitProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [connecting, setConnecting] = useState(true);
@@ -397,7 +400,7 @@ export function VideoVisit({
   }, [connecting]);
 
   return (
-    <main className={`flex min-h-screen w-full flex-col bg-navy-900 pb-4 pt-3 text-slate-100 ${isBedside ? "" : "px-3 sm:px-5 lg:px-6"}`}>
+    <main className={`flex ${embedded ? "min-h-0" : "min-h-screen"} w-full flex-col bg-navy-900 pb-4 pt-3 text-slate-100 ${isBedside ? "" : "px-3 sm:px-5 lg:px-6"}`}>
       <header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-3">
         {onEnd && (
           <button onClick={onEnd} aria-label="Leave visit" className="shrink-0 text-slate-400">
@@ -406,7 +409,7 @@ export function VideoVisit({
         )}
         <div className="col-start-2 min-w-0">
           <p className="truncate text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-400">
-            {connecting ? "• Connecting" : "• Live"}
+            {embedded ? (link.state === "live" ? "• Connected" : "• Connecting") : connecting ? "• Connecting" : "• Live"}
             {title ? ` · ${title}` : ""}
           </p>
           <p className="truncate text-xs text-slate-400">
@@ -452,7 +455,7 @@ export function VideoVisit({
             <div className="px-4 text-center">
               <p className="text-base font-semibold sm:text-lg">Waiting room</p>
               <p className="text-xs text-slate-400 sm:text-sm">
-                Admitting {patient} · consent on file
+                {embedded ? `Waiting for ${patient}` : `Admitting ${patient} · consent on file`}
               </p>
             </div>
           </div>
@@ -654,14 +657,14 @@ export function VideoVisit({
               role="status"
               className="mb-1 rounded-md bg-warning/20 px-2 py-1 text-center text-[11px] font-bold tracking-wide text-warning-foreground"
             >
-              SYNTHETIC DEMO AUDIO — NOT A LIVE STETHOSCOPE
+              DEMO AUDIO — NOT A LIVE STETHOSCOPE
             </p>
           )}
           <div className="h-36">
             <Waveform
               analyser={demo.analyser ?? waveAnalyser}
               active={demo.playing || !!waveStream}
-              label={demo.playing ? "SYNTHETIC DEMO" : undefined}
+              label={demo.playing ? "DEMO" : undefined}
             />
           </div>
           {demo.available && (

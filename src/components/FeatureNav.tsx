@@ -30,7 +30,7 @@ const FEATURES: Feature[] = [
   { permission: "platform.telemedicine", label: "Telemedicine", icon: Stethoscope, to: "/doctor" },
   { permission: "doctor.station", label: "Waiting room", icon: Stethoscope, to: "/doctor" },
   { permission: "platform.chat", label: "Virtualis Chat", icon: MessageSquare, href: "https://virtualischat.com" },
-  { permission: "platform.one", label: "Virtualis One", icon: LayoutGrid, href: "https://www.virtualischat.com" },
+  { permission: "platform.one", label: "Virtualis One", icon: LayoutGrid, to: "/one" },
   { permission: "platform.note", label: "Virtualis Note", icon: FileText, href: "https://virtualisnote.ai" },
   { permission: "platform.bedside", label: "Bedside view", icon: BedDouble, to: "/nurse" },
   { permission: "tech.provision", label: "Activations", icon: Wrench, to: "/tech" },

@@ -1,5 +1,6 @@
 import { AcuityBadge } from "@/components/NewConsult";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import type { WorkspaceCall } from "@/lib/workspace-context";
 import { PhoneIncoming, PhoneOff, Coffee, CheckCircle2, BellRing, Footprints } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,7 +39,7 @@ type Ack = {
   created_at: string;
 };
 
-export function DoctorStation() {
+export function DoctorStation({ renderWorkspace }: { renderWorkspace?: (call: WorkspaceCall | null, station: ReactNode) => ReactNode } = {}) {
   const { user, profile, role, loading, signOut } = useAuth();
   const [available, setAvailable] = useState(true);
   const [readyToRound, setReadyToRound] = useState(false);
@@ -223,22 +224,24 @@ export function DoctorStation() {
   }
 
   if (active) {
-    return (
+    const visit = (
       <VideoVisit
         roomId={active.id}
         callId={active.id}
 
         role="remote"
-        patient={(active.nurse_id && nurseNames[active.nurse_id]) || "Bedside station"}
+        patient={renderWorkspace ? active.patient_name || "Bedside station" : (active.nurse_id && nurseNames[active.nurse_id]) || "Bedside station"}
         room={active.patient_room ? `Room ${active.patient_room}` : ""}
-        hospital={active.hospital ?? "Virtualis General Hospital"}
-        unit={active.unit ?? "ICU - 4 West"}
+        hospital={active.hospital ?? (renderWorkspace ? "Hospital not provided" : "Virtualis General Hospital")}
+        unit={active.unit ?? (renderWorkspace ? "Unit not provided" : "ICU - 4 West")}
         title={active.patient_name ? `${active.patient_name} · ${active.reason ?? "Consult"}` : active.reason ?? "Virtual consult"}
         callerName={profile?.full_name ? `Dr. ${profile.full_name}` : "Physician"}
         allowRemoteLocalScope
+        embedded={Boolean(renderWorkspace)}
         onEnd={end}
       />
     );
+    return renderWorkspace ? renderWorkspace(active, visit) : visit;
   }
 
   if (loading) {
@@ -262,7 +265,7 @@ export function DoctorStation() {
   }
 
 
-  return (
+  const station = (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -433,4 +436,5 @@ export function DoctorStation() {
       )}
     </div>
   );
+  return renderWorkspace ? renderWorkspace(null, station) : station;
 }
