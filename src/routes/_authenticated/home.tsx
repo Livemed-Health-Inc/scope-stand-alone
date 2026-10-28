@@ -71,7 +71,7 @@ const PRODUCTS: Product[] = [
     label: "Virtualis One",
     blurb: "The unified Virtualis workspace.",
     icon: LayoutGrid,
-    href: "https://www.virtualischat.com",
+    to: "/one",
   },
 ];
 
